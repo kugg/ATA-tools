@@ -1,0 +1,34 @@
+# Runtime artifacts may contain credentials, voice samples or device identities.
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+.env
+.env.*
+!.env.example
+secrets/
+work/
+logs/
+backups/
+models/
+ata-config-*.json
+lease.json
+*.pcap
+*.pcapng
+*.key
+*.pem
+*.qcow2
+*.img
+*.wav
+*.mp3
+*.flac
+*.log
+
+# User-supplied Cisco firmware, support tools, and analysis outputs stay local.
+ata_03_01_00_sip_040211_1/
+vendor/
+firmware/
+analysis/
+optimized/
+*.zup
+ptag.dat
