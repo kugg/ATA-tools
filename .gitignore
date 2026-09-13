@@ -32,3 +32,6 @@ analysis/
 optimized/
 *.zup
 ptag.dat
+# Local-only rebuildable C research tree and proprietary decompiled/derived
+# outputs (disassembly dumps, decompiled C, rename maps); never publish.
+research/

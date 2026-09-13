@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_definitions>
+  <language processor="MIPS-X"
+            endian="big"
+            size="32"
+            variant="ATA186"
+            version="0.1"
+            slafile="mipsx_be.sla"
+            processorspec="mipsx.pspec"
+            id="MIPS-X:BE:32:ATA186">
+    <description>Stanford MIPS-X 32-bit big-endian (Cisco ATA186 research profile)</description>
+    <compiler name="ATA186 conservative" spec="mipsx.cspec" id="default"/>
+  </language>
+</language_definitions>

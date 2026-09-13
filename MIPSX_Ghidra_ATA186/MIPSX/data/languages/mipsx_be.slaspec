@@ -1,0 +1,362 @@
+# Stanford MIPS-X SLEIGH specification -- big-endian ATA186 research profile
+#
+# Encoding is based on the MIPS-X Instruction Set and Programmer's Manual,
+# cross-checked against kugg/ATA-tools refactor/mipsx_dasm.py and MAME's
+# mipsx disassembler.  This is a reverse-engineering oriented implementation:
+# core integer/control-flow instructions have p-code; coprocessor, exception,
+# divide-step, and uncertain ES3210/ES3890 extensions are conservative userops.
+
+# MIPS-X is byte-addressed and big-endian. Instructions are fixed 32-bit words.
+define endian=big;
+define alignment=4;
+
+define space ram type=ram_space size=4 default;
+define space register type=register_space size=4;
+
+# Integer registers. Architecturally r0 is hard-wired to zero.  The cspec also
+# tracks r0=0 at function entry; common NOP encoding gets explicit no-op p-code.
+define register offset=0x000 size=4 [
+    r0 r1 r2 r3 r4 r5 r6 r7
+    r8 r9 r10 r11 r12 r13 r14 r15
+    r16 r17 r18 r19 r20 r21 r22 r23
+    r24 r25 r26 r27 r28 r29 r30 r31
+];
+
+# Analysis-visible special/pseudo registers.  pc is the Ghidra program counter.
+# pcm4/pcml represent the special PC-chain registers used by exception returns.
+define register offset=0x100 size=4 [ pc psw md pcm4 pcml psw_other ];
+
+# Unknown or implementation-specific operations are represented as userops so
+# that decode stays useful without inventing hardware semantics.
+define pcodeop mipsx_mstart;
+define pcodeop mipsx_mstep;
+define pcodeop mipsx_dstep;
+define pcodeop mipsx_coprocessor;
+define pcodeop mipsx_trap;
+define pcodeop mipsx_halt;
+define pcodeop mipsx_exception_return;
+define pcodeop mipsx_xop5;
+define pcodeop mipsx_xop7;
+
+# Bit positions follow the architectural 32-bit instruction word; SLEIGH bit 0
+# is the least significant bit of the token.
+define token instr (32)
+    ty          = (30,31)
+    op          = (27,29)
+    src1        = (22,26)
+    src2        = (17,21)
+    link        = (17,21)
+    link_idx    = (17,21)
+    dest        = (12,16)
+
+    sq          = (16,16)
+    disp16      = (0,15) signed
+    imm17       = (0,16) signed
+
+    func12      = (0,11)
+    func_hi5    = (7,11)
+    shift_bbb   = (4,6)
+    shift_dddd  = (0,3)
+
+    low27       = (0,26)
+
+    cop_op      = (14,16)
+    cop_func    = (8,13)
+    cop_c1      = (4,7)
+    cop_c2      = (0,3)
+
+    spec_code   = (0,2)
+    spec_pad    = (3,11)
+
+    trap_venc   = (3,10)
+    trap_pad    = (11,26)
+    trap_low3   = (0,2)
+;
+
+attach variables [ src1 src2 link dest ] [
+    r0 r1 r2 r3 r4 r5 r6 r7
+    r8 r9 r10 r11 r12 r13 r14 r15
+    r16 r17 r18 r19 r20 r21 r22 r23
+    r24 r25 r26 r27 r28 r29 r30 r31
+];
+
+# ATA-tools resolves a branch at byte address A to A + 8 + 4*disp16.  This is
+# the byte-address-space rendering of the MIPS-X word-addressed PC chain.
+BranchDest: reloc is disp16 [ reloc = inst_start + 8 + 4*disp16; ] {
+    export *:4 reloc;
+}
+
+# Shift encoding dddd is one of 1,2,4,8.  The architectural shift amount is
+# 32 - (4*bbb + adjustment), adjustment={0,1,2,3} respectively.
+ShiftAmt: amt is shift_bbb & shift_dddd=1 [ amt = 32 - 4*shift_bbb; ] {
+    export *[const]:4 amt;
+}
+ShiftAmt: amt is shift_bbb & shift_dddd=2 [ amt = 31 - 4*shift_bbb; ] {
+    export *[const]:4 amt;
+}
+ShiftAmt: amt is shift_bbb & shift_dddd=4 [ amt = 30 - 4*shift_bbb; ] {
+    export *[const]:4 amt;
+}
+ShiftAmt: amt is shift_bbb & shift_dddd=8 [ amt = 29 - 4*shift_bbb; ] {
+    export *[const]:4 amt;
+}
+
+# Named special-register operands.
+SpecFrom: "psw" is spec_pad=0 & spec_code=1 { export psw; }
+SpecFrom: "md" is spec_pad=0 & spec_code=2 { export md; }
+SpecFrom: "pcm4" is spec_pad=0 & spec_code=4 { export pcm4; }
+SpecTo: "pcml" is spec_pad=0 & spec_code=4 { export pcml; }
+
+# Trap vectors are stored one's-complemented in the instruction.
+TrapVec: vec is trap_venc [ vec = 255 - trap_venc; ] {
+    export *[const]:4 vec;
+}
+
+# -----------------------------------------------------------------------------
+# Type 00 -- conditional branches.  MIPS-X has two delay-slot instructions.
+# SQ=1 means the two slots are squashed when the branch is NOT taken.
+# -----------------------------------------------------------------------------
+
+:beq src1,src2,BranchDest is ty=0 & op=1 & sq=0 & src1 & src2 & BranchDest {
+    local c:1 = src1 == src2;
+    delayslot(2);
+    if (c) goto BranchDest;
+}
+:beq^".sq" src1,src2,BranchDest is ty=0 & op=1 & sq=1 & src1 & src2 & BranchDest {
+    local c:1 = src1 == src2;
+    if (!c) goto <done>;
+    delayslot(2);
+    goto BranchDest;
+<done>
+}
+
+:bhs src1,src2,BranchDest is ty=0 & op=2 & sq=0 & src1 & src2 & BranchDest {
+    local c:1 = src1 >= src2;
+    delayslot(2);
+    if (c) goto BranchDest;
+}
+:bhs^".sq" src1,src2,BranchDest is ty=0 & op=2 & sq=1 & src1 & src2 & BranchDest {
+    local c:1 = src1 >= src2;
+    if (!c) goto <done>;
+    delayslot(2);
+    goto BranchDest;
+<done>
+}
+
+:blt src1,src2,BranchDest is ty=0 & op=3 & sq=0 & src1 & src2 & BranchDest {
+    local c:1 = src1 s< src2;
+    delayslot(2);
+    if (c) goto BranchDest;
+}
+:blt^".sq" src1,src2,BranchDest is ty=0 & op=3 & sq=1 & src1 & src2 & BranchDest {
+    local c:1 = src1 s< src2;
+    if (!c) goto <done>;
+    delayslot(2);
+    goto BranchDest;
+<done>
+}
+
+:bne src1,src2,BranchDest is ty=0 & op=5 & sq=0 & src1 & src2 & BranchDest {
+    local c:1 = src1 != src2;
+    delayslot(2);
+    if (c) goto BranchDest;
+}
+:bne^".sq" src1,src2,BranchDest is ty=0 & op=5 & sq=1 & src1 & src2 & BranchDest {
+    local c:1 = src1 != src2;
+    if (!c) goto <done>;
+    delayslot(2);
+    goto BranchDest;
+<done>
+}
+
+:blo src1,src2,BranchDest is ty=0 & op=6 & sq=0 & src1 & src2 & BranchDest {
+    local c:1 = src1 < src2;
+    delayslot(2);
+    if (c) goto BranchDest;
+}
+:blo^".sq" src1,src2,BranchDest is ty=0 & op=6 & sq=1 & src1 & src2 & BranchDest {
+    local c:1 = src1 < src2;
+    if (!c) goto <done>;
+    delayslot(2);
+    goto BranchDest;
+<done>
+}
+
+:bge src1,src2,BranchDest is ty=0 & op=7 & sq=0 & src1 & src2 & BranchDest {
+    local c:1 = src1 s>= src2;
+    delayslot(2);
+    if (c) goto BranchDest;
+}
+:bge^".sq" src1,src2,BranchDest is ty=0 & op=7 & sq=1 & src1 & src2 & BranchDest {
+    local c:1 = src1 s>= src2;
+    if (!c) goto <done>;
+    delayslot(2);
+    goto BranchDest;
+<done>
+}
+
+# -----------------------------------------------------------------------------
+# Type 01 -- compute / shift instructions.
+# -----------------------------------------------------------------------------
+
+# Multiply/divide-step operations use the MD special register and pipeline
+# details.  mstart/mstep are decoded and left conservative; dstep is likewise.
+:mstart src2,dest is ty=1 & op=0 & src1=0 & src2 & dest & func12=0x0e6 {
+    mipsx_mstart();
+}
+:mstep src1,src2,dest is ty=1 & op=0 & src1 & src2 & dest & func12=0x099 {
+    mipsx_mstep();
+}
+:dstep src1,src2,dest is ty=1 & op=0 & src1 & src2 & dest & func12=0x166 {
+    mipsx_dstep();
+}
+
+# Arithmetic shift right.
+:asr src1,dest,ShiftAmt is ty=1 & op=1 & src1 & src2=0 & dest & func_hi5=2 & ShiftAmt {
+    dest = src1 s>> ShiftAmt;
+}
+
+# Funnel shift: low 'amount' bits come from src2, the remainder from src1.
+:sh src1,src2,dest,ShiftAmt is ty=1 & op=1 & src1 & src2 & dest & func_hi5=4 & ShiftAmt {
+    local n:4 = ShiftAmt;
+    dest = (src1 >> n) | (src2 << (32 - n));
+}
+
+# Byte rotates; low two bits of src2 choose the byte rotation.
+:rotlb src1,src2,dest is ty=1 & op=1 & src1 & src2 & dest & func12=0x0c0 {
+    local n:4 = (src2 & 3) * 8;
+    dest = (src1 << n) | (src1 >> (32 - n));
+}
+:rotlcb src1,src2,dest is ty=1 & op=1 & src1 & src2 & dest & func12=0x080 {
+    local n:4 = ((~src2) & 3) * 8;
+    dest = (src1 << n) | (src1 >> (32 - n));
+}
+
+# NOP is the all-zero-source ADD encoding.
+:nop is ty=1 & op=4 & src1=0 & src2=0 & dest=0 & func12=0x019 { }
+
+:add src1,src2,dest is ty=1 & op=4 & src1 & src2 & dest & func12=0x019 {
+    dest = src1 + src2;
+}
+:sub src1,src2,dest is ty=1 & op=4 & src1 & src2 & dest & func12=0x066 {
+    dest = src1 - src2;
+}
+# SUBNC is one's-complement subtraction: src1 + ~src2.
+:subnc src1,src2,dest is ty=1 & op=4 & src1 & src2 & dest & func12=0x026 {
+    dest = src1 + ~src2;
+}
+:and src1,src2,dest is ty=1 & op=4 & src1 & src2 & dest & func12=0x023 {
+    dest = src1 & src2;
+}
+# BIC clears in src2 every bit that is set in src1.
+:bic src1,src2,dest is ty=1 & op=4 & src1 & src2 & dest & func12=0x00b {
+    dest = src2 & ~src1;
+}
+:not src1,dest is ty=1 & op=4 & src1 & src2=0 & dest & func12=0x00f {
+    dest = ~src1;
+}
+:or src1,src2,dest is ty=1 & op=4 & src1 & src2 & dest & func12=0x03b {
+    dest = src1 | src2;
+}
+:xor src1,src2,dest is ty=1 & op=4 & src1 & src2 & dest & func12=0x01b {
+    dest = src1 ^ src2;
+}
+
+# -----------------------------------------------------------------------------
+# Type 10 -- memory / coprocessor forms.  Addresses are BYTE addresses.
+# ldt/stt are modeled as ordinary 32-bit accesses for static analysis.
+# -----------------------------------------------------------------------------
+
+:ld imm17(src1),src2 is ty=2 & op=0 & src1 & src2 & imm17 {
+    local ea:4 = src1 + imm17;
+    src2 = *:4 ea;
+}
+:ldt imm17(src1),src2 is ty=2 & op=1 & src1 & src2 & imm17 {
+    local ea:4 = src1 + imm17;
+    src2 = *:4 ea;
+}
+:st src2,imm17(src1) is ty=2 & op=2 & src1 & src2 & imm17 {
+    local ea:4 = src1 + imm17;
+    *:4 ea = src2;
+}
+:stt src2,imm17(src1) is ty=2 & op=3 & src1 & src2 & imm17 {
+    local ea:4 = src1 + imm17;
+    *:4 ea = src2;
+}
+:ldf imm17(src1),src2 is ty=2 & op=4 & src1 & src2 & imm17 {
+    local ea:4 = src1 + imm17;
+    src2 = *:4 ea;
+}
+:stf src2,imm17(src1) is ty=2 & op=6 & src1 & src2 & imm17 {
+    local ea:4 = src1 + imm17;
+    *:4 ea = src2;
+}
+
+# Official MIPS-X uses OP5/OP7 with src1=0 for coprocessor transfers.  On the
+# ES3210/ES3890 family, ATA-tools/MAME flag nonzero-src1 forms as possible byte
+# operations.  Keep both conservative instead of assigning invented semantics.
+:movfrc cop_op,cop_func,cop_c1,cop_c2,src2 is ty=2 & op=5 & src1=0 & src2 & cop_op & cop_func & cop_c1 & cop_c2 {
+    mipsx_coprocessor();
+}
+:xop5 imm17(src1),src2 is ty=2 & op=5 & src1 & src2 & imm17 {
+    mipsx_xop5();
+}
+:movtoc src2,cop_op,cop_func,cop_c1,cop_c2 is ty=2 & op=7 & src1=0 & src2 & cop_op & cop_func & cop_c1 & cop_c2 {
+    mipsx_coprocessor();
+}
+:xop7 src2,imm17(src1) is ty=2 & op=7 & src1 & src2 & imm17 {
+    mipsx_xop7();
+}
+
+# -----------------------------------------------------------------------------
+# Type 11 -- immediate compute, jumps/calls, special-register and exception ops.
+# -----------------------------------------------------------------------------
+
+# JSPCI works in architectural WORD addresses.  Ghidra's RAM space is bytes,
+# so scale the target by 4.  The link value is the architectural word address
+# of the instruction after the two delay slots (inst_start + 12 bytes).
+# src2 is the encoded destination/link register for this instruction.
+:jspci src1,imm17,link is ty=3 & op=0 & src1 & link & imm17 {
+    local disp:4 = imm17;
+    local target:4 = (src1 + disp) << 2;
+    link = (inst_next + 8) >> 2;
+    delayslot(2);
+    call [target];
+}
+# With link register r0, treat JSPCI as an indirect jump/tail transfer.
+:jspci src1,imm17,link is ty=3 & op=0 & src1 & link_idx=0 & link & imm17 {
+    local disp:4 = imm17;
+    local target:4 = (src1 + disp) << 2;
+    delayslot(2);
+    goto [target];
+}
+
+# Privileged halt system call, exact encoding 0xCFC00000.
+:hsc is ty=3 & op=1 & low27=0x07c00000 {
+    mipsx_halt();
+}
+
+# Special register transfers.  Officially defined special codes are modeled.
+:movtos src1,SpecTo is ty=3 & op=2 & src1 & src2=0 & SpecTo {
+    SpecTo = src1;
+}
+:movfrs SpecFrom,src2 is ty=3 & op=3 & src1=0 & src2 & SpecFrom {
+    src2 = SpecFrom;
+}
+
+:addi src1,imm17,src2 is ty=3 & op=4 & src1 & src2 & imm17 {
+    src2 = src1 + imm17;
+}
+
+# JPC/JPCRS operate on the hidden PC chain used for exception return.  They are
+# decoded but deliberately opaque here: forcing a conventional Ghidra delay-slot
+# jump produces misleading nested-delay flows for the architectural return trio.
+:jpc is ty=3 & op=5 & src1=0 & src2=0 & func12=3 {
+    mipsx_exception_return();
+}
+:trap TrapVec is ty=3 & op=6 & trap_pad=0 & trap_low3=3 & TrapVec {
+    mipsx_trap();
+}
+:jpcrs is ty=3 & op=7 & src1=0 & src2=0 & func12=3 {
+    mipsx_exception_return();
+}

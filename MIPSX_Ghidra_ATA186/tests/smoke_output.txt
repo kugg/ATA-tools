@@ -1,0 +1,6 @@
+nop                    60000019  bytes=60000019  fields={'ty': 1, 'op': 4, 'src1': 0, 'src2': 0, 'dest': 0, 'func12': 25, 'imm17': 25, 'disp16': 25, 'sq': 0}
+hsc                    cfc00000  bytes=cfc00000  fields={'ty': 3, 'op': 1, 'src1': 31, 'src2': 0, 'dest': 0, 'func12': 0, 'imm17': 0, 'disp16': 0, 'sq': 0}
+jpc                    e8000003  bytes=e8000003  fields={'ty': 3, 'op': 5, 'src1': 0, 'src2': 0, 'dest': 0, 'func12': 3, 'imm17': 3, 'disp16': 3, 'sq': 0}
+jpcrs                  f8000003  bytes=f8000003  fields={'ty': 3, 'op': 7, 'src1': 0, 'src2': 0, 'dest': 0, 'func12': 3, 'imm17': 3, 'disp16': 3, 'sq': 0}
+addi r29,-16,r29       e77bfff0  bytes=e77bfff0  fields={'ty': 3, 'op': 4, 'src1': 29, 'src2': 29, 'dest': 31, 'func12': 4080, 'imm17': -16, 'disp16': -16, 'sq': 1}
+beq r1,r2,+3 words     08440003  bytes=08440003  fields={'ty': 0, 'op': 1, 'src1': 1, 'src2': 2, 'dest': 0, 'func12': 3, 'imm17': 3, 'disp16': 3, 'sq': 0}
