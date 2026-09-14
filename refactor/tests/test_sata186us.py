@@ -161,6 +161,17 @@ class WireTest(unittest.TestCase):
         self.assertEqual(sata186us.parse_legacy_kbox_request(padded),
                          sata186us.parse_kbox_request(packet))
 
+    def test_parser_accepts_legacy_leading_zero_selection_frame(self):
+        frame = bytes.fromhex(
+            "6b626f78" "00000001" "0028" "0000"
+            "00000597"
+            "00000301" "04000302" "00000000"
+            "61746130303030303030303030303120303130302030303031203100"
+        )
+        parsed = sata186us.parse_legacy_kbox_request(frame)
+        self.assertEqual(parsed,
+                         (0x301, 0x04000302, 0, "ata000000000001", 100, 1, 1))
+
     def test_data_parser_matches_vintage_checksum_size_and_padding_rules(self):
         hello_body = struct.pack(">IHH", 0x12345678, 99, 0)
         hello = struct.pack(">I", sata186us.cksum(hello_body)) + hello_body

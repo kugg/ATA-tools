@@ -183,6 +183,51 @@ def _route_output_address(record: Any) -> ipaddress.IPv4Address:
         raise FlashError("cannot inspect the current IPv4 route table") from error
 
 
+def _netstat_route_records(scapy: Any) -> tuple[Any, ...] | None:
+    """Read IPv4 routes via netstat, returning only valid route tuples.
+
+    On Darwin, scapy's PF_ROUTE parser reports corrupted netmasks for several
+    records (the multicast ``224.0.0/4`` entries come back as ``240.255.255.0``
+    and connected prefixes collapse to ``/32``). Scapy's own netstat-based
+    parser represents those masks correctly, so it is preferred on Darwin when
+    every returned record still parses cleanly; otherwise ``None`` is returned
+    and the caller keeps its fail-closed default.
+    """
+    try:
+        from scapy.arch.unix import read_routes as _netstat_read_routes
+        records = tuple(_netstat_read_routes())
+    except Exception:
+        return None
+    if not records:
+        return None
+    try:
+        for record in records:
+            _route_network(record)
+    except (FlashError, ValueError, TypeError):
+        return None
+    return records
+
+
+def _capture_route_records(scapy: Any) -> tuple[Any, ...]:
+    """Return the IPv4 route table in scapy's six-element tuple shape.
+
+    Scapy's PF_ROUTE parser corrupts several netmasks on Darwin (see
+    ``_netstat_route_records``). Only when scapy's own records cannot be parsed
+    is the netstat-based parser consulted, so clean records (including test
+    doubles and other platforms) are returned unchanged.
+    """
+    records = tuple(scapy.conf.route.routes)
+    try:
+        for record in records:
+            _route_network(record)
+        return records
+    except (FlashError, ValueError, TypeError):
+        netstat_records = _netstat_route_records(scapy)
+        if netstat_records is not None:
+            return netstat_records
+        return records
+
+
 def _is_direct_route(record: Any) -> bool:
     return record[2] in (0, None, "", "0.0.0.0")
 
@@ -237,7 +282,7 @@ def current_interface_state(scapy: Any, interface: str,
         if interface not in interfaces:
             raise FlashError("the selected interface does not exist")
         addresses = _interface_ipv4_addresses(scapy, interface)
-        routes = tuple(scapy.conf.route.routes)
+        routes = _capture_route_records(scapy)
     except FlashError:
         raise
     except Exception as error:

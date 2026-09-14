@@ -7,6 +7,7 @@ import struct
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -94,6 +95,61 @@ class DhcpTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("DRY RUN", result.stdout)
 
+    def test_main_apply_requires_interface(self):
+        with self.assertRaises(SystemExit) as caught:
+            dhcp.main(["dhcp.py", "--apply"])
+        self.assertEqual(caught.exception.code, 2)
+
+    def test_main_apply_interface_builds_default_config(self):
+        class FakeAddressScapy:
+            @staticmethod
+            def get_if_addr(_interface):
+                return "192.0.2.2"
+
+        captured = {}
+
+        def fake_run_dhcp(config, **kwargs):
+            captured["config"] = config
+            return dhcp.DhcpLease(
+                config.client_address, bytes.fromhex("020000000001"))
+
+        with patch("dhcp.import_module", return_value=FakeAddressScapy()), \
+                patch("dhcp.run_dhcp", side_effect=fake_run_dhcp):
+            result = dhcp.main(["dhcp.py", "--apply", "--interface", "test0",
+                                "--lease-seconds", "300",
+                                "--timeout-seconds", "60"])
+        self.assertEqual(result, 0)
+        config = captured["config"]
+        self.assertEqual(config.interface, "test0")
+        self.assertEqual(config.server_address, "192.0.2.2")
+        self.assertEqual(config.client_address, "192.0.2.10")
+        self.assertEqual(config.subnet_mask, "255.255.255.0")
+        self.assertEqual(config.lease_seconds, 300)
+        self.assertEqual(config.timeout_seconds, 60)
+
+    def test_main_client_mac_and_address_override_defaults(self):
+        class FakeAddressScapy:
+            @staticmethod
+            def get_if_addr(_interface):
+                return "192.0.2.2"
+
+        captured = {}
+
+        def fake_run_dhcp(config, **kwargs):
+            captured["config"] = config
+            return dhcp.DhcpLease(config.client_address, CLIENT_MAC)
+
+        with patch("dhcp.import_module", return_value=FakeAddressScapy()), \
+                patch("dhcp.run_dhcp", side_effect=fake_run_dhcp):
+            result = dhcp.main([
+                "dhcp.py", "--apply", "--interface", "test0",
+                "--client-address", "192.0.2.50",
+                "--client-mac", "02:00:00:00:00:01"])
+        self.assertEqual(result, 0)
+        config = captured["config"]
+        self.assertEqual(config.client_address, "192.0.2.50")
+        self.assertEqual(config.expected_client_mac, CLIENT_MAC)
+
     def test_parser_accepts_only_bounded_coherent_requests(self):
         for message_type in (1, 3):
             with self.subTest(message_type=message_type):
@@ -146,6 +202,29 @@ class DhcpTest(unittest.TestCase):
                             for item in scapy.send_kwargs))
         self.assertIs(scapy.sniff_kwargs["promisc"], False)
         self.assertTrue(any('"response":"ACK"' in line for line in logs))
+
+    def test_reply_advertises_tftp_server_options(self):
+        class RecordingScapy(FakeScapy):
+            dhcp_kwargs = []
+
+            @staticmethod
+            def DHCP(**kwargs):
+                RecordingScapy.dhcp_kwargs.append(kwargs)
+                return Layer()
+
+        scapy = RecordingScapy((dhcp_frame(self.config, 1),
+                                dhcp_frame(self.config, 3)))
+        lease = dhcp.run_dhcp(
+            self.config, scapy_module=scapy, address_check=lambda: True,
+            logger=lambda _message: None)
+        self.assertEqual(lease.client_mac, CLIENT_MAC)
+        self.assertEqual(len(scapy.sent), 2)
+        self.assertEqual(len(RecordingScapy.dhcp_kwargs), 2)
+        options = RecordingScapy.dhcp_kwargs[0].get("options")
+        self.assertIn(("tftp_server_name", self.config.server_address),
+                      options)
+        self.assertIn(("tftp_server_address", self.config.server_address),
+                      options)
 
     def test_expected_client_can_request_directly(self):
         config = dhcp.DhcpConfig(

@@ -462,7 +462,7 @@ def _parse_kbox_request_with_reason(pkt: bytes, allow_trailing: bool = False):
     nums: list[int] = []
     for tok in toks[1:4]:
         try:
-            nums.append(int(tok, 0))
+            nums.append(int(tok, 10))
         except ValueError:
             return None, "metadata"
     while len(nums) < 3:

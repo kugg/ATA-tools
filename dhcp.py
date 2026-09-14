@@ -241,7 +241,8 @@ def run_dhcp(config: DhcpConfig, *, scapy_module=None, address_check=None,
         raise DhcpError("the selected interface address is no longer present")
 
     logger(f"DHCP ready on {config.interface}: offering "
-           f"{config.client_address}; no gateway or DNS")
+           f"{config.client_address}; no gateway or DNS; "
+           f"TFTP server {config.server_address}")
     client_mac = config.expected_client_mac
     offered_xid = None
     acknowledged = False
@@ -280,8 +281,11 @@ def run_dhcp(config: DhcpConfig, *, scapy_module=None, address_check=None,
                          siaddr=config.server_address, chaddr=chaddr)
                  / DHCP(options=[("message-type", 2 if kind == 1 else 5),
                                   ("server_id", config.server_address),
-                                  ("subnet_mask", config.subnet_mask),
-                                  ("lease_time", config.lease_seconds), "end"]))
+("subnet_mask", config.subnet_mask),
+                                 ("lease_time", config.lease_seconds),
+                                 ("tftp_server_name", config.server_address),
+                                 ("tftp_server_address", config.server_address),
+                                 "end"]))
         try:
             sendp(reply, iface=config.interface, promisc=False, verbose=False)
         except Exception:
@@ -320,15 +324,73 @@ def run_dhcp(config: DhcpConfig, *, scapy_module=None, address_check=None,
 
 def parse_options(argv: list[str]) -> argparse.Namespace:
     parser = SafeArgumentParser(prog="dhcp.py", description=__doc__)
-    return parser.parse_args(argv[1:])
+    parser.add_argument("--apply", action="store_true",
+                        help="offer one DHCP lease on the selected interface")
+    parser.add_argument("--interface", metavar="NAME",
+                        help="existing Ethernet interface used for DHCP")
+    parser.add_argument("--client-address", metavar="ADDRESS",
+                        help="address to offer; default is host 10 in "
+                             "the interface /24")
+    parser.add_argument("--client-mac", metavar="MAC",
+                        help="optional DHCP client MAC; otherwise lock "
+                             "the first client")
+    parser.add_argument("--lease-seconds", type=int, metavar="SECONDS",
+                        default=DEFAULT_LEASE_SECONDS,
+                        help=f"lease duration to offer (default: "
+                             f"{DEFAULT_LEASE_SECONDS})")
+    parser.add_argument("--timeout-seconds", type=int, metavar="SECONDS",
+                        default=DEFAULT_TIMEOUT_SECONDS,
+                        help=f"capture deadline (default: "
+                             f"{DEFAULT_TIMEOUT_SECONDS})")
+    args = parser.parse_args(argv[1:])
+    if args.apply and args.interface is None:
+        parser.fixed_error("--apply requires --interface")
+    return args
+
+
+def _config_from_args(args: argparse.Namespace) -> DhcpConfig:
+    try:
+        scapy = import_module("scapy.all")
+    except ImportError as error:
+        raise DhcpError("Scapy is unavailable; no DHCP socket was opened") from error
+    try:
+        server_address = scapy.get_if_addr(args.interface)
+        server = ipaddress.IPv4Address(server_address)
+    except Exception as error:
+        raise DhcpError("cannot resolve the selected DHCP interface") from error
+    if server.is_unspecified:
+        raise DhcpError(
+            f"interface {args.interface} has no assigned IPv4 address")
+    network = ipaddress.IPv4Network(f"{server}/24", strict=False)
+    client_address = args.client_address or str(network.network_address + 10)
+    expected_mac = None
+    if args.client_mac is not None:
+        try:
+            expected_mac = parse_mac(args.client_mac)
+        except ValueError as error:
+            raise DhcpError(str(error)) from error
+    try:
+        return DhcpConfig(
+            args.interface, str(server), client_address, str(network.netmask),
+            expected_mac, lease_seconds=args.lease_seconds,
+            timeout_seconds=args.timeout_seconds)
+    except ValueError as error:
+        raise DhcpError(str(error)) from error
 
 
 def main(argv: list[str] | None = None) -> int:
     if argv is None:
         argv = sys.argv
-    parse_options(argv)
-    print("DRY RUN: no sockets opened. Use ata_flash.py for the combined "
-          "DHCP and firmware workflow.")
+    args = parse_options(argv)
+    if not args.apply:
+        print("DRY RUN: no sockets opened. Re-run with --apply and "
+              "--interface to offer one DHCP lease.")
+        return 0
+    try:
+        run_dhcp(_config_from_args(args))
+    except DhcpError as error:
+        print(f"dhcp.py: {error}", file=sys.stderr)
+        return 2
     return 0
 
 

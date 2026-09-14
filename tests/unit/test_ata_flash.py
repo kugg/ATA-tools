@@ -9,6 +9,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 from unittest.mock import call, patch
 
@@ -242,6 +243,43 @@ class NetworkTest(unittest.TestCase):
         for value in ("192.0.2.2", "198.51.100.10", "192.0.2.255"):
             with self.subTest(value=value), self.assertRaises(ata_flash.FlashError):
                 ata_flash.choose_client_address(value, state)
+
+
+class RouteCaptureTest(unittest.TestCase):
+    def test_clean_scapy_records_are_returned_as_is(self):
+        records = (route("0.0.0.0/0", "uplink0", "203.0.113.1"),
+                   route("192.0.2.0/24", "test0"))
+        scapy = FakeScapy(records=records)
+        captured = ata_flash._capture_route_records(scapy)
+        self.assertEqual(captured, records)
+
+    def test_corrupt_scapy_record_triggers_netstat_fallback(self):
+        good_records = (
+            (0xC0A80000, 0xffff0000, "0.0.0.0", "test0", "192.168.2.2", 1),
+            (0xE0000000, 0xF0000000, "0.0.0.0", "test0", "192.168.2.2", 1),
+        )
+        corrupt_records = (
+            (0xC0A80000, 0xffffffff, "0.0.0.0", "test0", "192.168.2.2", 1),
+            (0xE0000000, 0xF0FFFF00, "0.0.0.0", "test0", "192.168.2.2", 1),
+        )
+        scapy = FakeScapy(records=corrupt_records)
+        import types
+        fake_unix = types.ModuleType("scapy.arch.unix")
+        fake_unix.read_routes = lambda: list(good_records)
+        modules = {"scapy.arch.unix": fake_unix}
+        with patch.dict("sys.modules", modules):
+            captured = ata_flash._capture_route_records(scapy)
+        self.assertEqual(captured, good_records)
+
+    def test_fallback_keeps_original_when_netstat_unavailable(self):
+        corrupt_records = (
+            (0xE0000000, 0xF0FFFF00, "0.0.0.0", "test0", "192.168.2.2", 1),
+        )
+        scapy = FakeScapy(records=corrupt_records)
+        modules = {"scapy.arch.unix": types.ModuleType("scapy.arch.unix")}
+        with patch.dict("sys.modules", modules):
+            captured = ata_flash._capture_route_records(scapy)
+        self.assertEqual(captured, corrupt_records)
 
 
 class CoordinatorTest(unittest.TestCase):

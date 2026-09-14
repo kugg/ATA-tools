@@ -4,26 +4,36 @@ Source-readable tools and research for keeping Cisco ATA186 and ATA188 analog
 telephone adapters useful.
 
 The project can inspect legacy firmware, reconstruct and analyze its mapped flash
-bank, convert legacy configuration profiles, simulate the firmware protocol, and
-run one operator-attended DHCP and firmware-service window from Python. It does
-not include Cisco firmware or support files.
+bank, convert legacy configuration profiles, serve a configuration profile over
+TFTP, run one operator-attended DHCP and firmware-service window from Python, and
+host a bounded bench SIP registrar/UAS that rings a phone and exchanges RTP media.
+It does not include Cisco firmware or support files.
 
 > [!CAUTION]
-> Firmware maintenance can permanently disable a device. Offline parsing and the
-> complete firmware response stream are tested, but these Python tools have not
-> yet flashed a physical ATA. No successful device reboot, SIP registration,
-> ringing, or two-way audio result is claimed.
+> Firmware maintenance can permanently disable a device. The transfer protocol has
+> been proven against a physical ATA186: the KBOX selection and data dialogue were
+> served, the device rebooted and reported SIP 3.1(0) via `123#`, a TFTP-served
+> bench profile was applied, and registration, ringing, and two-way RTP audio were
+> observed on an isolated bench. These are results for one specific device and
+> profile, not a general guarantee. Keep modified firmware and modified profiles
+> off production hardware until separately validated.
 
-Modern Asterisk integration is a future project. The current repository creates a
-maintainable path to that work; it is not an Asterisk distribution or a tested PBX
-configuration.
+Modern Asterisk integration is the next project. The current repository provides
+the proven bench SIP path (DHCP + TFTP profile provisioning + registrar/UAS plus
+media) that an Asterisk endpoint will require; it is not yet an Asterisk
+distribution or a tested PBX configuration.
 
 ## What Is Included
 
 | Tool | Purpose |
 | --- | --- |
+| `dhcp.py` | Bounded DHCP parser/responder library also runnable directly: `dhcp.py --apply --interface NAME` |
+| `telephony/tftp_profile.py` | Bounded RFC1350 TFTP server that serves one allow-listed profile to one peer |
+| `telephony/sip_bench_proxy.py` | Bounded SIP registrar/UAS: REGISTER, INVITE with PCMU, streamed tone, inbound RTP counting |
+| `telephony/ata_dev_post.py` | Bounded ATA `ATADev` XML snapshot reader and exact-field web POST for the bench ATA |
+| `telephony/host_qualification.py` | Explicit loopback-only SCCP/IAX2/RTP qualification of the local host |
+| `telephony/skinny_fixture.py`, `iax2_fixture.py`, `rtp_external_media.py`, `g711.py` | Bounded offline protocol/media fixtures and PCMU helpers |
 | `ata_flash.py` | Experimental combined DHCP and firmware service for one directly connected ATA |
-| `dhcp.py` | Bounded DHCP parser/responder used by `ata_flash.py`; direct invocation is inert |
 | `refactor/sata186us.py` | Firmware inspection, KBOX protocol implementation, and loopback qualification |
 | `refactor/ata_upgrade_client.py` | Loopback-only ATA firmware client simulator |
 | `refactor/cfgfmt.py` | Offline conversion between legacy `#txt` and `#ata` configuration profiles |
@@ -37,18 +47,19 @@ The project deliberately does not provide:
 - A firmware catalog, signature service, or automatic upgrade-path selection
 - Host address, route, DNS, firewall, or VPN configuration
 - Automatic DTMF entry, retry, rollback, or recovery after an ambiguous transfer
-- A general web-management client, TFTP provisioning server, or SIP registrar
-- A guarantee that a rebuilt package is authentic, compatible, or safe to flash
+- A general web-management client, production TFTP provisioner, or production SIP registrar
+- A guarantee that a rebuilt package or a modified profile is authentic, compatible, or safe to load
 
 ## Requirements
 
 - Python 3.10 or newer
 - A POSIX-like system for the secure file-output paths
-- [Scapy 2.7.0](https://scapy.net/) for `ata_flash.py --apply`
+- [Scapy 2.7.0](https://scapy.net/) for `ata_flash.py --apply` and `dhcp.py --apply`
 - Packet-capture and layer-2-send access for the selected interface
+- One ATA186/188 and an isolated Ethernet interface (or a protected network) for the live bench
 
-Most offline tools use only the Python standard library. Set up the optional live
-dependency with:
+Most offline and telephony tools use only the Python standard library. Set up the
+optional live dependency with:
 
 ```sh
 python3 -m venv .venv
@@ -56,162 +67,79 @@ python3 -m venv .venv
 python -m pip install -r requirements-bench.txt
 ```
 
-The program does not elevate privileges. Arrange the minimum BPF/raw-packet access
+The programs do not elevate privileges. Arrange the minimum BPF/raw-packet access
 required by Scapy through normal operating-system administration.
 
-## Firmware Files
+## Telephony Bench
 
-Firmware is not distributed here. Obtain firmware and matching support files only
-from a source from which you are legally entitled to receive and use them. Keep
-firmware, configuration exports, passwords, keys, and generated banks out of Git.
+The bench is a single ATA186/188 on an isolated interface with a fixed private
+topology (for example host `.2` and ATA `.10` on one `/24`). The host must own the
+service address and the ATA must be reachable before any component binds.
 
-The repository ignores `firmware/`, `vendor/`, `analysis/`, `optimized/`, `*.zup`,
-and common private runtime artifacts. An ignore rule is not a secret scanner.
+Read-only route and NWI checks are always done before a live command. Never run
+these tools on a shared, production, or Internet-facing network.
 
-### Create `SHA256SUMS`
+### DHCP (`dhcp.py`)
 
-`ata_flash.py` requires an operator-controlled checksum manifest. Put the image in
-a private directory and create the manifest there:
-
-```sh
-mkdir -p firmware
-chmod 700 firmware
-
-(
-    umask 077
-    cd firmware
-    shasum -a 256 IMAGE.zup > SHA256SUMS
-    shasum -a 256 -c SHA256SUMS
-)
-```
-
-Use `sha256sum` and `sha256sum -c` on systems that provide the GNU commands.
-
-The tool accepts exactly one valid manifest entry whose filename exactly matches
-the selected image basename. Unrelated entries are ignored. The manifest is
-bounded and may not be a symlink.
-
-A matching SHA-256 proves that the selected bytes match the manifest. It does not
-prove Cisco provenance, legal entitlement, model compatibility, an appropriate
-upgrade path, or a vendor signature. Compare against an independent trusted digest
-when one exists.
-
-### Inspect Before Use
+`dhcp.py` is a bounded single-lease responder. It derives its defaults from the
+selected interface:
 
 ```sh
-python3 -B refactor/sata186us.py --inspect firmware/IMAGE.zup
-python3 -B refactor/zup_bank.py firmware/IMAGE.zup
+python3 -B dhcp.py --dry-run --interface NAME
+python3 -B dhcp.py --apply --interface NAME [--client-address ATA_IPV4] \
+  [--client-mac ATA_MAC] [--lease-seconds 600] [--timeout-seconds 3600]
 ```
 
-The first command reports the whole-file SHA-256 and outer metadata. For a mapped
-`+kxz` image, both commands validate the declared inner length and checksum, map
-bounds, destination overlap, raw-DEFLATE termination, CRC-32, and ISIZE before
-reconstructing the bank in memory.
+The OFFER and ACK include the TFTP server options the ATA needs (`66` name and
+`150` address) when provisioning over TFTP is used. Dry-run is the default and
+opens no socket.
 
-The live path currently accepts only deeply validated `kup1` / `+kxz` packages.
-Other historical envelope variants need equivalent structural validation before
-they can be considered for live service.
+### TFTP profile provisioning (`telephony/tftp_profile.py`)
 
-## Experimental Firmware Service
-
-`ata_flash.py` does not write flash memory directly. It temporarily answers DHCP
-for one client and serves firmware blocks only when the ATA requests them. The ATA
-controls storage, reboot, and boot selection.
-
-### Preconditions
-
-1. Connect one ATA to a dedicated Ethernet interface or otherwise isolated cable.
-2. Keep that interface disconnected from household, office, production, VPN, and
-   Internet-facing networks.
-3. Assign the host interface one suitable IPv4 address outside this project.
-4. Review current IPv4 and IPv6 routing. The selected interface must have no
-   default, split-default, or gateway route, and its subnet must not overlap a route
-   owned by another interface or VPN.
-5. Prefer supplying the ATA MAC address. If it is omitted, the responder locks the
-   first coherent DHCP client it sees.
-6. Verify the image manifest, inspect the package, confirm the intended model and
-   upgrade path, and keep any available configuration and recovery material private.
-7. Keep both devices powered and have a human ready to enter one DTMF sequence.
-
-Bare invocation is inert:
+The ATA fetches its configuration from TFTP at boot when provisioning is enabled.
+The server is bounded: it serves one allow-listed filename to one expected peer
+for one bounded window:
 
 ```sh
-python3 -B ata_flash.py
+python3 -B telephony/tftp_profile.py --apply \
+  --profile /path/to/ata-profile \
+  --allow-name atadefault.cfg \
+  --expected-client ATA_IPV4 \
+  --run-seconds 300
 ```
 
-Start one bounded attempt with values appropriate to the isolated cable:
+Build the profile from the device's own `/dev.xml` snapshot (see
+`telephony/ata_dev_post.py`) or from a `#txt` text profile via
+`refactor/cfgfmt.py`. Historical firmware requests a per-device name such as
+`ata<mac-without-separators>` and may fall back to `atadefault.cfg`. Keep
+device-specific profiles local.
+
+### SIP registration and calls (`telephony/sip_bench_proxy.py`)
+
+A bounded registrar/UAS that answers one fixed peer: REGISTER with `200 OK`, and
+INVITE to a fixed extension with PCMU (RTP/AVP 0) plus a short generated PCMU
+tone streamed to the peer. Inbound RTP is counted, never stored. One dialog at a
+time, bounded call time and bounded run time.
 
 ```sh
-python3 -B ata_flash.py --apply \
-  --interface IFACE \
-  --address HOST_IPV4 \
-  --client-address ATA_IPV4 \
-  --client-mac ATA_MAC \
-  --dhcp-timeout-seconds 600 \
-  --duration-seconds 3600 \
-  firmware/IMAGE.zup
+python3 -B telephony/sip_bench_proxy.py --apply \
+  --address HOST_IPV4 --expected-peer ATA_IPV4 \
+  --run-seconds 1800 --call-seconds 90
 ```
 
-`--interface` and `IMAGE` are required. The remaining network options behave as
-follows:
+The tone is a deliberate repeating pattern (for example 300 ms of 440 Hz then
+silence) so it is distinguishable from voice; hearing it in the handset is the
+media proof, not a rejection.
 
-- `--address` asserts an address already assigned to `IFACE`; it never configures
-  the address. It is required when the interface has multiple IPv4 addresses.
-- Without `--client-address`, host number 10 in the selected subnet is offered.
-- Without `--client-mac`, the first valid DHCP DISCOVER selects the client.
-- `--sha256sums PATH` selects a non-default manifest; otherwise `SHA256SUMS` beside
-  the image is used.
-- The DHCP deadline defaults to 600 seconds. The firmware window starts after ACK
-  and defaults to 3600 seconds.
-- The default completion grace is 120 quiet seconds after every block has been
-  served. Retransmissions remain available during that grace period.
+### Bench verification
 
-Before replying, the coordinator:
+With DHCP, TFTP, and the registrar running, power-cycle the ATA once. Expected at
+boot: DHCP OFFER/ACK, a TFTP request for the profile, then REGISTER to the service
+address, then a call to the extension with ringing plus the audible tone
+(`rtp_tx`/`rtp_rx` counters prove media). The `/dev.xml` snapshot should show the
+applied values (`GkOrProxy` and `SIPRegOn`).
 
-- validates the image and manifest before opening network sockets;
-- reloads all IPv4 addresses and routes rather than trusting an interface's first
-  address;
-- rejects another-interface subnet overlap and selected-interface gateway or
-  default-equivalent routes;
-- reserves UDP ports 8000 and 8500 before DHCP;
-- binds the exact host address and, where supported, the selected interface;
-- uses nonblocking firmware sockets and clears any packets queued before readiness;
-- ties DHCP ACK to the selected client and transaction;
-- rechecks interface ownership and the effective direct client route before every
-  firmware response.
-
-The responder offers no gateway or DNS. The firmware server accepts only the
-leased client IP, but source UDP ports may change because the vintage client does
-that. These checks are not cryptographic authentication. Datagram sizes and parsing
-are bounded; request counts are not artificially capped because real ATA transfers
-may be slow or retransmit extensively. The wall-clock deadline remains the resource
-limit.
-
-### Trigger and Verify
-
-Wait for the exact ready message. The program then prints a sequence of this form:
-
-```text
-100#A*B*C*D*8000#
-```
-
-Manually enter it once on the telephone attached to the ATA, where `A.B.C.D` is the
-printed service address. Do not enter it before readiness and do not automatically
-repeat it after an uncertain result.
-
-`Python firmware response stream complete` means the server successfully sent each
-unique payload block at least once. It does not prove that the ATA received, stored,
-accepted, booted, or retained the image. After the service window ends, use the ATA
-IVR version code:
-
-```text
-123#
-```
-
-Record the device-reported version, then perform the intended protocol and call
-tests. No transfer, a partial stream, interruption, route change, early firmware
-traffic, or an unexpected peer is a failed or ambiguous attempt. Stop and inspect;
-never redial or rerun automatically.
+Any ambiguity is a stop condition, never permission to redial, replay, or rerun.
 
 ## Configuring an ATA for SIP
 
@@ -271,7 +199,20 @@ Archived Cisco references:
 - [ATA 186/188 troubleshooting](https://web.archive.org/web/20040222045655id_/http://www.cisco.com/univercd/cc/td/doc/product/voice/ata/ataadmn/sip30ad/sip88ch5.htm)
 - [Cisco ATA186/188 3.1 release notes](https://web.archive.org/web/20090704161416id_/http://www.cisco.com/en/US/docs/voice_ip_comm/cata/186_188/3_1_0/english/release/notes/atarn3_1.html)
 
-### Offline Configuration Profiles
+### Building a bench profile
+
+The smallest supported way to change a device is to read its current `ATADev` XML:
+
+```sh
+python3 -B telephony/ata_dev_post.py --apply \
+  --url http://<ATA-IP>/dev --proxy 192.168.2.2 --reg-on 1
+```
+
+(Dry-run is the default; `--apply` performs the single POST.) The same snapshot can
+be converted to a binary `#ata` profile with `refactor/cfgfmt.py` for TFTP
+delivery. Keep device-specific profiles and passwords local.
+
+## Offline Configuration Profiles
 
 `refactor/cfgfmt.py` converts legacy text and binary profiles. It does not contact
 an ATA or run a TFTP service. Use the `ptag.dat` and template from the exact firmware
@@ -422,9 +363,7 @@ contact hardware and requires no QEMU or vendor executable.
 The public test set is offline except for bounded ephemeral loopback sockets:
 
 ```sh
-python3 -B -m unittest \
-  tests.unit.test_ata_flash \
-  tests.unit.test_dhcp -v
+python3 -B -m unittest discover -s tests/unit -v
 
 python3 -B -m unittest \
   refactor.tests.test_ata_upgrade_client \
@@ -433,6 +372,14 @@ python3 -B -m unittest \
   refactor.tests.test_sata186us \
   refactor.tests.test_zup_bank \
   refactor.tests.test_zup_rebuild -v
+```
+
+Host-loopback media qualification lives in `tests/host/` and is run only when
+intentionally qualifying the local host:
+
+```sh
+python3 -B -m unittest discover -s tests/host -v
+python3 -B -m telephony.host_qualification --run
 ```
 
 Synthetic tests run in a clean checkout. Optional compatibility tests use local
@@ -453,10 +400,10 @@ artifact vectors ran.
 
 ## Roadmap
 
-- Operator-attended validation on physical ATA186 hardware
+- Modern Asterisk SIP registration, dial plan, and media interop for the provable
+  bench SIP path
+- Controlled inbound ringing, outbound calling, and codec negotiation beyond PCMU
 - Version-specific backup, configuration, and recovery procedures
-- Modern Asterisk SIP registration and authentication
-- Controlled inbound ringing, outbound calling, codec negotiation, and two-way audio
 - Remaining launch-record semantics and component provenance
 - Further authenticity and recovery analysis before any modified-image experiment
 

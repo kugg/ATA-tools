@@ -17,11 +17,20 @@ use them.
 | `sata186us.py` | Inert by default; local image inspection and pinned loopback qualification |
 | `ata_upgrade_client.py` | Synthetic loopback client used by qualification tests |
 | `zup_bank.py` | Deep `+kxz` map validation, bank reconstruction, and nested-payload inspection |
+| `zup_extract.py` | Offline package decomposition into an editable directory and back |
 | `zup_rebuild.py` | Checked offline package rebuilding into a new private file |
 | `mipsx_dasm.py` | Bounded offline MIPS-X disassembly and control-transfer analysis |
+| `CreateFunc.java` | Ghidra script to create a function at a known address |
+| `DecompileAll.java` | Ghidra script to decompile all functions to C |
+| `DecompileAll.py` | PyGhidra script to decompile all functions to C |
+| `SeedDisasm.java` | Ghidra script to seed disassembly at known code regions |
+| `ghidra_decompile.py` | Ghidra headless decompiler wrapper |
+| `decompile_ghidra.py` | PyGhidra decompilation script |
 
-Live DHCP and firmware service exists only in the top-level `ata_flash.py`. None of
-the tools in this directory has a live-device mode.
+The live benchmark service moved to the top-level `telephony/` directory: the DHCP
+responder is `dhcp.py`, profile delivery is `telephony/tftp_profile.py`, and the
+bench SIP registrar/UAS is `telephony/sip_bench_proxy.py`. None of the tools in this
+directory has a live-device mode; they are offline analysis and converters.
 
 ## Safe Defaults
 
@@ -117,6 +126,12 @@ python3 -B refactor/zup_bank.py firmware/IMAGE.zup --type8-payload OFFSET
 python3 -B refactor/zup_rebuild.py \
   firmware/TEMPLATE.zup analysis/bank.bin analysis/rebuilt.zup
 
+# Decompose a package into an editable directory, change files, recompose.
+# All outputs are new private mode-0600 paths; existing paths are never replaced.
+python3 -B refactor/zup_extract.py firmware/IMAGE.zup --out "$PRIVATE_TMP/decomp"
+python3 -B refactor/zup_extract.py --compose "$PRIVATE_TMP/decomp" \
+  --bank "$PRIVATE_TMP/edited-bank.bin"
+
 # Decode a selected bank region.
 python3 -B refactor/mipsx_dasm.py analysis/bank.bin \
   --region START:END --stats
@@ -147,7 +162,8 @@ python3 -B -m unittest \
   refactor.tests.test_mipsx_dasm \
   refactor.tests.test_sata186us \
   refactor.tests.test_zup_bank \
-  refactor.tests.test_zup_rebuild -v
+  refactor.tests.test_zup_rebuild \
+  refactor.tests.test_zup_extract -v
 ```
 
 Optional compatibility vectors are selected with `ATA186_TEST_ARTIFACT_DIR` and are
