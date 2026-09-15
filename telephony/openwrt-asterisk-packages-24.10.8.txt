@@ -1,0 +1,51 @@
+# OpenWrt Asterisk package pin for the ATA bench integration
+#
+# Verified 2026-09-14 against the stable x86_64 telephony feed and the matching
+# 24.10-SNAPSHOT feed (identical versions). This is a reviewed, non-secret
+# release manifest; do not unpin or mix feeds on the APU.
+#
+# Source:
+#   https://downloads.openwrt.org/releases/24.10.8/packages/x86_64/telephony/
+#
+# Asterisk: 20.8.1-r1 (chan_sip is deprecated upstream and removed in 21;
+# keep release 20.8.1 pinned. Do not install the chan-sccp v4.3.5 fallback for
+# the SIP milestone.)
+#
+# ipk size is the download only, not the installed footprint. opkg additionally
+# pulls dependencies (for example libpjproject, libsrtp) not listed here.
+#
+# Phase mapping matches docs/asterisk-integration.md:
+#   all  = every phase
+#   sip  = Phase 1 engine + ATA SIP interop
+#   ivr  = Phase 2 prompts
+#   ext  = Phase 3 external media
+#   wbrt = Phase 4 pjsip/WebRTC twin (deferred)
+
+asterisk_20.8.1-r1_x86_64.ipk   1160.3 KB   all
+asterisk-chan-sip_20.8.1-r1_x86_64.ipk    333.6 KB   sip
+asterisk-pjsip_20.8.1-r1_x86_64.ipk       579.5 KB   wbrt sip
+asterisk-res-rtp-asterisk_20.8.1-r1_x86_64.ipk   74.6 KB   all
+asterisk-codec-ulaw_20.8.1-r1_x86_64.ipk          3.0 KB   all
+asterisk-codec-alaw_20.8.1-r1_x86_64.ipk          3.1 KB   all
+asterisk-sounds_20.8.1-r1_x86_64.ipk            1879.9 KB  ivr
+asterisk-app-read_20.8.1-r1_x86_64.ipk           4.3 KB    ivr
+asterisk-app-audiosocket_20.8.1-r1_x86_64.ipk    3.9 KB    ext
+asterisk-app-externalivr_20.8.1-r1_x86_64.ipk   11.0 KB    ext
+asterisk-res-agi_20.8.1-r1_x86_64.ipk           31.2 KB    ext
+asterisk-res-http-websocket_20.8.1-r1_x86_64.ipk 16.3 KB  wbrt
+asterisk-res-ari_20.8.1-r1_x86_64.ipk            23.2 KB  wbrt
+asterisk-res-ari-applications_20.8.1-r1_x86_64.ipk  5.2 KB  wbrt
+asterisk-res-ari-channels_20.8.1-r1_x86_64.ipk     23.8 KB  wbrt
+asterisk-res-ari-events_20.8.1-r1_x86_64.ipk       12.6 KB  wbrt
+asterisk-res-ari-model_20.8.1-r1_x86_64.ipk        36.1 KB  wbrt
+asterisk-res-ari-bridges_20.8.1-r1_x86_64.ipk      14.1 KB  wbrt
+asterisk-res-ari-endpoints_20.8.1-r1_x86_64.ipk      7.1 KB  wbrt
+asterisk-res-ari-playbacks_20.8.1-r1_x86_64.ipk      3.8 KB  wbrt
+asterisk-res-ari-recordings_20.8.1-r1_x86_64.ipk     6.0 KB  wbrt
+asterisk-res-ari-sounds_20.8.1-r1_x86_64.ipk         4.8 KB  wbrt
+asterisk-res-ari-mailboxes_20.8.1-r1_x86_64.ipk      3.6 KB  wbrt
+asterisk-res-srtp_20.8.1-r1_x86_64.ipk             11.4 KB  wbrt
+asterisk-func-aes_20.8.1-r1_x86_64.ipk              4.6 KB  wbrt
+
+# Historical SCCP probe only (architecture D013), never part of the SIP milestone:
+# asterisk-chan-skinny_20.8.1-r1_x86_64.ipk   56.3 KB
