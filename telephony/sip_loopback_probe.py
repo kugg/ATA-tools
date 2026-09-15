@@ -24,6 +24,7 @@ from telephony import g711  # noqa: E402
 from telephony.sip_bench_proxy import pcmu_sine_frame  # noqa: E402
 from telephony.rtp_external_media import (  # noqa: E402
     RTP_HEADER_BYTES,
+    RTP_TIMESTAMP_STEP,
     encode_rtp_packet,
 )
 from telephony.rtp_external_media import RtpPacket  # noqa: E402
@@ -32,6 +33,13 @@ from telephony.iax2_fixture import PCMU_PACKET_BYTES  # noqa: E402
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 SAMPLE_RATE = 8000
 DIALOG_FRAME_SECONDS = PCMU_PACKET_BYTES / SAMPLE_RATE
+
+# Phase-2 IVR profile: prompt playback window before the digit, the digit the
+# dialplan accepts, and the minimum post-DTMF RTP that proves Read() consumed
+# it (the confirmation prompt only plays on a matched digit).
+DTMF_DELAY_SECONDS = 2.6
+DTMF_DIGIT = 5
+POST_DTMF_RTP_MIN = 20
 
 
 def _now():
@@ -134,21 +142,24 @@ def build_request(method, uri, extra_headers, address, port, call_id, cseq,
 
 
 def build_sdp(address, rtp_port):
-    """Build an SDP offer supporting PCMU."""
+    """Build an SDP offer supporting PCMU plus RFC2833 telephone-event."""
     lines = [
         "v=0",
         "o=- 0 0 IN IP4 %s" % address,
         "s=bench-loopback",
         "c=IN IP4 %s" % address,
         "t=0 0",
-        "m=audio %d RTP/AVP 0" % rtp_port,
+        "m=audio %d RTP/AVP 0 101" % rtp_port,
         "a=rtpmap:0 PCMU/8000",
+        "a=rtpmap:101 telephone-event/8000",
+        "a=fmtp:101 0-16",
         "",
     ]
     return "\r\n".join(lines)
 
 
-def build_rfc2833_dtmf(event_code, duration_ms=160):
+def build_rfc2833_dtmf(event_code, sequence, timestamp, ssrc,
+                       duration_ms=160):
     """Build one RFC2833 DTMF packet (20 ms payload, E-bit set)."""
     payload = struct.pack(
         "!BBH",
@@ -157,8 +168,8 @@ def build_rfc2833_dtmf(event_code, duration_ms=160):
         duration_ms * SAMPLE_RATE // 1000,
     )
     first = (2 << 6)
-    second = (0x80) | 101  # marker, payload type 101 = telephone-event
-    return struct.pack("!BBHII", first, second, 0, 0, 0x0A7A2) + payload
+    second = 0x80 | 101  # marker, payload type 101 = telephone-event
+    return struct.pack("!BBHII", first, second, sequence, timestamp, ssrc) + payload
 
 
 class SipLoopbackProbe:
@@ -184,7 +195,10 @@ class SipLoopbackProbe:
         self.rtp_rx = 0
         self.rtp_tx = 0
         self.dtmf_sent = False
+        self.pre_dtmf_rx = 0
         self.from_tag = "%s-a" % self.call_id[-12:]
+        self.seq = 0x100
+        self.ts = 0x1000
 
     def _next_cseq(self):
         self.cseq += 1
@@ -271,9 +285,11 @@ class SipLoopbackProbe:
         if self.rtp_sock is None or self.engine_rtp_port is None:
             return
         frame = pcmu_sine_frame(440.0, 0.0)
-        packet = RtpPacket(0, 0, 0x0A7A2, frame)
+        packet = RtpPacket(self.seq, self.ts, 0x0A7A2, frame)
         wire = encode_rtp_packet(packet)
         self.rtp_sock.sendto(wire, (self.target_host, self.engine_rtp_port))
+        self.seq = (self.seq + 1) & 0xFFFF
+        self.ts = (self.ts + RTP_TIMESTAMP_STEP) & 0xFFFFFFFF
         self.rtp_tx += 1
 
     def run(self):
@@ -317,9 +333,13 @@ class SipLoopbackProbe:
         self._send_sip(ack_wire)
         self.log.info("ack sent")
 
-        # Receive RTP + send RFC2833 DTMF after a few frames
+        # Receive the prompt RTP, then send one RFC2833 DTMF digit, then
+        # require fresh RTP afterwards (the IVR echoes a confirmation prompt
+        # only when Read() actually consumed the digit).
+        dtmf_at = time.monotonic() + DTMF_DELAY_SECONDS
         tick_deadline = time.monotonic() + self.call_seconds
         last_tick = time.monotonic()
+        post_dtmf_rx = 0
         while time.monotonic() < tick_deadline:
             wait = min(DIALOG_FRAME_SECONDS, tick_deadline - time.monotonic())
             if wait <= 0:
@@ -339,13 +359,22 @@ class SipLoopbackProbe:
             if now >= last_tick + DIALOG_FRAME_SECONDS:
                 self._rtp_tick()
                 last_tick = now
-                if not self.dtmf_sent and self.rtp_rx > 5:
-                    dtmf_wire = build_rfc2833_dtmf(1, duration_ms=160)
+                if not self.dtmf_sent and now >= dtmf_at:
+                    dtmf_wire = build_rfc2833_dtmf(
+                        DTMF_DIGIT, self.seq, self.ts, 0x0A7A2, duration_ms=160)
+                    self.pre_dtmf_rx = self.rtp_rx
                     self.rtp_sock.sendto(
                         dtmf_wire, (self.target_host, self.engine_rtp_port))
+                    self.seq = (self.seq + 1) & 0xFFFF
+                    self.ts = (self.ts + RTP_TIMESTAMP_STEP) & 0xFFFFFFFF
                     self.dtmf_sent = True
                     self.rtp_tx += 1
-                    self.log.info("dtmf-sent event=1 rtp-tx=%d" % self.rtp_tx)
+                    self.log.info("dtmf-sent event=%d rtp-tx=%d"
+                                  % (DTMF_DIGIT, self.rtp_tx))
+            if self.dtmf_sent:
+                post_dtmf_rx = self.rtp_rx - self.pre_dtmf_rx
+                if post_dtmf_rx >= POST_DTMF_RTP_MIN:
+                    break
 
         # BYE
         bye_wire = self._build_bye(to_hdr, self.call_id,
@@ -354,10 +383,14 @@ class SipLoopbackProbe:
         bye_resp, _, _ = self._wait_sip_response_full(deadline)
         self.log.info("bye status=%s" % (bye_resp or "timeout"))
 
-        self.log.info("stop rtp-rx=%d rtp-tx=%d" % (self.rtp_rx, self.rtp_tx))
+        self.log.info("stop rtp-rx=%d rtp-tx=%d post-dtmf-rx=%d"
+                      % (self.rtp_rx, self.rtp_tx, post_dtmf_rx))
         if self.rtp_rx < 1:
             self.log.info("FAIL no RTP received")
             return "fail-rtp"
+        if not self.dtmf_sent or post_dtmf_rx < POST_DTMF_RTP_MIN:
+            self.log.info("FAIL no confirmation audio after DTMF (ivr)")
+            return "fail-ivr"
         return "pass"
 
     def _wait_sip_response(self, deadline):

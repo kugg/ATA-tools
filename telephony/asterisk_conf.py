@@ -32,11 +32,13 @@ MODULES = [
     "chan_sip.so",
     "pbx_config.so",
     "app_playback.so",
+    "app_read.so",
     "codec_ulaw.so",
     "codec_alaw.so",
     "format_sln.so",
     "format_gsm.so",
     "format_wav.so",
+    "res_timing_pthread.so",
 ]
 
 
@@ -105,6 +107,10 @@ def extensions_conf(extension):
         "[from-ata]\n"
         "exten => %s,1,Answer()\n"
         "same => n,Playback(hello-world)\n"
+        "same => n,Read(digits,menu,1)\n"
+        "same => n,GotoIf($[\"${digits}\" = \"5\"]?ok)\n"
+        "same => n,Hangup()\n"
+        "same => n(ok),Playback(confirmed)\n"
         "same => n,Hangup()\n"
     ) % _fmt_extension(extension)
 
@@ -133,7 +139,8 @@ def notes(address, ata, extension):
         "ATA peer        : %s\n"
         "extension       : %s\n"
         "engine          : chan_sip (removed in Asterisk 21; pinned 20.8.1-r1)\n"
-        "dialplan        : %s:1234 Answer, Playback(hello-world), Hangup\n"
+        "dialplan        : %s Answer, Playback(hello-world), Read(one digit,\n"
+        "                  bounded IVR), Playback(confirmed), Hangup\n"
         "\n"
         "Validation: run an Asterisk 20 host probe against this tree on the\n"
         "isolated bench/loopback only. Credentials are intentionally empty to\n"

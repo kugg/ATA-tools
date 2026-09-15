@@ -80,13 +80,19 @@ class SdpTest(unittest.TestCase):
 class DtmfTest(unittest.TestCase):
     def test_rfc2833_packet_shape(self):
         import struct
-        wire = probe.build_rfc2833_dtmf(1, duration_ms=160)
+        wire = probe.build_rfc2833_dtmf(1, 0x10, 0x200, 0x0A7A2,
+                                        duration_ms=160)
         self.assertEqual(len(wire), 12 + 4)
-        event, flags, duration = struct.unpack(
+        first, second, seq, ts, ssrc = struct.unpack_from("!BBHII", wire)
+        event, flags, duration = struct.unpack_from(
             "!BBH", wire[probe.RTP_HEADER_BYTES:])
         self.assertEqual(event, 1)
         self.assertEqual(duration, 1280)
-        self.assertTrue(flags & 0x80)  # E-bit set
+        self.assertTrue(flags & 0x80)          # E-bit set
+        self.assertTrue(second & 0x80)         # marker
+        self.assertEqual((second & 0x7F), 101) # telephone-event payload
+        self.assertEqual(ssrc, 0x0A7A2)
+        self.assertEqual(seq, 0x10)
 
 
 if __name__ == "__main__":
