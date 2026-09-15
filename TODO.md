@@ -374,8 +374,9 @@ plan in `docs/asterisk-integration.md`; dry-run config generator
 - [ ] Resolve opkg dependency set (`opkg depends`) on pinned 24.10.8 and
   record the installed-footprint budget vs overlay free space (APU cleaning is
   an open operator follow-up).
-- [ ] Hardware gate at maintenance checkpoint: ATA REGISTER to the engine on
-  the isolated bench, dial 100, hear prompt/tone, two-way RTP.
+- [x] Hardware gate: PASSED 2026-09-15 (operator-attended). ATA 186 SIP 3.1.0
+  registered to Asterisk 20.8.1 on 192.168.2.2 (en28 bench link), dialled 100,
+  heard prompt, RFC2833 digit 5 through Read(), confirmation tone, clean BYE.
 - [x] Phase 2 IVR: DONE 2026-09-15 — bounded one-digit Read() IVR
   passes end to end (probe sends RFC2833 '5' after the prompt; engine
   GotoIf-digits=5 and streams the confirmation prompt). Prompts are
