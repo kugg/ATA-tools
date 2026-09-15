@@ -295,6 +295,12 @@ Last updated: 2026-09-14. Local work only; no APU/alarm deployment authorized he
   then lift the handset, dial extension 100, and verify ringing plus the
   audible repeating tone; ambiguity is a stop condition, not permission to
   redial or rerun.
+- [ ] Syslog gate (decompilation-derived, see
+  `docs/ata-sip-firmware-services.md`): set `SyslogIP:<collector>.514` and
+  `SyslogCtrl:<class-mask>` in the bench profile, compile with `cfgfmt.py`,
+  serve via the proven TFTP flow, and capture PRI lines on a UDP/514
+  listener; `0xFFFFFFFF` enables every recovered debug class. Same
+  operator-attended window and stop-condition discipline.
 
 ## Published telephony milestone (2026-09-14)
 
