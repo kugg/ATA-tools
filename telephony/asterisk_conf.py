@@ -33,6 +33,8 @@ MODULES = [
     "pbx_config.so",
     "app_playback.so",
     "app_read.so",
+    "res_audiosocket.so",
+    "app_audiosocket.so",
     "codec_ulaw.so",
     "codec_alaw.so",
     "format_sln.so",
@@ -102,6 +104,14 @@ def sip_conf(address, ata, extension, dtmf="rfc2833"):
          _fmt_extension(extension), dtmf)
 
 
+# Fixed call UUID for the single-dialog external-media bench extension.
+# The bench profile is one call at a time, so a stable identifier is correct
+# here; it is non-secret and documented alongside the agent.
+AUDIOSOCKET_UUID = "0023a1a4-b10f-4a51-8d5f-0f3d5e6d7a99"
+AUDIOSOCKET_SERVICE = "127.0.0.1:9100"
+AUDIOSOCKET_EXTENSION = "101"
+
+
 def extensions_conf(extension):
     return (
         "[from-ata]\n"
@@ -112,7 +122,12 @@ def extensions_conf(extension):
         "same => n,Hangup()\n"
         "same => n(ok),Playback(confirmed)\n"
         "same => n,Hangup()\n"
-    ) % _fmt_extension(extension)
+        "\n"
+        "exten => %s,1,Answer()\n"
+        "same => n,AudioSocket(%s,%s)\n"
+        "same => n,Hangup()\n"
+    ) % (_fmt_extension(extension), AUDIOSOCKET_EXTENSION,
+         AUDIOSOCKET_UUID, AUDIOSOCKET_SERVICE)
 
 
 def modules_conf():  # noqa
@@ -141,12 +156,13 @@ def notes(address, ata, extension):
         "engine          : chan_sip (removed in Asterisk 21; pinned 20.8.1-r1)\n"
         "dialplan        : %s Answer, Playback(hello-world), Read(one digit,\n"
         "                  bounded IVR), Playback(confirmed), Hangup\n"
+        "                  %s Answer, AudioSocket(bounded local agent)\n"
         "\n"
         "Validation: run an Asterisk 20 host probe against this tree on the\n"
         "isolated bench/loopback only. Credentials are intentionally empty to\n"
         "match the bench profile; this tree must never face an untrusted or\n"
         "public network.\n"
-    ) % (address, ata, extension, extension)
+    ) % (address, ata, extension, extension, extension)
 
 
 def render(address=DEFAULT_ADDRESS, ata=DEFAULT_ATA, extension=DEFAULT_EXTENSION,

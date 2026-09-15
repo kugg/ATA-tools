@@ -384,7 +384,9 @@ plan in `docs/asterisk-integration.md`; dry-run config generator
   is not needed for calibration. First DTMF END also exposed a crash:
   with autoload=no, res_timing_pthread.so must be in the explicit module
   list or Read() segfaults in ast_timer_set_rate (NULL channel timer).
-- [ ] Phase 3
-  audiosocket/externalivr to a local agent adapter, PCMU end-to-end.
+- [x] Phase 3 external media: DONE 2026-09-15 — telephony/audiosocket_
+  agent.py bridges dial-101 calls to a bounded loopback agent; operator
+  confirms clean call audio both ways (unit suite 146 OK; see WORKLOG
+  for the three agent audio defects root-caused and fixed).
 - [ ] Phase 4 (deferred): separate pjsip/WebRTC/ARI engine twin for remote
   clients; allowlisted and isolated from the ATA SIP peer.

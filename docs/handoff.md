@@ -60,6 +60,25 @@ Next milestone: Phase 3 external media (audiosocket/externalivr) — requires
 the operator present; wire the existing call to a bounded local agent while
 keeping this IVR path intact.
 
+## Phase 3 external media PASSES (2026-09-15, operator-attended)
+
+telephony/audiosocket_agent.py (bounded AudioSocket agent, loopback-only,
+no audio persisted) bridges the live ATA call: dial 101 on the handset
+bridges the channel to 127.0.0.1:9100; the agent streams a paced, phase
+continuous 660 Hz tone (2 s), counts inbound frames/energy, then terminates
+cleanly. Operator confirms call audio quality through the bridge; unit
+suite 146 OK. Three audio defects were root-caused in the agent (queue
+burst truncation, sleep-granularity pacing, per-frame phase clicks) and
+fixed; see WORKLOG. Dialplan extension 101 + module set handled by
+telephony/asterisk_conf.py (AUDIOSOCKET_* constants). Cosmetics: engine
+logs an app_audiosocket ERROR when the agent closes the session; bench
+file logger quirk persists (console logging in use).
+
+Bench state: engine (asterisk-bench tree) and agent both still running;
+dial 100 = IVR gate, dial 101 = external-media agent. Remaining scope for
+the operator: OpenWrt module manifest check before APU deployment and the
+choice of what production agent (if any) sits behind the AudioSocket side.
+
 ## Phase 2 IVR passes + DTMF-path crash fix (2026-09-15)
 
 Phase 2 is complete and pushed (commits 0fc134a, 219e9f9, 66bffcd): the
@@ -1792,3 +1811,16 @@ finish the reset-preset reverse-engineering from the resident tail indices
 (0x7fef0 validator return context, 0x7ff60 linked call), then re-run the
 emulator to dump slot->target pairs and rewrite annotations as resolved
 names. The readability C remains annotation-only until then.
+
+## Dispatch resolution complete for the r24 family (2026-09-15, local-only)
+
+DISPATCH TABLE DOES NOT EXIST: the stubs are pc-relative `jspci r24,disp`
+calls (r24 word base 0x33F0280); target = 0x0cf80000 + (0x40a00 + 4*off),
+proven by execution (research/boot_run.py + main_run.py: memory = expanded
+bank, 1 MiB page mask, SFR @ 0x20000000; entry 0x7ff80 boot or 0xc74c with
+launch ABI; validator bypass injects r2=r5=0x0cfc0100). The in_r31 pattern
+is the return epilogue (link register), not a return value; 100 epilogues
+rewritten as return;. sip_bank_named_readable.c now has 5836 named calls
+(824 targets, 253 classified); signatures in research/signatures.json.
+Next: r30/S-struct family via emulator RAM snapshot; call-site return-type
+derivation from r2.
