@@ -147,10 +147,20 @@ def run_checked(argv: list[str]) -> None:
         fail(f"command failed: {' '.join(argv)}")
 
 
+def locate_ptag(explicit: str) -> str:
+    if explicit:
+        return explicit
+    for candidate in (os.path.join(REPO_ROOT, "vendor", "ptag.dat"),
+                      os.path.join(REPO_ROOT, "ata_03_01_00_sip_040211_1",
+                                   "ptag.dat")):
+        if os.path.isfile(candidate):
+            return candidate
+    fail("ptag.dat not found; pass --ptag (supplied with the exact "
+         "firmware release)")
+
+
 def cfgfmt_compile(profile_txt: str, out_bin: str, ptag: str) -> None:
-    if not os.path.isfile(ptag):
-        fail(f"ptag file missing: {ptag} (supplied with the exact "
-             "firmware release)")
+    ptag = locate_ptag(ptag)
     run_checked([sys.executable, CFGFMT, "-t" + ptag, "-sip",
                  profile_txt, out_bin])
 
@@ -270,9 +280,10 @@ def main(argv: list[str] | None = None) -> int:
                        default=DEFAULT_RUN_SECONDS)
         p.add_argument("--timeout", type=int, default=5,
                        help="HTTP timeout seconds")
-        p.add_argument("--ptag", default=os.path.join(REPO_ROOT, "vendor",
-                                                      "ptag.dat"),
-                       help="parameter-description file for cfgfmt")
+        p.add_argument("--ptag", default="",
+                       help="parameter-description file for cfgfmt "
+                            "(default: vendor/ptag.dat, else the pinned "
+                            "release artifact dir)")
         p.add_argument("--apply", action="store_true",
                        help="execute device-facing effects; default dry")
 
