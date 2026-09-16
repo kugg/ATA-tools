@@ -40,8 +40,9 @@ import sys
 
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 CFGFMT = os.path.join(REPO_ROOT, "refactor", "cfgfmt.py")
-DHCP_TOOL = os.path.join(REPO_ROOT, "dhcp.py")
 TFTP_TOOL = os.path.join(REPO_ROOT, "telephony", "tftp_profile.py")
 
 DEVICE_HTTP_HOST = "192.168.2.10"
@@ -255,18 +256,32 @@ def cmd_dhcp(args: argparse.Namespace) -> int:
     reset; it offers one lease (options 66/150 -> this bench address) and
     exits once the device ACKs.
     """
-    # dhcp.py derives the server address from the selected interface; it
-    # has no --server-address flag.
-    argv = [sys.executable, DHCP_TOOL, "--apply",
-            "--client-address", args.client,
-            "--lease-seconds", str(args.lease_seconds),
-            "--timeout-seconds", str(args.dhcp_seconds)]
     if not args.apply:
-        print("DRY RUN:", " ".join(argv + ["--interface", args.interface or "<ifname>"]))
+        print("DRY RUN: dhcp.RunDhcp on", repr(args.interface),
+              "-> client", args.client, "lease", args.lease_seconds,
+              "capture deadline", args.dhcp_seconds)
         return 0
     if not args.interface:
         fail("--interface is required with --apply")
-    run_checked(argv + ["--interface", args.interface])
+    import dhcp as dhcp_module
+
+    args_ns = dhcp_module.parse_options([
+        "dhcp.py", "--apply", "--interface", args.interface,
+        "--client-address", args.client,
+        "--lease-seconds", str(args.lease_seconds),
+        "--timeout-seconds", str(args.dhcp_seconds)])
+    try:
+        config = dhcp_module._config_from_args(args_ns)
+    except dhcp_module.DhcpError as exc:
+        fail(str(exc))
+    print(f"dhcp: offering {config.client_address} on {config.interface} "
+          f"for up to {config.timeout_seconds}s", flush=True)
+    try:
+        lease = dhcp_module.run_dhcp(config)
+    except dhcp_module.DhcpError as exc:
+        fail(f"DHCP capture ended: {exc}")
+    print(f"dhcp: ACK'd {dhcp_module.format_mac(lease.client_mac)} "
+          f"-> {lease.client_address}")
     return 0
 
 
