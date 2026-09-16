@@ -136,6 +136,11 @@ def http_get_text(host: str, path: str, seconds: int) -> bytes:
         if resp.status != 200:
             fail(f"HTTP {resp.status} from {host}{path}")
         return resp.read(MAX_CONFIG_BYTES + 1)
+    except OSError as exc:
+        fail(f"cannot reach {host}:{DEVICE_HTTP_PORT} ({exc!r}); the bench "
+             "pair must be up and the device powered - check the host owns "
+             "its bench IPv4 and the device is cabled; run the read-only "
+             "gate from TODO.md before retrying")
     finally:
         conn.close()
 
