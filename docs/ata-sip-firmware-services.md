@@ -134,6 +134,39 @@ the reboot flag through the dispatcher handle
    device. No HTTP route or SIP message handler for a device reboot was
    found in the string inventory.
 
+## Remote reboot without changing the effective profile
+
+The device keeps its running configuration in flash; a fetched profile is
+*applied into* it (merge/overwrite), it is not consumed once. Two copies
+therefore always exist: the device's flash config (source of truth,
+readable VERBATIM through the proven `/dev.xml` snapshot) and the bench
+profile in this repo (`telephony/ata00070e36e57b.txt`), from which the
+binary profile regenerates deterministically with `cfgfmt.py`. "Burning"
+the profile is thus a recoverable, auditable operation, not data loss —
+but the reboot trigger must still be an *effective* profile change
+(`cfgNeedReboot` is computed by the apply flow; the flag write runs
+through the dispatcher handle as shown above, so serving a byte-identical
+profile is not expected to disturb anything — and is also not expected
+to reboot).
+
+Recommended remote-reboot recipe (operator-attended window):
+
+1. Collect first: snapshot `/dev.xml` (proven read-only flow) and diff it
+   against `telephony/ata00070e36e57b.txt` to confirm they agree.
+2. Serve the profile with one deliberate, reversible no-op-for-service
+   change (e.g. toggle `AltGkTimeOut` or re-emit `SyslogCtrl` with a then-
+   revertable value) so `cfgNeedReboot` trips. Keep the collected copies
+   as the rollback target.
+3. After the reset (log line `reset` / device returns on the bench IP),
+   serve the original profile again so the *next* `CfgInterval` fetch
+   (3600 s) restores the exact stored state; alternatively re-serve
+   immediately — the device applies on fetch, so the original is in place
+   before the hour elapses.
+4. Verify by diffing the fresh `/dev.xml` snapshot against step 1.
+
+The alternative is a power-cycle (no profile I/O at all); no HTTP route
+or SIP handler for a bare reboot exists in the image.
+
 ## Open items
 
 - The `in_r30`-family indirect transfers (~3766 sites) still await
