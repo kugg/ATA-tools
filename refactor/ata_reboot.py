@@ -245,6 +245,65 @@ def cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+class LearningTftpServer:
+    """Wraps the published TftpServer and learns the device's fetch name
+    from the first RRQ (the pre-reset config poll), so the caller does
+    not have to know it.  The phase mapping decides which profile that
+    name serves: trip until the reset marker, revert afterwards."""
+
+    def __init__(self, address: str, expected_client: str,
+                 trip_bytes: bytes, revert_bytes: bytes,
+                 run_seconds: int, log=None):
+        import telephony.tftp_profile as tftp_profile
+        self.tftp = tftp_profile
+        self.trip = trip_bytes
+        self.revert = revert_bytes
+        self.learned_name: str | None = None
+        self.revert_active = False
+        # a NUL-keyed placeholder satisfies the base requirement of a
+        # non-empty payload map; no RRQ filename can contain a NUL byte
+        self.payloads = {"\x00learning": trip_bytes}
+        self.server = tftp_profile.TftpServer(
+            address, expected_client, self.payloads,
+            run_seconds=run_seconds, log=log)
+
+    def serve(self, name: str, phase: bytes) -> None:
+        self.payloads[name] = phase
+
+    def handle_datagram(self, peer, data) -> None:
+        # learning pass: only the fixed expected client may teach the
+        # fetch name; the base handler enforces the same peer check
+        if peer[0] == self.server.expected_client and \
+                len(data) > 2 and data[:2] == b"\x00\x01":
+            try:
+                filename, _ = self.tftp.split_rrq(data)
+            except Exception:
+                filename = None
+            if filename and filename not in self.payloads:
+                payload = self.trip
+                if self.revert_active:
+                    # post-reset boot fetch; the revert payload regardless
+                    # of requesting name, and only this fixed client asks
+                    payload = self.revert
+                    if self.learned_name is None:
+                        print(f"tftp: post-reset RRQ reveals the fetch "
+                              f"name {filename!r}", flush=True)
+                        self.learned_name = filename
+                else:
+                    self.learned_name = filename
+                    print(f"tftp: learned the device fetch name "
+                          f"{filename!r} from the config poll; serving "
+                          f"the trip profile", flush=True)
+                self.payloads[filename] = payload
+        self.server.handle_datagram(peer, data)
+
+    def run(self) -> None:
+        self.server.run()
+
+    def requests(self) -> int:
+        return self.server.requests
+
+
 def dhcp_parse_options(argv: list[str]) -> argparse.Namespace:
     """Library accessor for dhcp.py's option parser (no exec)."""
     import dhcp as dhcp_module
@@ -330,8 +389,14 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(f"  1. GET http://{args.device}/dev.xml -> {args.work} "
               f"(baseline)")
         print(f"  2. compile trip/revert profiles into {args.work}")
-        print(f"  3. TFTP {args.address}:{OTA_PORT} serves "
-              f"{args.tftp_name!r} (trip) for the whole window")
+        if args.tftp_name:
+            print(f"  3. TFTP {args.address}:{OTA_PORT} serves "
+                  f"{args.tftp_name!r} (trip) for the whole window")
+        else:
+            print(f"  3. TFTP {args.address}:{OTA_PORT} in learning mode: "
+                  f"serves the trip profile to the first (pre-reset) RQT's "
+                  f"filename, then the revert profile to the post-reset "
+                  f"boot fetch -- no --tftp-name needed")
         print(f"  4. lease answer on {args.interface or '<ifname>'} "
               f"({args.dhcp_seconds}s deadline) waits for the post-reset "
               f"DISCOVER")
@@ -358,17 +423,29 @@ def cmd_run(args: argparse.Namespace) -> int:
     with open(revert_bin, "rb") as fh:
         revert_bytes = fh.read()
 
-    payloads = {args.tftp_name: trip_bytes}
-
-    import telephony.tftp_profile as tftp_profile
-    server = tftp_profile.TftpServer(
-        args.address, args.client, payloads,
-        run_seconds=args.dhcp_seconds + args.verify_seconds,
-        log=tftp_profile.Log())
+    if args.tftp_name:
+        payloads = {args.tftp_name: trip_bytes}
+        swap = lambda: payloads.__setitem__(args.tftp_name, revert_bytes)
+        import telephony.tftp_profile
+        server = telephony.tftp_profile.TftpServer(
+            args.address, args.client, payloads,
+            run_seconds=args.dhcp_seconds + args.verify_seconds)
+        wrapped = None
+    else:
+        wrapped = LearningTftpServer(args.address, args.client,
+                                     trip_bytes, revert_bytes,
+                                     run_seconds=args.dhcp_seconds +
+                                     args.verify_seconds)
+        server = wrapped.server
+        swap = lambda: setattr(wrapped, "revert_active", True)
     server_thread = threading.Thread(target=server.run, daemon=True)
     server_thread.start()
-    print(f"tftp: serving {args.tftp_name!r} on {args.address}:{OTA_PORT} "
-          f"(trip payload) for the whole window", flush=True)
+    kind = (f"pinned name {args.tftp_name!r}" if args.tftp_name
+            else "learning mode: the fetch name comes from the first (pre-"
+                 "reset) RRQ; the revert payload then serves the post-reset "
+                 "boot fetch")
+    print(f"tftp: serving on {args.address}:{OTA_PORT} ({kind}) for the "
+          f"whole window", flush=True)
 
     # the blocking lease answer: returns right after the post-reset ACK -
     # the reset marker; the swap below must beat the device's boot-time

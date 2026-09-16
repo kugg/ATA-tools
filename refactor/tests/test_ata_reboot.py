@@ -25,6 +25,41 @@ ata_reboot = importlib.import_module("refactor.ata_reboot") \
 PROFILE = b"#txt\nUseTftp:1\nAltGkTimeOut:0\nSyslogCtrl:0x00000000\n"
 
 
+class LearningTftpTest(unittest.TestCase):
+    def _rrq(self, name: str) -> bytes:
+        return b"\x00\x01" + name.encode() + b"\x00octet\x00"
+
+    def test_learn_then_revert_serve(self) -> None:
+        t = ata_reboot.LearningTftpServer(
+            "192.168.2.2", "192.168.2.10", b"trip-bytes", b"revert-bytes",
+            run_seconds=10)
+        captures = []
+        t.server._sendto = lambda peer, packet: captures.append(packet)
+        # pre-reset poll teaches the name and serves the trip profile
+        t.handle_datagram(("192.168.2.10", 999), self._rrq("dev-cfg.xml"))
+        self.assertEqual(t.learned_name, "dev-cfg.xml")
+        self.assertEqual(t.payloads["dev-cfg.xml"], b"trip-bytes")
+        # reset marker: revert becomes active; the post-reset boot fetch
+        # for the SAME name now yields the revert profile
+        t.revert_active = True
+        t2 = ata_reboot.LearningTftpServer(
+            "192.168.2.2", "192.168.2.10", b"trip-bytes", b"revert-bytes",
+            run_seconds=10)
+        t2.revert_active = True
+        t2.server._sendto = lambda peer, packet: captures.append(packet)
+        t2.handle_datagram(("192.168.2.10", 999), self._rrq("dev-cfg.xml"))
+        self.assertEqual(t2.payloads["dev-cfg.xml"], b"revert-bytes")
+        self.assertEqual(t2.learned_name, "dev-cfg.xml")
+        # a foreign client never influences the learn phase
+        t3 = ata_reboot.LearningTftpServer(
+            "192.168.2.2", "192.168.2.10", b"trip", b"revert", 10)
+        t3.server._sendto = lambda peer, packet: captures.append(packet)
+        t3.handle_datagram(("192.168.2.99", 999), self._rrq("x"))
+        # the foreign client is rejected before any learning happens
+        self.assertEqual(t3.payloads["\x00learning"], b"trip")
+        self.assertEqual(t3.learned_name, None)
+
+
 class RunOrchestrationTest(unittest.TestCase):
     def setUp(self) -> None:
         self.work = tempfile.mkdtemp(prefix="run-test-")
