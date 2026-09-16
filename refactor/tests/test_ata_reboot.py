@@ -25,6 +25,27 @@ ata_reboot = importlib.import_module("refactor.ata_reboot") \
 PROFILE = b"#txt\nUseTftp:1\nAltGkTimeOut:0\nSyslogCtrl:0x00000000\n"
 
 
+class RunOrchestrationTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.work = tempfile.mkdtemp(prefix="run-test-")
+        os.chmod(self.work, 0o700)
+        self.profile = os.path.join(self.work, "profile.txt")
+        with open(self.profile, "wb") as fh:
+            fh.write(PROFILE)
+
+    def test_dry_run_plan_has_no_io(self) -> None:
+        # run without --apply must not touch the network nor need the
+        # tftp name; stdout prints the plan
+        rc = ata_reboot.main(["run", "--work", self.work,
+                              "--profile", self.profile])
+        self.assertEqual(rc, 0)
+
+    def test_swap_to_revert_replaces_payload(self) -> None:
+        payloads = {"cnf": b"trip"}
+        ata_reboot.swap_to_revert(payloads, "cnf", b"revert")
+        self.assertEqual(payloads, {"cnf": b"revert"})
+
+
 class RebootPlannerTest(unittest.TestCase):
     def setUp(self) -> None:
         self.work = tempfile.mkdtemp(prefix="reboot-test-", dir=None)

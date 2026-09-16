@@ -37,6 +37,8 @@ import shutil
 import stat
 import subprocess
 import sys
+import threading
+import time
 
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -186,30 +188,20 @@ def cmd_collect(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_prepare(args: argparse.Namespace) -> int:
-    private_dir(args.work)
-    # the converter never replaces an existing output; clear only the
-    # derived artifacts (never the collected baseline/dev view)
-    if args.fresh:
-        for name in ("profile_trip.txt", "profile_revert.txt",
-                     "profile_trip.bin", "profile_revert.bin"):
-            path = os.path.join(args.work, name)
-            if os.path.exists(path):
-                os.unlink(path)
-    existing = os.path.join(args.work, "profile_trip.bin")
-    if os.path.exists(existing) and not args.fresh:
-        fail(f"{existing} already exists and the converter never replaces "
-             f"outputs; rerun with --fresh (clears only the derived "
-             f"profiles, never the collected baseline)")
-    lines = read_profile_lines(args.profile)
+def prepare_profiles(work: str, profile: str, ptag: str, fresh: bool) -> tuple[str, str]:
+    lines = read_profile_lines(profile)
     current = find_value(lines, KNOB_NAME)
     if current is None:
         fail(f"profile lacks the {KNOB_NAME} knob")
-    # tripped profile: flip the knob; revert profile: the untouched original
-    trip_txt = os.path.join(args.work, "profile_trip.txt")
-    revert_txt = os.path.join(args.work, "profile_revert.txt")
-    trip_bin = os.path.join(args.work, "profile_trip.bin")
-    revert_bin = os.path.join(args.work, "profile_revert.bin")
+    existing = os.path.join(work, "profile_trip.bin")
+    if os.path.exists(existing) and not fresh:
+        fail(f"{existing} already exists and the converter never replaces "
+             f"outputs; rerun with --fresh (clears only the derived "
+             f"profiles, never the collected baseline)")
+    trip_txt = os.path.join(work, "profile_trip.txt")
+    revert_txt = os.path.join(work, "profile_revert.txt")
+    trip_bin = os.path.join(work, "profile_trip.bin")
+    revert_bin = os.path.join(work, "profile_revert.bin")
     trip_value = KNOB_TRIP_VALUE if current != str(KNOB_TRIP_VALUE) \
         else KNOB_RESTORE_VALUE
     body = ("#txt\n" + "\n".join(lines) + "\n").encode("latin-1")
@@ -217,11 +209,17 @@ def cmd_prepare(args: argparse.Namespace) -> int:
                                                      str(trip_value), True))
     publish_private(revert_txt, body)
     print(f"knob {KNOB_NAME}: {current} -> {trip_value}")
-    cfgfmt_compile(trip_txt, trip_bin, args.ptag)
-    cfgfmt_compile(revert_txt, revert_bin, args.ptag)
+    cfgfmt_compile(trip_txt, trip_bin, ptag)
+    cfgfmt_compile(revert_txt, revert_bin, ptag)
     for path in (trip_txt, revert_txt, trip_bin, revert_bin):
         os.chmod(path, 0o600)
     print(f"prepared {trip_bin} (trips reset) and {revert_bin} (restores)")
+    return trip_bin, revert_bin
+
+
+def cmd_prepare(args: argparse.Namespace) -> int:
+    private_dir(args.work)
+    prepare_profiles(args.work, args.profile, args.ptag, args.fresh)
     return 0
 
 
@@ -245,6 +243,12 @@ def cmd_serve(args: argparse.Namespace) -> int:
                  "--run-seconds", str(args.run_seconds),
                  "--profile", profile])
     return 0
+
+
+def dhcp_parse_options(argv: list[str]) -> argparse.Namespace:
+    """Library accessor for dhcp.py's option parser (no exec)."""
+    import dhcp as dhcp_module
+    return dhcp_module.parse_options(argv)
 
 
 def cmd_dhcp(args: argparse.Namespace) -> int:
@@ -285,6 +289,120 @@ def cmd_dhcp(args: argparse.Namespace) -> int:
     return 0
 
 
+def swap_to_revert(payloads: dict, name: str, revert_bytes: bytes) -> None:
+    """Atomic-in-practice swap: must land before the device's boot fetch."""
+    payloads[name] = revert_bytes
+
+
+def wait_for_baseline(device: str, baseline_digest: str,
+                      poll_seconds: int, tries: int) -> int:
+    """Poll the machine view until it matches the baseline; 0 on match."""
+    for attempt in range(1, tries + 1):
+        try:
+            body = http_get_text(device, "/dev.xml", 5)
+        except SystemExit:
+            pass
+        else:
+            if hashlib.sha256(body).hexdigest() == baseline_digest:
+                print(f"verify: device config is byte-identical to the "
+                      f"baseline (attempt {attempt})")
+                return 0
+            print(f"run: device answered but config differs "
+                  f"(attempt {attempt}); trying again...")
+        time.sleep(min(5, poll_seconds))
+    fail(f"device config did not return to baseline within "
+         f"{tries * poll_seconds}s; AMBIGUOUS STATE - collect the current "
+         f"/dev.xml into the work dir and restore the profile manually")
+    return 1
+
+
+def cmd_run(args: argparse.Namespace) -> int:
+    """The whole reset in one command: baseline, lease answer up, trip
+    payload on the config poll, reset detected via the post-reset
+    DISCOVER, revert payload swapped BEFORE the boot fetch, then
+    convergence verified against the baseline.  Every stage bounded."""
+    private_dir(args.work)
+    if args.apply and not args.tftp_name:
+        fail("--tftp-name is required with --apply (the device's config "
+             "fetch filename; copy it from the last TFTP tool log)")
+    if not args.apply or not args.interface:
+        print("plan (run):")
+        print(f"  1. GET http://{args.device}/dev.xml -> {args.work} "
+              f"(baseline)")
+        print(f"  2. compile trip/revert profiles into {args.work}")
+        print(f"  3. TFTP {args.address}:{OTA_PORT} serves "
+              f"{args.tftp_name!r} (trip) for the whole window")
+        print(f"  4. lease answer on {args.interface or '<ifname>'} "
+              f"({args.dhcp_seconds}s deadline) waits for the post-reset "
+              f"DISCOVER")
+        print(f"  5. on ACK: swap the TFTP payload to the revert profile "
+              f"immediately (the boot fetch is PXE-early)")
+        print(f"  6. poll /dev.xml up to {args.verify_seconds}s; expect "
+              f"byte-identical to baseline")
+        print("DRY RUN: add --apply --interface <if> to execute")
+        return 0
+
+    baseline = http_get_text(args.device, "/dev.xml", args.timeout)
+    if len(baseline) > MAX_CONFIG_BYTES:
+        fail("machine config view exceeds the bounded size")
+    baseline_digest = hashlib.sha256(baseline).hexdigest()
+    publish_private(os.path.join(args.work, "dev.xml"), baseline)
+    publish_private(os.path.join(args.work, "baseline.sha256"),
+                    f"{baseline_digest}  dev.xml\n".encode())
+    print(f"baseline collected: sha256={baseline_digest}")
+
+    trip_bin, revert_bin = prepare_profiles(
+        args.work, args.profile, args.ptag, True)
+    with open(trip_bin, "rb") as fh:
+        trip_bytes = fh.read()
+    with open(revert_bin, "rb") as fh:
+        revert_bytes = fh.read()
+
+    payloads = {args.tftp_name: trip_bytes}
+
+    import telephony.tftp_profile as tftp_profile
+    server = tftp_profile.TftpServer(
+        args.address, args.client, payloads,
+        run_seconds=args.dhcp_seconds + args.verify_seconds,
+        log=tftp_profile.Log())
+    server_thread = threading.Thread(target=server.run, daemon=True)
+    server_thread.start()
+    print(f"tftp: serving {args.tftp_name!r} on {args.address}:{OTA_PORT} "
+          f"(trip payload) for the whole window", flush=True)
+
+    # the blocking lease answer: returns right after the post-reset ACK -
+    # the reset marker; the swap below must beat the device's boot-time
+    # config fetch (PXE-early), so it happens immediately.
+    args_ns = dhcp_parse_options([
+        "dhcp.py", "--apply", "--interface", args.interface,
+        "--client-address", args.client,
+        "--lease-seconds", str(args.lease_seconds),
+        "--timeout-seconds", str(args.dhcp_seconds)])
+    import dhcp as dhcp_module
+    try:
+        config = dhcp_module._config_from_args(args_ns)
+    except dhcp_module.DhcpError as exc:
+        fail(str(exc))
+    print(f"dhcp: waiting for the post-reset DISCOVER on {config.interface} "
+          f"(up to {config.timeout_seconds}s)", flush=True)
+    try:
+        lease = dhcp_module.run_dhcp(config)
+    except dhcp_module.DhcpError as exc:
+        fail(f"DHCP capture ended before the reset: {exc}")
+    print(f"dhcp: ACK'd {dhcp_module.format_mac(lease.client_mac)} "
+          f"-> {lease.client_address}; reset confirmed - swapping the "
+          f"TFTP payload to the revert profile immediately", flush=True)
+    swap_to_revert(payloads, args.tftp_name, revert_bytes)
+
+    print(f"run: waiting up to {args.verify_seconds}s for the device to "
+          f"boot, refetch the revert profile, and converge", flush=True)
+    tries = max(1, args.verify_seconds // 5)
+    rc = wait_for_baseline(args.device, baseline_digest, 5, tries)
+    print(f"tftp transfers served={server.requests} errors={server.errors} "
+          f"bytes={server.byte_count}")
+    return rc
+
+
 def cmd_verify(args: argparse.Namespace) -> int:
     baseline_path = os.path.join(args.work, "baseline.sha256")
     if not os.path.isfile(baseline_path):
@@ -314,8 +432,10 @@ def cmd_status(args: argparse.Namespace) -> int:
           "compile trip + revert profiles")
     print(f"  serve    : tftp_profile --apply {args.address}:{OTA_PORT} "
           f"for {args.run_seconds}s (trip profile)")
-    print(f"  serve -r : same but the revert profile, after the reset")
-    print(f"  verify   : re-GET /dev.xml; expect identical to baseline")
+    print(f"  run      : ALL AT ONCE - lease answer up, trip served on "
+          f"the poll, reset detected via the post-reset DISCOVER, "
+          f"revert payload swapped before the boot fetch, then verify; "
+          f"requires --tftp-name (the device's config fetch filename)")
     return 0
 
 
@@ -349,13 +469,29 @@ def main(argv: list[str] | None = None) -> int:
 
     for name, fn in (("status", cmd_status), ("collect", cmd_collect),
                      ("prepare", cmd_prepare), ("serve", cmd_serve),
-                     ("dhcp", cmd_dhcp), ("verify", cmd_verify)):
+                     ("dhcp", cmd_dhcp), ("run", cmd_run),
+                     ("verify", cmd_verify)):
         p = sub.add_parser(name)
         add(p)
         if name == "prepare":
             p.add_argument("--fresh", action="store_true",
                            help="clear previously prepared profile "
                                 "artifacts first (never the baseline)")
+        if name == "run":
+            p.add_argument("--interface", help="bench Ethernet interface "
+                                              "(required with --apply)")
+            p.add_argument("--tftp-name",
+                           help="the filename the device fetches its "
+                                "profile under (seen in the last TFTP "
+                                "tool log); required with --apply")
+            p.add_argument("--lease-seconds", type=int, default=600,
+                           help="lease duration to offer (default 600)")
+            p.add_argument("--dhcp-seconds", type=int, default=1800,
+                           help="lease-answer capture deadline spanning "
+                                "the reset (default 1800)")
+            p.add_argument("--verify-seconds", type=int, default=600,
+                           help="wait budget for the device to return to "
+                                "baseline after the reset (default 600)")
         if name == "dhcp":
             p.add_argument("--interface", help="bench Ethernet interface "
                                               "(required with --apply)")
