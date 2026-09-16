@@ -122,6 +122,13 @@ the config pipeline strings sit in the main `.data`
 the reboot flag through the dispatcher handle
 (`iRam0000c11c + 8 := uRam0000b6f4`, `func_0cf81268`). Practical form:
 
+0. **Keep the lease answer up for the whole window** (the blink
+   constraint): after a profile-driven reset the ATA immediately
+   re-DHCPs; without a live responder it drops off the bench.  Run
+   `dhcp.py --apply --interface <if>` (options 66/150 point at the bench
+   TFTP) FIRST, with a capture deadline spanning the reset; it offers one
+   lease and exits after the device ACKs.  `refactor/ata_reboot.py dhcp`
+   wraps it with the same dry-run/apply discipline.
 1. Serve a modified profile via the proven TFTP flow; the device fetches
    it at `CfgInterval` (3600 s in the bench profile) or on the next resync,
    and resets itself when the applied profile reports `cfgNeedReboot`.
@@ -162,7 +169,9 @@ Recommended remote-reboot recipe (operator-attended window):
    (3600 s) restores the exact stored state; alternatively re-serve
    immediately — the device applies on fetch, so the original is in place
    before the hour elapses.
-4. Verify by diffing the fresh `/dev.xml` snapshot against step 1.
+4. The post-reset re-lease lands on the step-0 responder; the device then
+   refetches its (restored) profile from options 66/150 at boot.
+5. Verify by diffing the fresh `/dev.xml` snapshot against step 1.
 
 The alternative is a power-cycle (no profile I/O at all); no HTTP route
 or SIP handler for a bare reboot exists in the image.
