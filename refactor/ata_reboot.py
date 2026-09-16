@@ -381,22 +381,19 @@ def cmd_run(args: argparse.Namespace) -> int:
     DISCOVER, revert payload swapped BEFORE the boot fetch, then
     convergence verified against the baseline.  Every stage bounded."""
     private_dir(args.work)
-    if args.apply and not args.tftp_name:
-        fail("--tftp-name is required with --apply (the device's config "
-             "fetch filename; copy it from the last TFTP tool log)")
+    print("plan (run):")
+    print(f"  1. GET http://{args.device}/dev.xml -> {args.work} "
+          f"(baseline)")
+    print(f"  2. compile trip/revert profiles into {args.work}")
+    if args.tftp_name:
+        print(f"  3. TFTP {args.address}:{OTA_PORT} serves "
+              f"{args.tftp_name!r} (trip) for the whole window")
+    else:
+        print(f"  3. TFTP {args.address}:{OTA_PORT} in learning mode: "
+              f"serves the trip profile to the first (pre-reset) RRQ's "
+              f"filename, then the revert profile to the post-reset "
+              f"boot fetch -- no --tftp-name needed")
     if not args.apply or not args.interface:
-        print("plan (run):")
-        print(f"  1. GET http://{args.device}/dev.xml -> {args.work} "
-              f"(baseline)")
-        print(f"  2. compile trip/revert profiles into {args.work}")
-        if args.tftp_name:
-            print(f"  3. TFTP {args.address}:{OTA_PORT} serves "
-                  f"{args.tftp_name!r} (trip) for the whole window")
-        else:
-            print(f"  3. TFTP {args.address}:{OTA_PORT} in learning mode: "
-                  f"serves the trip profile to the first (pre-reset) RRQ's "
-                  f"filename, then the revert profile to the post-reset "
-                  f"boot fetch -- no --tftp-name needed")
         print(f"  4. lease answer on {args.interface or '<ifname>'} "
               f"({args.dhcp_seconds}s deadline) waits for the post-reset "
               f"DISCOVER")
@@ -558,9 +555,10 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--interface", help="bench Ethernet interface "
                                               "(required with --apply)")
             p.add_argument("--tftp-name",
-                           help="the filename the device fetches its "
-                                "profile under (seen in the last TFTP "
-                                "tool log); required with --apply")
+                   help="the filename the device fetches its profile under; "
+                        "OPTIONAL - when omitted the server learns the name "
+                        "from the first (pre-reset) RRQ and serves the revert "
+                        "profile to the post-reset boot fetch under that name")
             p.add_argument("--lease-seconds", type=int, default=600,
                            help="lease duration to offer (default 600)")
             p.add_argument("--dhcp-seconds", type=int, default=1800,
