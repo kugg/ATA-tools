@@ -113,6 +113,27 @@ recovered emit sites — stack (`dhcp.c`, `udp.c`, `tcp.c` markers),
 TFTP/profile, signaling/validator families — emit messages through the
 single PRI-formatted path.
 
+## Remote reboot paths (decompilation-derived)
+
+The only device-triggered remote mechanism is the **profile-driven reset**:
+the config pipeline strings sit in the main `.data`
+(`cfgNeedReboot %d` @ image `0x609c`, `waiting to reset` @ `0x60b8`,
+`reset` @ `0x60cd`, `applyProfile` @ `0x612a`), and the apply flow copies
+the reboot flag through the dispatcher handle
+(`iRam0000c11c + 8 := uRam0000b6f4`, `func_0cf81268`). Practical form:
+
+1. Serve a modified profile via the proven TFTP flow; the device fetches
+   it at `CfgInterval` (3600 s in the bench profile) or on the next resync,
+   and resets itself when the applied profile reports `cfgNeedReboot`.
+2. A firmware "upgrade" also ends in a reset, but its trigger (the
+   `100#<ip>*...#<port>#` feature code) is keypad-driven, so it is not
+   fully remote.
+3. Non-reboot look-alikes, deliberately excluded: `/clr0` resets RTP
+   counters only; the `/dev` page "[Click here to reload]" re-renders the
+   page only; `>>> SIP Soft Reset >>>` resets the SIP stack state, not the
+   device. No HTTP route or SIP message handler for a device reboot was
+   found in the string inventory.
+
 ## Open items
 
 - The `in_r30`-family indirect transfers (~3766 sites) still await
