@@ -186,6 +186,19 @@ def cmd_collect(args: argparse.Namespace) -> int:
 
 def cmd_prepare(args: argparse.Namespace) -> int:
     private_dir(args.work)
+    # the converter never replaces an existing output; clear only the
+    # derived artifacts (never the collected baseline/dev view)
+    if args.fresh:
+        for name in ("profile_trip.txt", "profile_revert.txt",
+                     "profile_trip.bin", "profile_revert.bin"):
+            path = os.path.join(args.work, name)
+            if os.path.exists(path):
+                os.unlink(path)
+    existing = os.path.join(args.work, "profile_trip.bin")
+    if os.path.exists(existing) and not args.fresh:
+        fail(f"{existing} already exists and the converter never replaces "
+             f"outputs; rerun with --fresh (clears only the derived "
+             f"profiles, never the collected baseline)")
     lines = read_profile_lines(args.profile)
     current = find_value(lines, KNOB_NAME)
     if current is None:
@@ -297,6 +310,10 @@ def main(argv: list[str] | None = None) -> int:
                      ("verify", cmd_verify)):
         p = sub.add_parser(name)
         add(p)
+        if name == "prepare":
+            p.add_argument("--fresh", action="store_true",
+                           help="clear previously prepared profile "
+                                "artifacts first (never the baseline)")
         if name == "serve":
             p.add_argument("--revert", action="store_true",
                            help="serve the original profile (post-reset)")
