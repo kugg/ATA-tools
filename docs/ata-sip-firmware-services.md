@@ -176,15 +176,17 @@ Recommended remote-reboot recipe (operator-attended window):
 The alternative is a power-cycle (no profile I/O at all); no HTTP route
 or SIP handler for a bare reboot exists in the image.
 
-The full sequence is embodied in `refactor/ata_reboot.py` (published,
-dry-run default, seven offline tests): `collect` (read-only `/dev.xml`
-baseline) → `prepare` (one-knob trip profile + untouchable revert,
-compiled with `cfgfmt -t<ptag> -sip` against the firmware's own
-`ptag.dat`) → `serve --apply` (the telephony TFTP tool, bounded window)
-→ `serve --revert --apply` (restore) → `verify` (`/dev.xml` must match
-the baseline byte-for-byte; mismatch is an ambiguous stop, not a retry).
-Validated offline against the pinned profile: the trip and revert
-binaries differ in exactly 2 bytes — the knob.
+The full sequence embodies one command: `refactor/ata_reboot.py run
+--apply --interface <if> --tftp-name <fetch-name>` (published, dry-run
+default, nine offline tests).  The device's boot-time profile fetch is
+PXE-early, so the revert payload must already be served when the device
+comes back — `run` starts ONE TFTP server for the whole window with the
+trip payload, uses the lease answer (dhcp.py as a library) as the reset
+marker, swaps the served payload to the revert profile at the ACK, and
+then polls `/dev.xml` until it is byte-identical to the baseline
+(collected in step 1 of the same command).  `<fetch-name>` is the
+filename the device requests — copy it from the previous TFTP tool log.
+The trip/revert binaries differ in exactly 2 bytes — the knob.
 
 ## Open items
 
