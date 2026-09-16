@@ -255,23 +255,18 @@ def cmd_dhcp(args: argparse.Namespace) -> int:
     reset; it offers one lease (options 66/150 -> this bench address) and
     exits once the device ACKs.
     """
+    # dhcp.py derives the server address from the selected interface; it
+    # has no --server-address flag.
+    argv = [sys.executable, DHCP_TOOL, "--apply",
+            "--client-address", args.client,
+            "--lease-seconds", str(args.lease_seconds),
+            "--timeout-seconds", str(args.dhcp_seconds)]
     if not args.apply:
-        plan = [sys.executable, DHCP_TOOL, "--apply",
-                "--interface", args.interface or "<ifname>",
-                "--client-address", args.client,
-                "--server-address", args.address,
-                "--lease-seconds", str(args.lease_seconds),
-                "--timeout-seconds", str(args.dhcp_seconds)]
-        print("DRY RUN:", " ".join(plan))
+        print("DRY RUN:", " ".join(argv + ["--interface", args.interface or "<ifname>"]))
         return 0
     if not args.interface:
         fail("--interface is required with --apply")
-    run_checked([sys.executable, DHCP_TOOL, "--apply",
-                 "--interface", args.interface,
-                 "--client-address", args.client,
-                 "--server-address", args.address,
-                 "--lease-seconds", str(args.lease_seconds),
-                 "--timeout-seconds", str(args.dhcp_seconds)])
+    run_checked(argv + ["--interface", args.interface])
     return 0
 
 
