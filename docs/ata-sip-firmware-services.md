@@ -167,6 +167,16 @@ Recommended remote-reboot recipe (operator-attended window):
 The alternative is a power-cycle (no profile I/O at all); no HTTP route
 or SIP handler for a bare reboot exists in the image.
 
+The full sequence is embodied in `refactor/ata_reboot.py` (published,
+dry-run default, seven offline tests): `collect` (read-only `/dev.xml`
+baseline) → `prepare` (one-knob trip profile + untouchable revert,
+compiled with `cfgfmt -t<ptag> -sip` against the firmware's own
+`ptag.dat`) → `serve --apply` (the telephony TFTP tool, bounded window)
+→ `serve --revert --apply` (restore) → `verify` (`/dev.xml` must match
+the baseline byte-for-byte; mismatch is an ambiguous stop, not a retry).
+Validated offline against the pinned profile: the trip and revert
+binaries differ in exactly 2 bytes — the knob.
+
 ## Open items
 
 - The `in_r30`-family indirect transfers (~3766 sites) still await
