@@ -394,7 +394,7 @@ def cmd_run(args: argparse.Namespace) -> int:
                   f"{args.tftp_name!r} (trip) for the whole window")
         else:
             print(f"  3. TFTP {args.address}:{OTA_PORT} in learning mode: "
-                  f"serves the trip profile to the first (pre-reset) RQT's "
+                  f"serves the trip profile to the first (pre-reset) RRQ's "
                   f"filename, then the revert profile to the post-reset "
                   f"boot fetch -- no --tftp-name needed")
         print(f"  4. lease answer on {args.interface or '<ifname>'} "
