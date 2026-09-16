@@ -41,6 +41,7 @@ import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CFGFMT = os.path.join(REPO_ROOT, "refactor", "cfgfmt.py")
+DHCP_TOOL = os.path.join(REPO_ROOT, "dhcp.py")
 TFTP_TOOL = os.path.join(REPO_ROOT, "telephony", "tftp_profile.py")
 
 DEVICE_HTTP_HOST = "192.168.2.10"
@@ -245,6 +246,35 @@ def cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_dhcp(args: argparse.Namespace) -> int:
+    """Keep the lease answer up: REQUIRED across the reset window.
+
+    After a profile-driven reset the ATA immediately re-DHCPs; without a
+    live responder it drops off the bench (the blinking state).  Run this
+    BEFORE the trip serve, with a capture deadline long enough to span the
+    reset; it offers one lease (options 66/150 -> this bench address) and
+    exits once the device ACKs.
+    """
+    if not args.apply:
+        plan = [sys.executable, DHCP_TOOL, "--apply",
+                "--interface", args.interface or "<ifname>",
+                "--client-address", args.client,
+                "--server-address", args.address,
+                "--lease-seconds", str(args.lease_seconds),
+                "--timeout-seconds", str(args.dhcp_seconds)]
+        print("DRY RUN:", " ".join(plan))
+        return 0
+    if not args.interface:
+        fail("--interface is required with --apply")
+    run_checked([sys.executable, DHCP_TOOL, "--apply",
+                 "--interface", args.interface,
+                 "--client-address", args.client,
+                 "--server-address", args.address,
+                 "--lease-seconds", str(args.lease_seconds),
+                 "--timeout-seconds", str(args.dhcp_seconds)])
+    return 0
+
+
 def cmd_verify(args: argparse.Namespace) -> int:
     baseline_path = os.path.join(args.work, "baseline.sha256")
     if not os.path.isfile(baseline_path):
@@ -267,6 +297,8 @@ def cmd_verify(args: argparse.Namespace) -> int:
 def cmd_status(args: argparse.Namespace) -> int:
     """Read-only rehearsal: print the full plan without any device I/O."""
     print("plan (dry):")
+    print(f"  0 dhcp    : keep the lease answer up across the reset "
+          f"(run FIRST; the device re-DHCPs after reset or it drops off)")
     print(f"  collect  : GET http://{args.device}/dev.xml -> {args.work}")
     print(f"  prepare  : flip {KNOB_NAME} in {args.profile}, "
           "compile trip + revert profiles")
@@ -307,13 +339,21 @@ def main(argv: list[str] | None = None) -> int:
 
     for name, fn in (("status", cmd_status), ("collect", cmd_collect),
                      ("prepare", cmd_prepare), ("serve", cmd_serve),
-                     ("verify", cmd_verify)):
+                     ("dhcp", cmd_dhcp), ("verify", cmd_verify)):
         p = sub.add_parser(name)
         add(p)
         if name == "prepare":
             p.add_argument("--fresh", action="store_true",
                            help="clear previously prepared profile "
                                 "artifacts first (never the baseline)")
+        if name == "dhcp":
+            p.add_argument("--interface", help="bench Ethernet interface "
+                                              "(required with --apply)")
+            p.add_argument("--lease-seconds", type=int, default=600,
+                           help="lease duration to offer (default 600)")
+            p.add_argument("--dhcp-seconds", type=int, default=1800,
+                           help="capture deadline; must span the reset "
+                                "(default 1800)")
         if name == "serve":
             p.add_argument("--revert", action="store_true",
                            help="serve the original profile (post-reset)")
