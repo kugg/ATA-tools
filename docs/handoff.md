@@ -1,7 +1,105 @@
 # Handoff
 
-Updated 2026-09-15. Read TODO.md and WORKLOG.md before continuing. The final section
-supersedes older firmware-gate statements retained below as historical context.
+Updated 2026-09-16. Read TODO.md and WORKLOG.md before continuing. The latest
+section (this one) supersedes older sections retained below as historical
+context.
+
+## OpenWrt 24.10.8 digital twin pass (2026-09-16)
+
+Local work only: no device, APU, alarm or host network change. The Asterisk
+20.8.1-r1 engine that already passed the host-loopback probe, the Phase 2
+IVR gate and the Phase 3 AudioSocket gate on macOS has now been reproduced
+inside an isolated QEMU x86_64 OpenWrt 24.10.8 guest with no egress:
+REGISTER/INVITE/PCMU/RTP/DTMF/BYE round trip passes in-guest, and an
+operator-attended double check confirmed extension 100# -> IVR prompt,
+DTMF digit 5 -> confirmation tone, and extension 101# -> clean AudioSocket
+agent tone (same behaviour as the real ATA gate on the bench link). No
+segfaults on the OpenWrt build.
+
+Changed/new files (not committed):
+- tests/qemu/run-qemu-asterisk.sh - bounded twin harness (dry-run default;
+  read-only route preflight with numeric 10.0.2.0/24 overlap check; serial
+  br-lan 10.0.2.15 + dropbear bootstrap; chunked pubkey install; local
+  file:// opkg feeds with signature checks; engine start; in-guest probe;
+  log harvest; post-run drift compare; guest disk is snapshot, discarded).
+- tests/qemu/guest_drive.py, tests/qemu/serial_capture.py - 8250-bound 96
+  char serial driver and logger (D0NE# PS1, MMARK<n> markers).
+- tests/qemu/provision-guest.sh - distfeeds -> file:// local sources,
+  opkg update + install of the pinned set, module checks.
+- telephony/openwrt_feed_cache.py - dependency-closure resolver + SHA256
+  verified offline cache across base/packages/telephony/target feeds
+  (libstdcpp6 lives in the target feed paired with the image, not in
+  packages/x86_64). 6 new unit tests.
+- telephony/openwrt-twin-manifest-24.10.8.txt - the 65 ipks opkg actually
+  installed in the twin (verified against provision.log).
+- tests/openwrt/build-openwrt-packages.sh - SDK 24.10.8 x86_64 build
+  pipeline (dry-run default; NEEDS PINS_FILES; SDK SHA256-verified before
+  extraction); staged, NOT executed.
+
+Exact verification commands:
+- python3 -B -m unittest discover -s tests/unit  ->  152 OK (146 + 6 new)
+- python3 -B -m py_compile telephony/openwrt_feed_cache.py
+- sh -n tests/qemu/provision-guest.sh && bash -n tests/openwrt/build-openwrt-packages.sh
+- cd $TWIN_ROOT && ./run-qemu-asterisk.sh --apply  ->  stages engine-up, probe-done
+- in-guest probe log: work/logs/probe.log (register 200, invite 200/ACK,
+  49 RTP PCMU pkts, RFC2833 DTMF, BYE 200); console/module/dialplan harvests
+  under work/logs/engine-*.log
+- tape check: extension 100# -> prompt -> key 5 -> confirmation; 101# -> tone.
+- feed manifest: rg "Installing .* to root" work/logs/provision.log
+
+TWIN_ROOT default:
+/var/folders/0_/rjsf94rn3gd5k8mntc9fjkth0000gn/T/opencode/openwrt-twin
+
+Current local state: twin image + 67-ipk cache under TWIN_ROOT; macOS engine
+trees untouched under asterisk-bench/asterisk-run dirs; feed cache and twin
+tree are outside Git. Git tree has modified WORKLOG.md/TODO.md/handoff.md plus
+many untracked files already staged-eligible but NOT committed this session.
+
+Unresolved risks / next safe action:
+- SDK build pipeline is deliberately unexecuted (large download + long
+  compile): decide whether to run it this session or after.
+- APU overlay footprint budget still needs target-size data on the device.
+- Earlier single 503 on first twin attempt was an engine warm-up race
+  (manual 100#/101# checks after boot settle pass cleanly).
+- No host network state is touched; the guest is not persisted (snapshot).
+- Next broader step stays Phase 4 pjsip/WebRTC/ARI twin (deferred, gated).
+- The __pycache__ dirs and private feed caches under /tmp TWIN_ROOT are
+  volatile; manifest + scripts replicate the pinned fact base from Git.
+
+## ata_reboot orchestrated run + optional --tftp-name (2026-09-16)
+
+Local work only: no device, APU, alarm or host network change. All commits
+pushed to origin/main: 78caf66 (single-command orchestrated reset: baseline
+GET, one TFTP server spanning the whole window, dhcp.py lease-answer as the
+reset marker, immediate payload swap to the revert profile, bounded
+/dev.xml convergence poll), 10d57b1 (runbook doc), c4e064d + 5a6b524
+(LearningTftpServer: --tftp-name is now OPTIONAL; the fetch name is learned
+from the first pre-reset RRQ, name learning gated to the fixed expected
+client after a unit-test-caught foreign-peer leak).
+
+Verification (local, synthetic): refactor.tests.test_ata_reboot 10/10 OK;
+tests/unit suite OK; dry-run plan renders both pinned and learning modes;
+py_compile clean; LC_ALL=C grep shows no non-ASCII characters in the tool
+and test files. WORKLOG 2026-09-16T18:45Z entry added.
+
+Current local state: telephony/ata00070e36e57b.txt pinned profile with a
+reversible AltGkTimeOut knob; trip/revert profiles differ in exactly 2
+bytes. The full reset is one command:
+`sudo python3 -B refactor/ata_reboot.py run --apply --interface <if>
+[--tftp-name <name>]` (dry-run default; without --tftp-name the server
+learns the name from the pre-reset config poll).
+
+Unresolved risks: the run has never executed against the live bench from
+this session (no 192.168.2.0/24 route on this host); the device's boot
+fetch must land in the PXE-early window, which the swap satisfies only
+if the lease answer's ACK precedes the boot fetch - unchanged from the
+previous design. No CJK/non-ASCII characters in shipped code.
+
+Next safe action: on the operator-attended bench window, dry-run then
+apply the orchestrated `run` with the direct interface
+(LC_ALL=C journal: expect one trip RRQ, reset marker ACK, one boot RRQ,
+byte-identical /dev.xml). Research next step remains the in_r30/S-struct
+dispatch family (~3766 sites) via the emulator RAM snapshot.
 
 ## Asterisk local engine + loopback harness pass (2026-09-15)
 

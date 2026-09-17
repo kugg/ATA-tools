@@ -1,6 +1,6 @@
 # Durable task queue
 
-Last updated: 2026-09-14. Local work only; no APU/alarm deployment authorized here.
+Last updated: 2026-09-16. Local work only; no APU/alarm deployment authorized here.
 
 ## Public release curation (2026-09-12)
 
@@ -377,9 +377,24 @@ plan in `docs/asterisk-integration.md`; dry-run config generator
   generator change: peer `host=dynamic` + `permit=<ata>` (chan_sip rejects
   REGISTER from static-host peers), `defaultuser` instead of deprecated
   `username`, and probe messages need a From tag (pedantic checking).
-- [ ] Resolve opkg dependency set (`opkg depends`) on pinned 24.10.8 and
+- [x] Resolve opkg dependency set (`opkg depends`) on pinned 24.10.8 and
   record the installed-footprint budget vs overlay free space (APU cleaning is
-  an open operator follow-up).
+  an open operator follow-up). DONE 2026-09-16: installed manifest captured
+  from the QEMU twin provision log (65 ipks, opkg signature-checked) in
+  `telephony/openwrt-twin-manifest-24.10.8.txt`; footprint-budget vs APU free
+  space still open (needs target-size data on the APU).
+- [x] OpenWrt 24.10.8 digital twin (QEMU) reproduces the protocol-level
+  engine and BOTH validated milestones under pinned OpenWrt without a
+  physical ATA and with no guest egress. DONE 2026-09-16: in-guest
+  REGISTER/INVITE/PCMU/RTP/DTMF/BYE round trip; operator manual check
+  extension 100# -> IVR + DTMF 5 -> confirmation, extension 101# -> clean
+  AudioSocket tone; no segfaults. Harness `tests/qemu/run-qemu-asterisk.sh`
+  (dry-run default), feed cache `telephony/openwrt_feed_cache.py`
+  (+6 unit tests, 152 total), guest provisioning, log harvest.
+- [ ] OpenWrt SDK package-build pipeline: staged but NOT executed — script
+  `tests/openwrt/build-openwrt-packages.sh` (dry-run default; requires
+  PINS_FILES; SDK checksum-verified). Needs an operator decision to download
+  the ~300 MB OpenWrt SDK 24.10.8 and run a many-minute build.
 - [x] Hardware gate: PASSED 2026-09-15 (operator-attended). ATA 186 SIP 3.1.0
   registered to Asterisk 20.8.1 on 192.168.2.2 (en28 bench link), dialled 100,
   heard prompt, RFC2833 digit 5 through Read(), confirmation tone, clean BYE.

@@ -1,0 +1,83 @@
+# OpenWrt twin installed-package manifest (opkg, 24.10.8 x86_64)
+#
+# Captured from the verified QEMU twin run of 2026-09-16 (stage: provisioned).
+# These are the ipks actually installed to root by `opkg install` in the twin
+# guest, taken one-to-one from provision.log "Installing <pkg> to root..."
+# lines. opkg considered jansson4 and libuuid1 already satisfied by the base
+# image and did not install them (they are in the feed cache but not in the
+# installed footprint).
+#
+# Source feeds (all local-only inside the twin, signature-checked via opkg):
+#   base      https://downloads.openwrt.org/releases/24.10.8/packages/x86_64/base/
+#   packages  https://downloads.openwrt.org/releases/24.10.8/packages/x86_64/packages/
+#   telephony https://downloads.openwrt.org/releases/24.10.8/packages/x86_64/telephony/
+#   target    https://downloads.openwrt.org/releases/24.10.8/targets/x86/64/packages/
+#
+# Recompute with: rg "Installing .* to root" work/logs/provision.log
+# Sorted set (65 packages):
+
+asterisk
+asterisk-app-audiosocket
+asterisk-app-confbridge
+asterisk-app-externalivr
+asterisk-app-read
+asterisk-bridge-builtin-features
+asterisk-bridge-simple
+asterisk-bridge-softmix
+asterisk-chan-sip
+asterisk-codec-alaw
+asterisk-codec-ulaw
+asterisk-res-agi
+asterisk-res-audiosocket
+asterisk-res-http-websocket
+asterisk-res-rtp-asterisk
+asterisk-res-speech
+libbz2-1.0
+libcap
+libedit
+libffi
+libgdbm
+liblzma
+libncurses6
+libopenssl3
+libpj
+libpjlib-util
+libpjmedia
+libpjnath
+libpjsip
+libpjsip-simple
+libpjsip-ua
+libpjsua
+libpjsua2
+libpython3-3.11
+libreadline8
+libsqlite3-0
+libstdcpp6
+libxml2-16
+libxslt
+python3
+python3-asyncio
+python3-base
+python3-cgi
+python3-cgitb
+python3-codecs
+python3-ctypes
+python3-dbm
+python3-decimal
+python3-distutils
+python3-email
+python3-light
+python3-logging
+python3-lzma
+python3-multiprocessing
+python3-ncurses
+python3-openssl
+python3-pydoc
+python3-readline
+python3-sqlite3
+python3-unittest
+python3-urllib
+python3-uuid
+python3-xml
+terminfo
+zlib

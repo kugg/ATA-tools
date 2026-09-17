@@ -3149,3 +3149,183 @@ This completes the local phases of the plan; what remains is operator/scope
 work: OpenWrt module manifest comparison before any APU deployment, and
 whichever external-media application (e.g. speech agent) the operator wants
 behind extension 101.
+
+## 2026-09-15: tooling published; sleigh verified, emulator slot-count fixed
+
+Before: boot_run.py used one delay slot per transfer; the sleigh models two.
+
+Change:
+- Verified the published processor module against the boot-tail evidence:
+  two delay slots (the setup copy loop advances BOTH r2 and r3 via its two
+  post-branch instructions, which only works with slots=2), link value at
+  instruction start + 12 bytes = the selector entry 0x7fd18, and word-
+  scaled jspci targets. NO processor-module fix is needed - the earlier
+  emulator was the wrong side of the comparison (the firmware pads unused
+  slots with nops, which masked the bug while still running).
+- Published `refactor/mipsx_boot_trace.py` (bounded, inert without args,
+  synthetic-test vectors only) and `refactor/tests/test_mipsx_boot_trace.py`
+  as commit 3358774 and pushed to github.com/kugg/ATA-tools main.
+- Local research/ files remain local-only per the standing rule.
+
+Verify: `python3 -B -m unittest refactor.tests.test_mipsx_boot_trace` -> 5 OK;
+`python3 -B -m unittest discover -s tests/unit` -> OK; push confirmed
+fbe395b..3358774 on origin/main.
+
+Rollback: git revert 3358774 (tooling only; no existing file touched).
+
+Outcome: the validated MIPS-X semantics now live in the public tooling in
+runnable form; remaining open item is the r30/S-struct dispatch family.
+
+## 2026-09-15 (night): services map, syslog decoded, scanner published
+
+Before: syslog/HTTP/FTP presence in the pinned image unproven; the .data
+string layout unmapped.
+
+Change:
+- Completed the runtime image in `refactor/mipsx_strings.py`: the four
+  raw map regions, seven deflate streams, and the five CRC-checked
+  type-8 payloads (mode-1 destinations: 0x6cbcc->0x2fbc, 0x6bb60->0x100,
+  0x76c20->0x100). The .data string cabin therefore sits at
+  0x2fbc..0x7b84 inside the main image.
+- Deterministic findings (all from the expanded image + decompiled C):
+  HTTP surface = /dev, /dev.xml, service.xml, stat.xml, /rtps, /clr0,
+  gated by LoginID0/LoginID1/UseLoginID; TFTP client only - no FTP
+  exists (every 'ftp' byte run is the tftp substring); syslog client
+  with the config pair SyslogIP (type 0x00061101, extended ip.port,
+  default 0.0.0.0.514) and SyslogCtrl (4-byte class bitmask, live cell
+  RAM 0xb6f8, shipped default 0x08c4001a).
+- SyslogCtrl semantics: every emit site gates on (ctrl & class_bit);
+  recovered class bits 0x1/0x10000/0x40000/0x400000/0x8000000/0x20000000/
+  0x40000000/0x80000000 with the emit families named (validator, config
+  UI, signaling). Full debug = enable all bits. No 514 constant exists
+  because the port comes from SyslogIP.
+- Parameter schema located at image 0x4330.. (20-byte entries:
+  {name_ptr, default/storage, formatter, type, id}); config pointers
+  travel via iRam0000c11c/uRam00002ed0 globals.
+- Published `refactor/mipsx_strings.py` + synthetic tests + the research
+  doc `docs/ata-sip-firmware-services.md` as commit 02f5a6f and pushed.
+
+Verify: unittest refactor.tests.test_mipsx_strings - 3 OK; boot-trace
+tests 5 OK; unit suite OK; push 3358774..02f5a6f on origin main.
+
+Blockers: live bench was unreachable this session (no 192.168.2.0/24
+path active on the host; the operator-attended window from TODO.md is
+still the gate), so the 192.168.2.2 probe request could not be actioned;
+/dev and /dev.xml remain the known admin endpoints from earlier bench
+evidence.
+
+Rollback: git revert 02f5a6f (adds three new files only).
+
+Outcome: enabling remote debug logging is now a reproducible profile
+change: SyslogIP:<collector>.514 + SyslogCtrl:<class-mask> through the
+proven cfgfmt + TFTP flow; the research doc records the evidence chain.
+
+## 2026-09-15/16: reboot tool added (refactor/ata_reboot.py)
+
+Before: the remote-reboot recipe existed only as prose in
+docs/ata-sip-firmware-services.md.
+
+Change: added the bounded planner/runner implementing the recipe:
+collect (read-only /dev.xml + sha256 baseline), prepare (single reversible
+knob AltGkTimeOut flipped; trip + revert profiles compiled with the
+published cfgfmt -t<ptag> -sip), serve (the proven telephony TFTP tool,
+bounded window, trip profile; --revert for the restore), verify
+(/dev.xml byte-compare; mismatch = ambiguous stop). Dry-run default,
+--apply gates everything, 0700 work dir, bounded sizes. Offline validated
+against the pinned profile + ptag.dat: trip/revert binaries differ in
+exactly 2 bytes. 7 synthetic unit tests (no sockets). Published as
+commits 04421a7 (+ doc pointer) and pushed.
+
+Verify: unittest refactor.tests.test_ata_reboot - 7 OK; full unit suite
+OK; binary diff check above; status dry-run plan prints.
+
+Blockers: hardware step untouched (bench window is the operator gate);
+the collect/serve/verify steps run only inside that window.
+
+Rollback: git revert 04421a7 (new files only).
+
+Outcome: a reproducible, reversible device reset that provably preserves
+the stored profile state.
+
+## 2026-09-16T18:45Z: ata_reboot optional --tftp-name (learning server)
+
+Before: run --apply required --tftp-name copied by hand from the previous
+TFTP tool log; the whole-window orchestrated run (78caf66) was committed
+but the name pin made ad-hoc bench use clumsy.
+
+Change: LearningTftpServer in refactor/ata_reboot.py wraps the published
+telephony/tftp_profile.py TftpServer and derives the device fetch name
+from the first pre-reset RRQ; after the dhcp reset marker the wrapper
+flips revert_active so the PXE-early boot fetch receives the revert
+profile. Explicit --tftp-name still pins the name. A NUL-keyed
+placeholder satisfies the base class non-empty-payload-map rule; name
+learning is gated on the expected client peer (the unit test caught the
+foreign-peer leak). Dry-run plan prints learning mode explicitly.
+
+Verify: python3 -B -m unittest refactor.tests.test_ata_reboot -> 10/10 OK
+(LearningTftpTest covers trip learn, revert swap, foreign-peer rejection
+with no learning); python3 -B -m unittest discover -s tests/unit -> OK;
+refactor/ata_reboot.py run dry-run renders both modes; py_compile clean.
+Commits c4e064d and 5a6b524 pushed to origin/main. LC_ALL=C grep over the
+tool and test files shows no non-ASCII characters in shipped code.
+
+Rollback: git revert 5a6b524 c4e064d restores the pinned-name-only
+runner; no device state touched (dry-run and synthetic tests only).
+
+Blockers/next: live bench unreachable from this host (no 192.168.2.0/24
+route); orchestrated run needs an operator-attended window. in_r30 /
+S-struct dispatch family (~3766 jspci sites) is the next research pass
+via the emulator RAM snapshot.
+
+## 2026-09-16T21:30Z: OpenWrt 24.10.8 digital twin + feed cache + SDK pipeline
+
+Before: the OpenWrt twin work existed only as experimental scripts and this
+entry supersedes the provisional 2026-09-16 session notes above (none were
+written; the harness boot/install/probe loop from earlier in the session was
+iterated directly). The macOS engine, loopback probe, CPU-less ATA bench gate
+(Phase 2 IVR + Phase 3 AudioSocket) were already passing on the host; the
+pinned package set was verified but never run under OpenWrt.
+
+Change: ported the protocol-level engine to an isolated QEMU x86_64 OpenWrt
+24.10.8 guest with no egress (slirp restrict=on, only loopback host-fwd ssh
+2205 and serial 4519). New tools: tests/qemu/run-qemu-asterisk.sh (bounded
+harness: read-only route preflight with numeric 10.0.2.0/24 overlap check,
+serial bootstrap of br-lan 10.0.2.15 + dropbear, chunked pubkey install,
+host->guest ssh/scp, opkg local file:// feeds with signature verification,
+engine start, in-guest loopback probe, log harvest, post-run drift compare);
+tests/qemu/guest_drive.py + serial_capture.py (serial driver/logger);
+tests/qemu/provision-guest.sh (rewrites distfeeds to local sources,
+opkg update+install pinned set); telephony/openwrt_feed_cache.py (closure
+resolver + SHA256-verified offline cache across base/packages/telephony/
+target feeds; dry-run default); 6 new unit tests; pages feed target feed
+(libstdcpp6 lives in targets/x86/64/packages, not packages/x86_64).
+twin package manifest telephony/openwrt-twin-manifest-24.10.8.txt (65 ipks
+actually installed, verified against provision.log). tests/openwrt/
+build-openwrt-packages.sh SDK 24.10.8 build pipeline (dry-run default,
+checksum-verified SDK, pins files required).
+
+Verify: full harness run to completion twice (engine-up, probe-done stages);
+in-guest REGISTER/INVITE/PCMU/RTP/DTMF/BYE round trip on OpenWrt passes;
+operator manual dual check: extension 100# -> IVR prompt, RFC2833 digit 5 ->
+confirmation tone; extension 101# -> clean AudioSocket agent tone (same
+behaviour as the real ATA gate on 192.168.2.2). python3 -B -m unittest
+discover -s tests/unit -> 152 OK (146 + 6 new); py_compile clean; all
+scripts bash -n clean. No segfaults observed on the OpenWrt build (the
+res_timing_pthread lesson from the host Read() crash carries over: the
+explicit module list installs and everything runs plain).
+
+Rollback: harness is a dry-run-by-default swarm with no persistent host
+changes; it never alters routes/interfaces/filters/VPN. Removing the twin
+tree (TWIN_ROOT) and the four feed entries leaves nothing installed on the
+host. No guest disk is persisted (snapshot, discarded each run).
+
+Outcome: the twin reproduces the host-loopback protocol results AND the
+operator-attended ATA milestones under pinned OpenWrt 24.10.8, without a
+physical ATA and without guest egress. The SDK pipeline is staged but not
+run (300 MB download; operator decision to run it).
+
+Blockers/next: SDK build is a long compile and is deliberately not executed
+here; overlay-footprint budget vs APU free space still needs the target-size
+opkg data (open operator follow-up). Phase 4 pjsip/WebRTC/ARI twin remains
+deferred. Commits not made for this batch (working tree only; multiple
+untracked new files listed in docs/handoff.md).
