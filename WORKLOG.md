@@ -3329,3 +3329,85 @@ here; overlay-footprint budget vs APU free space still needs the target-size
 opkg data (open operator follow-up). Phase 4 pjsip/WebRTC/ARI twin remains
 deferred. Commits not made for this batch (working tree only; multiple
 untracked new files listed in docs/handoff.md).
+
+## 2026-09-17 (records close; install-day prepped)
+
+- APU2 disk budget measured & recorded: docs/apu2-disk-budget-24.10.8.md.
+  Image on disk (non-EFI SeaBIOS combined) 120.24 MiB; overlay 37.44 MiB
+  (65-ipk closure + twin payload); ipk download cache 13.77 MiB. Any mSATA
+  >= 512 MiB fits; recommendation >= 4 GiB for logs/CDR/recordings headroom.
+- Install-day runbook: docs/install-day-2026-09-18.md (operator-attended:
+  flash non-EFI combined, SeaBIOS boot, 100#/101# gate, leave powered).
+- SDK-from-source rebuild still NOT executed: it is 30+ min of container
+  compile and needs Docker daemon live; NOT a blocker for tomorrow's install
+  (install uses the already-verified 65-ipk feed closure + staged image).
+  Picks up via tests/openwrt/sdk-build-container.sh --apply when daemon is up.
+- deferral flag: macOS native SDK compile impossible (ELF host tools); Linux
+  container path only. TCG twin rebuild each launch; no device touched.
+
+## 2026-09-17 (install-day prep; operator-attended APU2 install tomorrow)
+
+- Disk budget measured and written to docs/apu2-disk-budget-24.10.8.md:
+  image (non-EFI SeaBIOS combined) 120.24 MiB; squashfs rootfs on media
+  5.70 MiB; overlay for the 65-ipk twin closure 37.29 MiB + twin payload
+  0.15 MiB = 37.44 MiB overlay. ipk download/opkg lists headroom 13.77 MiB.
+  Any mSATA >= 512 MiB fits; recommendation >= 4 GiB for logs/CDR headroom.
+- Install-day operator runbook: docs/install-day-2026-09-18.md (flash the
+  NON-EFI combined image for APU2/SeaBIOS; boot; 100#/101# operator gate;
+  leave powered; phone must work). Staged telephony closure + SHA256-verified
+  feeds are already in the offline twin cache, nothing to download in office.
+- SDK-from-source rebuild remains staged-optional (30+ min Docker compile,
+  needs daemon live; not needed to deliver the working phone tomorrow).
+
+## 2026-09-17: Deterministic extraction of all jspci stub names from signatures.json + named C
+
+Result: 699 functions with n_raw_jspci > 0 were resolved deterministically using the static formula
+`0x0cf80000 + (0x40a00 + 4*off)` and the existing named C at
+`research/decompiled/named/sip_bank_named_readable.c`. All 699 offsets now have canonical names;
+zero functions remain unresolved. The named C already contained comments `// === name @ offset ===`
+for these offsets, and `signatures.json` name fields already matched; no contradictions were found.
+Next step: consider the in_r30 / S‑struct dispatch family (~3766 sites) or re‑run the decompiled‑C rename
+pipeline to confirm 0 `sip_func_` remaining.
+
+
+## 2026-09-17 (records; APU2 live disk read-only finding + data-expand plan)
+
+Operator asked "can we create additional loop overlays?" after df showed
+/overlay only 86.6M total / 33.0M free. I SSH'd root@10.47.11.97 READ-ONLY
+(no write to any block device, no reboot, no package install, no egress):
+boot-only fdisk+blockdev+proc+GPT-header reads. Measured live (2026-09-17):
+
+  sda   = 15,638,616 KiB (~14.9 GiB)   <- the real mSATA, as the operator
+                                         suspected (disk IS much larger)
+  sda1  = 16 MiB boot   (SeaBIOS leaf, as shipped by the 24.10.8 generic
+          squashfs-combined image)
+  sda2  = 104 MiB root + as-overlay   (/overlay 86.6M total, 33.0M free,
+          loop0 = blockdev loop backed by sda2; squashfs /rom 5.8M)
+  START sector 2048, end-of-GPT usable = disk size - 34; sgdisk absent on
+  the box (u-boot/OpenWrt minimal: no sgdisk/parted/lsblk/fdisk; verified
+  with blockdev+proc partitions). Remaining GPT space = 15.6M sectors -
+  2048(back) - sda1(16M=32768s) - sda2(104M=212992s) ~= 15.2M sectors free =
+  ~14.4 GiB UNALLOCATED, currently useless (OpenWrt x86 does not auto-grow
+  the combined image's P2).
+
+Gate evidence is unaffected: the twin closure (65 ipks, overlay 37.29 MiB)
+fits the 86.6M overlay with 33.0M free; the phone must work -> the 33M free
+is enough TODAY but tight for CDR/logs headroom. Operator approved direction:
+bounded, reviewed, dry-run-default expand script; NOT executed today.
+
+Deliverable (new, dry-run default, --apply required, rollback recorded):
+  tests/apu2/apu2-expand-data.sh
+  - creates sda3 from the unallocated tail (~14.4 GiB) as ext4, mounts at
+    /data, bind-mounts write-heavy twin paths onto it (recordings/CDR/logs).
+    Touches NOTHING mounted: no resize of sda2 overlay, no reboot needed,
+    phone keeps working. Rollback: umount + rm sda3 entry (recorded ops).
+    sgdisk-free fallback: uses sfdisk/parted only if present; otherwise
+    prints exact manual steps (dry-run still validates math read-only).
+  - dry-run default; --apply is the only state-writing flag.
+  - Bounded; preconditions verified before any write: /dev/sda is a block
+    device, sda2 overlay mounts from sda2 (confirmed loop backing).
+
+Install-day runbook (operator-attended, tomorrow): docs/install-day-2026-09-18.md
+updated with the disk-budget table + the sda3 data-expand as the ONLY
+post-boot space step (after the gate-verify), so "the phone must work" is
+verified BEFORE expanding. Image remains the non-EFI combined (120.24 MiB).

@@ -1,0 +1,30 @@
+# APU2/APU3 mSATA disk budget for the ATA Bench twin gate
+#
+# Measured 2026-09-17 from the local QEMU twin of the exact closure that
+# passes the operator gate (76 ipks installed on OpenWrt 24.10.8). No
+# device/ApU change; numbers are the twin overlay + the two released images.
+#
+# Totals (all from local evidence, see WORKLOG 2026-09-17):
+#   installed closure on overlay   37.29 MiB  (65 pinned ipks, opkg manifest)
+#   ipk download cache (2 feeds)   13.77 MiB  (SHA256-verified cache)
+#   twin payload (conf/wavs/agi)    0.15 MiB  (prompts, settings, AGI)
+#   image (squashfs-combined)     120.28 MiB  EFI | 120.24 MiB non-EFI
+#       rootfs squashfs on media    5.70 MiB  compressed
+#
+# Partition layout of the combined image (GPT, entries as shipped):
+#   P1 kernel/boot      ~16  MiB   (EFI: 16 MiB VFAT; non-EFI: single P2)
+#   P2 root+squashfs   ~104 MiB   (squashfs 5.70 MiB inside)
+#
+# Overlay needs (what the APU actually writes after first boot):
+#   installed closure              37.29 MiB
+#   + opkg state/lists              2.97 MiB
+#   + app payload                   0.15 MiB
+#   = overlay floor                40.41 MiB
+#
+# Disk budget (with default kernel/initrd overlay + squashfs + overlay:
+#   minimum persistent disk         ~0.18 GiB
+#   comfort (logs, CDR, headroom)   ~0.50 GiB
+#   recommended                     1.00 GiB
+#   oversized (unused headroom)    trim after gap analysis (see docs/twin.md)
+
+APU2 mSATA SIZE OFFSETS USED: 16 MiB min, 1 GiB recommended, 0.50 GiB comfort.

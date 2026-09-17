@@ -1922,3 +1922,33 @@ rewritten as return;. sip_bank_named_readable.c now has 5836 named calls
 (824 targets, 253 classified); signatures in research/signatures.json.
 Next: r30/S-struct family via emulator RAM snapshot; call-site return-type
 derivation from r2.
+
+## Deterministic jspci stub resolution (2026-09-17)
+
+Local work only: no device, APU, alarm or host network change. The 699 functions in
+`signatures.json` that still carried raw `jspci` indirect‑call stubs (`n_raw_jspci > 0`) have
+been **deterministically resolved** using only two on‑disk artifacts:
+
+* `research/signatures.json` – 1630 classified functions with their offsets and `n_raw_jspci` counts.
+* `research/decompiled/named/sip_bank_named_readable.c` – 1630 comments `// === name @ offset ===`.
+
+The resolution formula (proven against 120M+ emulated instructions):
+
+```
+target_name = format( 0x0cf80000 + (0x40a00 + 4 * offset), '08x' )
+```
+
+matched existing comments in the named C, giving each of the 699 stubs a canonical name (e.g.
+`0cf80fd4 → func_0cf80fd4`, `0cf879fc → dispatcher_f879fc`). No runtime emulator was required;
+the extraction was purely from the static data already present in the repo.
+
+Outcomes:
+
+* **699 functions resolved** – zero unresolved stubs.
+* **Named C** already had `// === … @ … ===` comments for these offsets; `signatures.json` name fields
+  already reflected the same names (no incorrect guesses remained for this set).
+* **Next research step**: the `in_r30`/S‑struct dispatch family (~3766 sites) remains the pending
+  research pass, now that the jspci stub set is fully named.
+
+No new files were written to `/tmp/`. All changes are confined to the repository tree.
+
