@@ -48,9 +48,13 @@ done
 
 # ---- locate SDK (24.10.8 x86/64) -------------------------------------------
 SDK_DIR_NAME="openwrt-sdk-${RELEASE}-${SDK_ARCH}_gcc-13.3.0_musl.Linux-x86_64"
-SDK_ARCHIVE="${SDK_DIR_NAME}.tar.xz"
+SDK_ARCHIVE="${SDK_DIR_NAME}.tar.zst"
 SDK_URL="${DOWNLOAD_BASE}/${SDK_ARCHIVE}"
 SDK_CHECKSUMS_URL="${DOWNLOAD_BASE}/sha256sums"
+EXTRACT_TOOL=""
+for tool in unzstd tar; do
+    if command -v "$tool" >/dev/null 2>&1; then EXTRACT_TOOL="$tool"; break; fi
+done
 
 mkdir -p "$SDK_ROOT"   # private, per AGENTS umask 077
 if [ -d "$SDK_ROOT/$SDK_DIR_NAME" ]; then
@@ -67,13 +71,16 @@ else
     fi
     [ "$BUILD" = "1" ] || exit 0
     log "verifying SDK checksum against $SDK_CHECKSUMS_URL"
-    curl -fsSL "$SDK_CHECKSUMS_URL" | grep -F " ${SDK_ARCHIVE}$" | head -1
-    EXPECTED="$(curl -fsSL "$SDK_CHECKSUMS_URL" | grep -F " ${SDK_ARCHIVE}$" | cut -d' ' -f1)"
+    curl -fsSL "$SDK_CHECKSUMS_URL" | grep -E "[ *]${SDK_ARCHIVE}$" | head -1
+    EXPECTED="$(curl -fsSL "$SDK_CHECKSUMS_URL" | grep -E "[ *]${SDK_ARCHIVE}$" | cut -d' ' -f1)"
     [ -n "$EXPECTED" ] || fail "SDK hash not found in sha256sums"
     ACTUAL="$(shasum -a 256 "$SDK_ROOT/$SDK_ARCHIVE" | cut -d' ' -f1)"
     [ "$ACTUAL" = "$EXPECTED" ] || fail "SDK checksum mismatch"
     log "SDK verified"
-    tar xJf "$SDK_ROOT/$SDK_ARCHIVE" -C "$SDK_ROOT"
+    case "$EXTRACT_TOOL" in
+        tar) tar xf "$SDK_ROOT/$SDK_ARCHIVE" -C "$SDK_ROOT" ;;
+        unzstd) unzstd -c "$SDK_ROOT/$SDK_ARCHIVE" | tar xf - -C "$SDK_ROOT" ;;
+    esac
 fi
 
 SDK_DIR="$SDK_ROOT/$SDK_DIR_NAME"

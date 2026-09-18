@@ -3411,3 +3411,20 @@ Install-day runbook (operator-attended, tomorrow): docs/install-day-2026-09-18.m
 updated with the disk-budget table + the sda3 data-expand as the ONLY
 post-boot space step (after the gate-verify), so "the phone must work" is
 verified BEFORE expanding. Image remains the non-EFI combined (120.24 MiB).
+
+## 2026-09-18T08:34: SDK overnight container build LAUNCHED (operator-attended, detached)
+
+Operator decided: "Build it over night... The SDK... worth it. Build it over night." Launch is the explicit --apply action; wrapper default remains dry-run for everyone else.
+
+Evidence first (bounded, read-only):
+- sharp-pcl-proxy SDK: DIFFERENT project (release 24.10.0, closure ghostscript-urf_10.07.1 + sharp-pcl-proxy_0.1.0, combined-efi image). NOT our 24.10.8 asterisk closure; read-only; do not modify that repo.
+- sharp-pcl-proxy runtime images present (sharp-pcl-proxy-openwrt-runtime:24.10.0-x86_64 11.7MB, ghostscript-openwrt-state:latest 3.18GB) => the amd64-Debian-container SDK build technique is ALREADY PROVEN on this exact Mac/Docker; our wrapper reuses the technique with our own pinned closure.
+- Our SDK pinned: RELEASE=24.10.8, SDK_ROOT=<T>/opencode/openwrt-sdk (archive staged + SHA256 verified 2026-09-17).
+
+What ran (launch is "before"): tests/openwrt/sdk-build-container.sh --apply, umask 077, detached nohup, log = sdk-overnight-20260918-083413.log in T/opencode/.
+Launched: PID 43602 (bash children run docker, amd64/debian:12-slim apt configuring).
+Bound: container --cpus 6 --memory 6g; build state kept on host SDK_ROOT (incremental reuse); Docker daemon live (29.5.2).
+
+Rollback / recover: build is containerized + host-staged only; no repo, route, device, or production change. If container fails, remove container, re-run wrapper (incremental). Records stay append-only; source untouched by build.
+
+Verify next: SDK must emit OUR asterisk 20.8.1-r1 closure ipk set (65 ipks) + feed cache, not a printer closure. Log + ipk SHA256 list to be recorded on completion.
