@@ -3428,3 +3428,18 @@ Bound: container --cpus 6 --memory 6g; build state kept on host SDK_ROOT (increm
 Rollback / recover: build is containerized + host-staged only; no repo, route, device, or production change. If container fails, remove container, re-run wrapper (incremental). Records stay append-only; source untouched by build.
 
 Verify next: SDK must emit OUR asterisk 20.8.1-r1 closure ipk set (65 ipks) + feed cache, not a printer closure. Log + ipk SHA256 list to be recorded on completion.
+
+## 2026-09-18 install-day start: SDK overnight FAILED (case-sensitive fs preflight)
+
+Detached container build (PID 43602, launched 08:34Z) FAILED morning rollup:
+- Concrete error: `OpenWrt can only be built on a case-sensitive filesystem`
+  `Prerequisite check failed. Use FORCE=1 to override.` -> prereq-build /
+  prepare-tmpinfo / package/asterisk/download target aborted.
+- Root cause: --sdk-root lives on the macOS default APFS (case-insensitive),
+  bind-mounted into the amd64 Debian container; OpenWrt preflight rejects that.
+- Broke nothing: umask 077, --cpus 6 --memory 6g bounded, no host route/net/
+  device change, no repo state. Log: sdk-overnight-20260918-083413.log (tail
+  captured 06:36Z).
+- Decision needed (operator): rebuild SDK with SDK_ROOT on a case-SENSITIVE
+  volume (HFS+/APFS-case-sensitive image or container-internal ext4 tree)
+  BEFORE another --apply. Do NOT use FORCE=1 (AGENTS: no silent gate passes).
