@@ -23,6 +23,7 @@ list plus the requested output C file.  It never opens a socket.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -98,7 +99,8 @@ public class PackedDecompile extends GhidraScript {
     public void run() throws Exception {
         String sitesPath = getScriptArgs()[0];
         String startsPath = getScriptArgs()[1];
-        String outPath = getScriptArgs()[2];
+        String namesPath = getScriptArgs()[2];
+        String outPath = getScriptArgs()[3];
         List<String[]> sites = readSites(sitesPath);
         List<long[]> starts = readPairs(startsPath);
 
@@ -137,6 +139,40 @@ public class PackedDecompile extends GhidraScript {
         }
         println("call_sites=" + sites.size() + " linked=" + linked
                 + " function_starts=" + starts.size() + " created=" + created);
+
+        // 4) apply the deterministic, evidence-backed naming map.  Every name
+        //    carries its evidence as a plate comment so the generated C is
+        //    reproducible and auditable.
+        int named = 0, nameSkipped = 0;
+        BufferedReader nb = new BufferedReader(new FileReader(namesPath));
+        String nline;
+        while ((nline = nb.readLine()) != null) {
+            nline = nline.trim();
+            if (nline.isEmpty()) continue;
+            String[] p = nline.split("\\t");
+            if (p.length < 3) continue;
+            Address a = toAddr(Long.parseLong(p[1], 16));
+            String kind = p[0];
+            String nm = p[2];
+            String ev = p.length > 3 ? p[3] : "";
+            if ("f".equals(kind)) {
+                Function f = getFunctionAt(a);
+                if (f == null) { nameSkipped++; continue; }
+                try {
+                    f.setName(nm, SourceType.USER_DEFINED);
+                    setPlateComment(a, "evidence: " + ev);
+                    named++;
+                } catch (Exception e) { nameSkipped++; }
+            } else {
+                try {
+                    createLabel(a, nm, true);
+                    setPlateComment(a, "evidence: " + ev);
+                    named++;
+                } catch (Exception e) { nameSkipped++; }
+            }
+        }
+        nb.close();
+        println("names_applied=" + named + " names_skipped=" + nameSkipped);
 
         PrintWriter pw = new PrintWriter(new FileWriter(outPath));
         DecompInterface decomp = new DecompInterface();
@@ -237,6 +273,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--project", default=None,
                         help="persistent Ghidra project dir to create/keep "
                              "(for an MCP server); default is a temp project")
+    parser.add_argument("--names", default=None,
+                        help="evidence-backed naming map (JSON); applied "
+                             "deterministically so the C is regenerable")
     parser.add_argument("--timeout", type=int, default=1800)
     args = parser.parse_args(argv)
 
@@ -281,6 +320,22 @@ def main(argv: list[str] | None = None) -> int:
         with open(script_path, "w") as handle:
             handle.write(GHIDRA_SCRIPT)
 
+        # Deterministic, evidence-backed naming map (optional).  Format:
+        # kind<TAB>address<TAB>name<TAB>evidence  (kind = f function | g global)
+        names_path = os.path.join(work, "names.tsv")
+        with open(names_path, "w") as handle:
+            if args.names:
+                with open(args.names, "r") as names_file:
+                    naming = json.load(names_file)
+                for item in naming.get("functions", []):
+                    handle.write("f\t{:x}\t{}\t{}\n".format(
+                        int(item["address"], 16), item["name"],
+                        item.get("evidence", "").replace("\t", " ")))
+                for item in naming.get("globals", []):
+                    handle.write("g\t{:x}\t{}\t{}\n".format(
+                        int(item["address"], 16), item["name"],
+                        item.get("evidence", "").replace("\t", " ")))
+
         project_dir = os.path.abspath(args.project) if args.project \
             else os.path.join(work, "project")
         os.makedirs(project_dir, exist_ok=True)
@@ -294,7 +349,8 @@ def main(argv: list[str] | None = None) -> int:
             "-loader", "BinaryLoader",
             "-loader-baseAddr", hex(args.base),
             "-analysisTimeoutPerFile", str(args.timeout),
-            "-postScript", "PackedDecompile.java", sites_path, starts_path, out_path,
+            "-postScript", "PackedDecompile.java",
+            sites_path, starts_path, names_path, out_path,
         ] + delete_flag
         print("running Ghidra headless...")
         result = subprocess.run(

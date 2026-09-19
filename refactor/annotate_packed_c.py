@@ -54,6 +54,17 @@ def load_resident_names(named_c_path: str) -> dict[str, str]:
     return names
 
 
+def load_function_names(names_path: str) -> dict[int, str]:
+    """Map packed-main address (int) to its evidence-backed name."""
+    import json
+    names: dict[int, str] = {}
+    with open(names_path, "r") as handle:
+        data = json.load(handle)
+    for item in data.get("functions", []):
+        names[int(item["address"], 16)] = item["name"]
+    return names
+
+
 def payload_r23_targets(payload: bytes) -> set[int]:
     regions = mipsx_dasm.validate_regions(
         [(0, len(payload) - (len(payload) % 4))], len(payload))
@@ -71,17 +82,19 @@ def payload_r23_targets(payload: bytes) -> set[int]:
 
 
 def annotate(text: str, valid_targets: set[int],
-             resident_names: dict[str, str] | None = None
+             resident_names: dict[str, str] | None = None,
+             function_names: dict[int, str] | None = None
              ) -> tuple[str, dict[str, int]]:
     stats = {"r23_resolved": 0, "r23_unverified": 0, "r24_resolved": 0,
              "r24_unverified": 0, "returns": 0, "retyped": 0}
+    function_names = function_names or {}
 
     def replace_call(match: re.Match[str]) -> str:
         displacement = int(match.group(1), 16)
         target = ((R23_ANCHOR_WORD + displacement) * 4) & 0xFFFFFFFF
         if target in valid_targets:
             stats["r23_resolved"] += 1
-            return f"sub_{target:08x}"
+            return function_names.get(target, f"sub_{target:08x}")
         stats["r23_unverified"] += 1
         return match.group(0)
 
@@ -125,11 +138,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", default=None, help="annotated output C file")
     parser.add_argument("--resident-c", default=None,
                         help="resident named C used to resolve r24 cross-module calls")
+    parser.add_argument("--names", default=None,
+                        help="evidence-backed function naming map (JSON)")
     args = parser.parse_args(argv)
 
     out_path = args.out or re.sub(r"\.c$", "_annotated.c", args.c_file)
     with open(args.c_file, "r") as handle:
         text = handle.read()
+
+    names_path = args.names or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "naming", "packed_main.json")
+    function_names = load_function_names(names_path) \
+        if os.path.isfile(names_path) else {}
+    print(f"function names: {len(function_names)}")
 
     resident_c = args.resident_c or os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -143,7 +164,7 @@ def main(argv: list[str] | None = None) -> int:
     valid = payload_r23_targets(payload)
     print(f"valid r23 targets in payload: {len(valid)}")
 
-    annotated, stats = annotate(text, valid, resident_names)
+    annotated, stats = annotate(text, valid, resident_names, function_names)
     with open(out_path, "w") as handle:
         handle.write(annotated)
     print(f"r23_resolved={stats['r23_resolved']} "
