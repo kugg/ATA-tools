@@ -412,6 +412,31 @@ the trace/syslog path (`sub_00010268` → `dispatcher_f82b38`) fires after each 
 Dump these tables from the decompiled data or the emulator and they become the firmware-side
 counterpart of `ptag.dat`.
 
+### 8.6 Runtime tables live in the type-2 zero-fill gaps  [proven]
+
+The low-RAM address space (base 0) is assembled at launch as:
+
+| Range | Source |
+| --- | --- |
+| `0x100..0x26d0` | type-8 mode-1 data span (bank `0x6bb60`) |
+| `0x26d0..0x2fbc` | **type-2 zero fill** |
+| `0x2fbc..0x7b84` | type-8 mode-1 data span (bank `0x6cbcc`) — holds the parameter descriptor table at `0x4024` |
+| `0x7b84..0xc74c` | **type-2 zero fill** |
+| `0xc74c..0x686a0` | packed main code (type-8 mode-0, bank `0x479bc`) |
+
+Both runtime tables land in the zero-fill gaps, so they are **built by init code, not stored**:
+
+* **Resident event-dispatch table at `0x2bc8`** (in `0x26d0..0x2fbc`). `dispatcher_f82b38`
+  (bank `0x2b38`) takes an event code `in_r4`, rejects `> 0x4f` or a zero table entry, loads
+  `mem[0x2bc8 + code*4]`, and calls it via a common path (`0x26f0`). The stored bank bytes at
+  `0x2bc8` are the dispatcher's own delay-slot code, so the table is populated at run time.
+* **Config state table at `0x9d84`** (in `0x7b84..0xc74c`, stride `0xc`), populated by the
+  packed main's init from the `0x4024` descriptor table.
+
+This is the "config structure + function-pointer dispatch" model: init fills the tables, then
+events/parameters select which handler runs. Recovering the populated tables requires running
+the init sequence (the same runtime-state problem as entry mode), not more static reading.
+
 ### 8.5 The `.linux` tools are i386 ELF (format mapping, started)
 
 `cfgfmt.linux` (stripped), `prserv.linux` and `sata186us.linux` (both **not stripped**, e.g.
