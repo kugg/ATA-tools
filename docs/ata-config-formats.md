@@ -340,26 +340,34 @@ outside this reconstructed bank, or use a non-string (compact) encoding. This is
 open question, not an artifact of the reconstruction (the SIP bank is byte-identical to the
 pinned digest).
 
-### 8.2 The `cfgfmt.py` function addresses
+### 8.2 The `FUN_0804xxxx` addresses are **cfgfmt.linux**, not firmware  [resolved]
 
-`refactor/cfgfmt.py` cites functions it reproduces:
+`refactor/cfgfmt.py` cites these as "the original firmware functions". They are actually
+functions in the **PC tool `cfgfmt.linux`** (i386 ELF, image base `0x08048000`), confirmed by
+importing it into Ghidra and matching behaviour:
 
-| Address | Role (comment in `cfgfmt.py`) |
-| --- | --- |
-| `FUN_08048d08` | RC4 KSA |
-| `FUN_08048be4` | RC4 PRGA |
-| `FUN_08049184` / `FUN_080491f0` | varint encode/decode |
-| `FUN_08049274` / `FUN_080492b4` | checksums (simple / internet) |
-| `FUN_0804a60c` | tag `0x1105` wrapping (fixed `.data` blob at `0x0804ed60`) |
-| `FUN_0804ab4c` | text profile parsing |
-| `FUN_0804b79c` | binary building |
-| `FUN_0804c70c` / `FUN_0804a728` | binary decoding |
+| Address (cfgfmt.linux) | Role | Confirmed by |
+| --- | --- | --- |
+| `FUN_0804c908` | `main` (arg parsing: `-e`,`-x`,`-v`,`-E`,`-X`,`-g`,`-t`) | called from `entry` via `__libc_start_main` |
+| `FUN_08048d08` | RC4 key setup (hex key; note the literal `"0xAA"` prefix) | decompiled |
+| `FUN_08048be4` | RC4 PRGA | decompiled |
+| `FUN_08049184` / `FUN_080491f0` | varint read / write | decompiled (read matches §4.3) |
+| `FUN_08049274` | simple checksum (byte sum) | decompiled |
+| `FUN_080492b4` | internet checksum | decompiled |
+| `FUN_0804a60c` | tag `0x1105` wrapping | xref to the fixed blob |
+| `FUN_0804ab4c` | text profile parsing | — |
+| `FUN_0804b79c` | binary building | xref to `#ata` (`0x0804dad9`) |
+| `FUN_0804c70c` / `FUN_0804a728` | binary decoding | xref to `#txt` (`0x0804db3c`) |
 
-These are in the `0x0804xxxx` range and appear **nowhere** in the repo except `cfgfmt.py`'s
-comments; the disassembly dumps and Ghidra projects are all `0x0CF8xxxx`. A quick test of the
-obvious base hypothesis (`0x08000000 + offset` → transition bank offset `0x48d08`) found
-**data, not code**, so that base is wrong. The base these addresses belong to is still
-unresolved.
+The tool's strings: `#ata` at file offset `0x0804dad9`, `#txt` at `0x0804db3c`/`0x0804dc8f`.
+
+So the earlier "open — needs mapping" question is closed: these are tool addresses, and the
+tool (not the firmware) is the authority for the text↔binary format. Functions were renamed in
+the Ghidra project `/vendor-tools/cfgfmt.linux` (`maybe_cfgfmt_main`, `maybe_rc4_key_setup`,
+`maybe_build_binary_profile`, `maybe_decode_binary_profile`, …).
+
+> The config code that runs **on the device** is a different thing and lives in the packed main
+> and transition image (§8.1, §8.4). Do not conflate the two.
 
 ### 8.3 Recommended next step
 
@@ -404,14 +412,16 @@ the trace/syslog path (`sub_00010268` → `dispatcher_f82b38`) fires after each 
 Dump these tables from the decompiled data or the emulator and they become the firmware-side
 counterpart of `ptag.dat`.
 
-### 8.5 The `.linux` tools are i386 ELF (for format mapping)
+### 8.5 The `.linux` tools are i386 ELF (format mapping, started)
 
 `cfgfmt.linux` (stripped), `prserv.linux` and `sata186us.linux` (both **not stripped**, e.g.
 `BigNumAdd` in `sata186us.linux`) are 32-bit i386 ELF, dynamically linked. They implement the
-PC-side format exactly and are the authoritative reference for the TLV/RC4/varint/checksum
-behaviour `refactor/cfgfmt.py` models. Import them into Ghidra (i386 has first-class analysis)
-to confirm the format rather than trusting the reimplementation — this is the recommended way
-to close the `FUN_0804xxxx` question.
+PC-side format exactly.
+
+All three were imported into the Ghidra project (`/vendor-tools/…`) and `cfgfmt.linux`'s
+format functions were identified and named (§8.2). The remaining step is a behavioural diff of
+`refactor/cfgfmt.py` against `maybe_build_binary_profile` / `maybe_decode_binary_profile` /
+`maybe_rc4_key_setup` to confirm the reimplementation field-for-field.
 
 ---
 
@@ -474,9 +484,10 @@ are exactly `input output`.
    `ptag.dat`; recovering them maps TLV tag → internal index → descriptor/state.
 2. **Map the resident log/dispatch path**: `dispatcher_f82b38` (called from `sub_000100e8`) and
    the other `r24` cross-module targets; this is the syslog-after-dispatch family.
-3. **Confirm the binary/encryption format** by importing the i386 ELF tools (`cfgfmt.linux`
-   etc., §8.5) into Ghidra, closing the `FUN_0804xxxx` question directly instead of trusting
-   `refactor/cfgfmt.py`.
+3. **Binary/encryption format** (§8.2): the `FUN_0804xxxx` addresses are now identified as
+   **cfgfmt.linux** functions (tool, base `0x08048000`) and named in the Ghidra project. Next:
+   diff `cfgfmt.py`'s behaviour against `maybe_build_binary_profile` / `maybe_decode_binary_profile`
+   / `maybe_rc4_key_setup` to close any remaining divergence (e.g. the `"0xAA"` KSA prefix).
 4. **Confirm the split/extended mechanics** against a device profile >2000 bytes: file naming
    (`<out>` + `<out>.ex`, and `.x`/`.xex` for the strong pass) and the `0x4000` pointer.
 5. **RC4 key handling**: exact KSA variants for the hex-string (`-e`) vs byte (`-x`) keys, and
