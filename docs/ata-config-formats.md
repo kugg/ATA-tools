@@ -470,6 +470,38 @@ This is the "config structure + function-pointer dispatch" model: init fills the
 events/parameters select which handler runs. Recovering the populated tables requires running
 the init sequence (the same runtime-state problem as entry mode), not more static reading.
 
+### 8.7 Static parameter descriptor table (`0x4024`), decoded  [proven]
+
+Base `0x4024`, stride `0x14`, 84 entries; **byte 2 is the TLV tag** (75/84 match a `ptag.dat`
+name; the rest are internal-only tags 0/1/6/…). Field layout, from the init/apply code:
+
+| Offset | Meaning |
+| --- | --- |
+| `+0` (2) | flags |
+| `+2` (1) | **TLV tag** |
+| `+3` (1) | subtype/group |
+| `+4` (2) | size (bytes) |
+| `+6` (2) | runtime format code (`0x1700`, `0x1100`, `0x1500`, `0x0100`, …) |
+| `+10` (4) | value / default pointer |
+| `+14` (2) | pointer into the data span (names/defaults; descending `0x49xx`) |
+
+Example rows: `tag 3 StaticIP` (size 4), `tag 15 Dhcp`, `tag 20 UseTftp`, `tag 50 CfgInterval`,
+`tag 129 DialPlanEx`, `tag 160 FeatureTimer2`. Full dump:
+`/var/folders/0_/.../opencode/cfg_desc_table.txt`.
+
+### 8.8 Runtime tables are init-populated; standalone emulation diverges  [proven]
+
+* Resident dispatch table `0x2bc8`: zeroed by `sub_000068bc(0x2bc8, 0x140)` then filled by
+  per-event registration; `dispatcher_f82b38` reads `mem[0x2bc8 + code*4]`.
+* Config state `0x9d84`: filled per parameter by `sub_0002854c` from the `0x4024` descriptor
+  table during the init loop.
+* Attempting to run the packed main standalone (runtime image = data spans + zero gaps + code,
+  entry `0xc74c`, launch ABI regs) diverges into the data span (`pc` ends in `0x2fbc..0x7b84`)
+  without reaching the config init (`0x28000..0x29000`); 3M steps, no init. The tables need the
+  resident's runtime state, so they cannot be dumped without executing the full launch sequence.
+  Options for a later pass: finish the boot emulator, or capture the live tables over the
+  `NPrintf`/`prserv` debug channel (needs device access, not authorized here).
+
 ### 8.5 The `.linux` tools are i386 ELF (format mapping, started)
 
 `cfgfmt.linux` (stripped), `prserv.linux` and `sata186us.linux` (both **not stripped**, e.g.
