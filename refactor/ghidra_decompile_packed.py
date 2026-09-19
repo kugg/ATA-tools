@@ -78,12 +78,28 @@ public class PackedDecompile extends GhidraScript {
         return out;
     }
 
+    private List<String[]> readSites(String path) throws Exception {
+        List<String[]> out = new ArrayList<>();
+        BufferedReader br = new BufferedReader(new FileReader(path));
+        String line;
+        while ((line = br.readLine()) != null) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+            String[] parts = line.split("\\\\s+");
+            if (parts.length < 2) continue;
+            String kind = parts.length > 2 ? parts[2] : "call";
+            out.add(new String[] { parts[0], parts[1], kind });
+        }
+        br.close();
+        return out;
+    }
+
     @Override
     public void run() throws Exception {
         String sitesPath = getScriptArgs()[0];
         String startsPath = getScriptArgs()[1];
         String outPath = getScriptArgs()[2];
-        List<long[]> sites = readPairs(sitesPath);
+        List<String[]> sites = readSites(sitesPath);
         List<long[]> starts = readPairs(startsPath);
 
         // 1) linear-sweep so every word is an instruction before flows are built
@@ -92,16 +108,19 @@ public class PackedDecompile extends GhidraScript {
             Address ad = toAddr(a);
             if (getInstructionAt(ad) == null) disassemble(ad);
         }
-        // 2) link each jspci call site to its resolved target
+        // 2) link each jspci site to its resolved target.  A tail transfer is a
+        //    computed *jump*, so the callee's body is not merged into the caller.
         int linked = 0;
-        for (long[] site : sites) {
-            Address src = toAddr(site[0]);
-            Address dst = toAddr(site[1]);
+        for (String[] site : sites) {
+            Address src = toAddr(Long.parseLong(site[0], 16));
+            Address dst = toAddr(Long.parseLong(site[1], 16));
             Instruction ins = getInstructionAt(src);
             if (ins == null) continue;
+            RefType type = "jump".equals(site[2])
+                ? RefType.COMPUTED_JUMP : RefType.COMPUTED_CALL;
             try {
                 currentProgram.getReferenceManager().addMemoryReference(
-                    src, dst, RefType.COMPUTED_CALL, SourceType.USER_DEFINED, -1);
+                    src, dst, type, SourceType.USER_DEFINED, -1);
                 linked++;
             } catch (Exception e) {}
         }
@@ -154,25 +173,28 @@ public class PackedDecompile extends GhidraScript {
 
 
 def resolve_call_sites(payload: bytes, byte_order: str,
-                       register_bases: dict[int, int]) -> list[tuple[int, int]]:
-    """Resolved (site, target) pairs for direct calls, reusing mipsx_dasm.
+                       register_bases: dict[int, int]) -> list[tuple[int, int, str]]:
+    """Resolved (site, target, kind) triples, reusing mipsx_dasm.
 
-    Uses the tool's decoder and word iterator rather than a second ISA model.
+    ``kind`` is "call" (link register != r0) or "jump" (tail transfer).  The
+    distinction matters: a tail transfer is a jump, so it must be linked with
+    a computed *jump* reference, otherwise Ghidra merges the callee's body
+    into the caller and never creates a separate function.
     """
     regions = mipsx_dasm.validate_regions(
         [(0, len(payload) - (len(payload) % 4))], len(payload))
-    sites: list[tuple[int, int]] = []
+    sites: list[tuple[int, int, str]] = []
     for address, word in mipsx_dasm.iter_words(payload, regions, byte_order):
         instruction = mipsx_dasm.decode(word, address, register_bases)
-        if instruction.kind == "jump" and instruction.role == "call" \
-                and instruction.target is not None:
-            sites.append((address, instruction.target))
+        if instruction.kind == "jump" and instruction.target is not None:
+            kind = "call" if instruction.role == "call" else "jump"
+            sites.append((address, instruction.target, kind))
     return sites
 
 
 def resolve_function_starts(payload: bytes, byte_order: str,
                             register_bases: dict[int, int]) -> list[int]:
-    """Candidate function starts: jspci call targets plus r29 stack prologues.
+    """Candidate function starts: jspci targets (call or tail) plus r29 prologues.
 
     Reuses mipsx_dasm's prologue test and decoder; not a second ISA model.
     """
@@ -183,8 +205,9 @@ def resolve_function_starts(payload: bytes, byte_order: str,
         if mipsx_dasm.is_stack_prologue(word):
             starts.add(address)
         instruction = mipsx_dasm.decode(word, address, register_bases)
-        if instruction.kind == "jump" and instruction.role == "call" \
-                and instruction.target is not None \
+        # A resolved jspci target is a function entry whether it is a call
+        # (link != r0) or a tail transfer (link r0); include both.
+        if instruction.kind == "jump" and instruction.target is not None \
                 and mipsx_dasm.address_in_regions(instruction.target, regions):
             starts.add(instruction.target)
     return sorted(starts)
@@ -193,7 +216,7 @@ def resolve_function_starts(payload: bytes, byte_order: str,
 def resolve_call_targets(payload: bytes, byte_order: str,
                          register_bases: dict[int, int]) -> list[int]:
     """Unique resolved local call targets for one payload."""
-    return sorted({target for _, target in
+    return sorted({target for _, target, _ in
                    resolve_call_sites(payload, byte_order, register_bases)})
 
 
@@ -249,8 +272,8 @@ def main(argv: list[str] | None = None) -> int:
         with open(payload_path, "wb") as handle:
             handle.write(payload)
         with open(sites_path, "w") as handle:
-            for source, target in sites:
-                handle.write(f"{args.base + source:x} {args.base + target:x}\n")
+            for source, target, kind in sites:
+                handle.write(f"{args.base + source:x} {args.base + target:x} {kind}\n")
         with open(starts_path, "w") as handle:
             for start in starts:
                 handle.write(f"{args.base + start:x}\n")

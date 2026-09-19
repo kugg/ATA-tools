@@ -368,6 +368,51 @@ actual config/web logic (name table iteration, form generation, `#ata` handling)
 the RC4/varint/checksum routines the reimplementation models. This uses the reversed firmware
 directly and would let `docs/ata-config-formats.md` stop relying on `cfgfmt.py`'s comments.
 
+### 8.4 The config parser and dispatcher in the packed main  [proven from the decompiled C]
+
+The SIP **application** (packed main, base 0, decompiled in `ghidra-project-packed`) does the
+profile parsing with numeric constants — there are no strings and no C `switch`; the dispatch
+is table/pointer based, matching the working hypothesis that config drives function-pointer
+selection.
+
+Chain recovered from the annotated C (`research/decompiled/named/packed_main_annotated.c`):
+
+| Function | Role |
+| --- | --- |
+| `sub_00037a1c` | **Profile parser.** Reads varints (`sub_00010dfc`), checks header `tag == 0x7FFE && len == 4`, verifies checksum (`sub_0000ff7c`), then calls the TLV processor. Error paths log `0x60xx` codes via `sub_000381e4`. |
+| `sub_000380c0` | **TLV record loop.** For each `(tag,len)`: skips `tag < 0xff` unless `tag == 1` or `0x12`; applies via `sub_00024688`; special-cases tags `0x23` and `0x66`; logs `0x6048/0x6088/0x609c` via `sub_00010268`. |
+| `sub_00024688` | **Tag setter** = `store(lookup(tag), value)`. |
+| `sub_00024aa8` → `sub_00024ae8` | **Tag lookup**: linear search of a descriptor table at RAM **`0x4026 + i*0x10`** (16-byte stride) for the tag word. |
+| `sub_00024064` | **Apply**: index-bounded `1..0x54`; reads a **0x14-byte descriptor at RAM `0x4024 + index*0x14`** and a **0xc-byte state entry at RAM `0x9d84 + index*0xc`**. This is the "config struct" the settings are loaded into. |
+| `sub_00010268` | **Logger/trace**: `sub_0000bb60` (format) → `sub_000100e8`. |
+| `sub_000100e8` | **Log dispatcher**: only records whose first byte is `0x60`; calls the **resident** `dispatcher_f82b38(param, ..., 0)` and manages log state (`iRam00008390`). |
+| `sub_000381e8` / `sub_000381e4` | Completion / error-report tail targets (event codes `0x60xx`). |
+
+**Cross-module evidence:** `sub_000100e8` calls `dispatcher_f82b38`, a **resident** function
+name from `signatures.json`, and `sub_000380c0` calls `func_0cf80f8c`. These are exactly the
+`r24` cross-module calls resolved in §"r24" above — the packed main drives resident
+dispatchers. This supports the hypothesis: config state selects which dispatched task runs, and
+the trace/syslog path (`sub_00010268` → `dispatcher_f82b38`) fires after each dispatched task.
+
+**Tables to recover next** (all in packed-main RAM, base 0):
+
+* `0x4024`, stride `0x14`, indices `1..0x54` — the parameter descriptor table (likely
+  tag/format/size/current-value, cf. `ptag.dat`).
+* `0x9d84`, stride `0xc` — per-parameter runtime state.
+* `0x4026`, stride `0x10` — tag→index lookup table.
+
+Dump these tables from the decompiled data or the emulator and they become the firmware-side
+counterpart of `ptag.dat`.
+
+### 8.5 The `.linux` tools are i386 ELF (for format mapping)
+
+`cfgfmt.linux` (stripped), `prserv.linux` and `sata186us.linux` (both **not stripped**, e.g.
+`BigNumAdd` in `sata186us.linux`) are 32-bit i386 ELF, dynamically linked. They implement the
+PC-side format exactly and are the authoritative reference for the TLV/RC4/varint/checksum
+behaviour `refactor/cfgfmt.py` models. Import them into Ghidra (i386 has first-class analysis)
+to confirm the format rather than trusting the reimplementation — this is the recommended way
+to close the `FUN_0804xxxx` question.
+
 ---
 
 ## 9. Working commands
@@ -424,21 +469,26 @@ are exactly `input output`.
 
 ## 10. Open questions for the next agent
 
-1. **Map the `0x0804xxxx` functions** (§8) to a real image and confirm the binary/encryption
-   logic directly, rather than trusting the reimplementation.
-2. **Confirm the split/extended mechanics** against a device profile >2000 bytes: file naming
+1. **Dump the packed-main config tables** (§8.4): `0x4024` (stride `0x14`, indices `1..0x54`),
+   `0x9d84` (stride `0xc`), `0x4026` (stride `0x10`). These are the firmware-side counterpart of
+   `ptag.dat`; recovering them maps TLV tag → internal index → descriptor/state.
+2. **Map the resident log/dispatch path**: `dispatcher_f82b38` (called from `sub_000100e8`) and
+   the other `r24` cross-module targets; this is the syslog-after-dispatch family.
+3. **Confirm the binary/encryption format** by importing the i386 ELF tools (`cfgfmt.linux`
+   etc., §8.5) into Ghidra, closing the `FUN_0804xxxx` question directly instead of trusting
+   `refactor/cfgfmt.py`.
+4. **Confirm the split/extended mechanics** against a device profile >2000 bytes: file naming
    (`<out>` + `<out>.ex`, and `.x`/`.xex` for the strong pass) and the `0x4000` pointer.
-3. **RC4 key handling**: exact KSA variants for the hex-string (`-e`) vs byte (`-x`) keys, and
+5. **RC4 key handling**: exact KSA variants for the hex-string (`-e`) vs byte (`-x`) keys, and
    whether `EncryptKey`/`EncryptKeyEx` in a served profile are *configuration data* or also
-   select output encryption (the reimplementation treats them as data — see tests
-   `test_profile_key_is_configuration_data_not_output_encryption`).
-4. **XML field completeness**: is the `<ATADev>` element set identical to the `ptag.dat`
-   names, and does CUCM add/rename any?
-5. **`bitaid`**: reconstruct the exact bit-range semantics for the bitmap parameters
+   select output encryption (the reimplementation treats them as data).
+6. **XML field completeness**: is the `<ATADev>` element set identical to the `ptag.dat` names,
+   and does CUCM add/rename any?
+7. **`bitaid`**: reconstruct the exact bit-range semantics for the bitmap parameters
    (`OpFlags`, `CallFeatures`, `VLANSetting`, …).
-6. **Tones**: `cptones.txt` per-country tables vs the `DialTone`/`BusyTone` array encoding
+8. **Tones**: `cptones.txt` per-country tables vs the `DialTone`/`BusyTone` array encoding
    (`tone_pair`, `refactor/cfgfmt.py:484`).
-7. **Provisioning security**: the profile is RC4-protected, not authenticated; document the
+9. **Provisioning security**: the profile is RC4-protected, not authenticated; document the
    threat model before any live use (see `docs/security.md`).
 
 ---
