@@ -30,7 +30,11 @@ import argparse
 import struct
 import sys
 import time
-import zlib
+
+try:
+    from . import mipsx_image
+except ImportError:  # executed as a script with refactor/ on sys.path
+    import mipsx_image
 
 
 MAX_PACKAGE_BYTES = 2 * 1024 * 1024
@@ -44,17 +48,9 @@ MAX_STEPS = 400_000_000
 RUNTIME_BASE = 0x0CF80000      # alias window start; identity with the bank
 PC_TAG = 0x40000000            # terminal type-3 PC tag, stripped on transfer
 
-# Pinned SIP 3.1.0 image: stored-deflate stream table
-# (package offset, stored bytes, bank destination, output bytes).
-SIP_DEFLATE_STREAMS = (
-    (0x2E96C, 0x1A, 0x0, 0x100),
-    (0x2E986, 0x1366A, 0xA00, 0x2E00C),
-    (0x41FF0, 0x29, 0x2EA0C, 0xF4),
-    (0x42019, 0x77E9, 0x40000, 0x79BC),
-    (0x49802, 0x33B9, 0x77000, 0x3400),
-    (0x4CBBB, 0xCA1, 0x7D000, 0x1F00),
-    (0x4D85C, 0x5DB, 0x7F400, 0xC00),
-)
+# The bank image is no longer rebuilt here.  refactor/zup_bank.py owns
+# reconstruction and refactor/mipsx_image.py gates it on the pinned digest;
+# hardcoding region tables here previously dropped the four raw regions.
 
 # Pinned launch ABI register state (main launch table, records 0..26),
 # and the terminal type-3 entry: (0x400031d3 & ~PC_TAG) * 4 = bank 0xc74c.
@@ -98,50 +94,10 @@ def shift_amount(encoded: int) -> int:
     return 32 - (((encoded & 0x70) >> 2) + adjustment)
 
 
-class Memory:
-    """Flat 1 MiB window plus the 0x2000xxxx special-function window.
-
-    Every aliased window (bank identity at 0x0CF80000, the bit24/bit28/bit31
-    tagged forms) folds to ``addr & 0xFFFFF``.  The SFR window absorbs
-    writes, so device initialization cannot corrupt the image.
-    """
-
-    def __init__(self, image: bytes) -> None:
-        if len(image) > MAX_BANK_BYTES:
-            raise ValueError("bank image exceeds 512 KiB")
-        self.m = bytearray(FLAT_BYTES)
-        self.m[: len(image)] = image
-        self.sfr: dict[int, int] = {}
-
-    def _flat(self, addr: int) -> int:
-        addr &= MASK32
-        if 0x1C000000 <= addr < 0x1D000000:
-            # bit28 window: bank-relative read/write alias
-            return (addr - 0x1CF80000) & 0x7FFFF
-        if 0x0D000000 <= addr < 0x0E000000:
-            # bank mirror page used for data reads past the 512 KiB mark
-            return addr & 0xFFFFFF
-        if 0x0CF80000 <= addr < 0x0D000000:
-            return addr - 0x0CF80000            # bank identity alias
-        if addr & 0x80000000:
-            return addr & 0x7FFFF               # bit31 tagged window
-        if 0x01000000 <= addr < 0x02000000:
-            return (addr - 0x01000000) & (FLAT_BYTES - 1)
-        return addr & (FLAT_BYTES - 1)
-
-    def load(self, addr: int) -> int:
-        addr &= MASK32
-        if 0x20000000 <= addr < 0x20100000:
-            return self.sfr.get(addr & 0xFFFF, 0)
-        return struct.unpack_from(">I", self.m, self._flat(addr))[0]
-
-    def store(self, addr: int, value: int) -> None:
-        addr &= MASK32
-        value &= MASK32
-        if 0x20000000 <= addr < 0x20100000:
-            self.sfr[addr & 0xFFFF] = value
-            return
-        struct.pack_into(">I", self.m, self._flat(addr), value)
+# Shared alias/memory model: refactor/mipsx_image.py owns address folding so
+# the emulator, resolver, and table scanner cannot disagree about which byte
+# an address names.
+Memory = mipsx_image.Memory
 
 
 class CPU:
@@ -307,18 +263,16 @@ class CPU:
 
 
 def build_runtime_image(package: bytes) -> bytes:
-    """Expand the pinned stored-deflate streams into an 512 KiB image."""
+    """Reconstruct the pinned SIP bank through the single validated builder.
+
+    Delegates to refactor/mipsx_image.py (which wraps refactor/zup_bank.py)
+    and asserts the pinned SHA-256, so an incomplete or wrong image raises
+    instead of silently steering the interpreter down a bogus branch.
+    """
     if len(package) > MAX_PACKAGE_BYTES:
         raise ValueError("package exceeds the bounded size")
-    image = bytearray(MAX_BANK_BYTES)
-    for src, stored, dst, out in SIP_DEFLATE_STREAMS:
-        if src + stored > len(package):
-            raise ValueError("deflate stream outside package")
-        data = zlib.decompress(package[src:src + stored], -15)
-        if len(data) != out:
-            raise ValueError(f"stream at 0x{src:x} expanded to {len(data)} != {out}")
-        image[dst:dst + out] = data
-    return bytes(image)
+    return mipsx_image.build_bank_checked(
+        package, mipsx_image.PINNED_SIP_SHA256)
 
 
 def resolve_dispatch(offset: int, anchor: int = 0x40A00) -> int:

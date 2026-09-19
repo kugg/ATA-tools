@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<processor_spec>
+  <programcounter register="pc"/>
+  <register_data>
+    <register name="r29" group="Stack"/>
+    <register name="r0" group="General"/>
+    <register name="r31" group="General"/>
+    <register name="psw" group="Special"/>
+    <register name="md" group="Special"/>
+    <register name="pcm4" group="Special"/>
+    <register name="pcml" group="Special"/>
+    <register name="psw_other" group="Special"/>
+  </register_data>
+  <context_data>
+    <tracked_set space="ram">
+      <set name="r0" val="0" description="MIPS-X architectural zero register"/>
+    </tracked_set>
+  </context_data>
+</processor_spec>

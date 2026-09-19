@@ -218,6 +218,11 @@ delivery. Keep device-specific profiles and passwords local.
 an ATA or run a TFTP service. Use the `ptag.dat` and template from the exact firmware
 support package; they are not interchangeable across arbitrary releases.
 
+For the full format reference (the `ptag.dat` descriptor table, the binary `#ata` TLV
+layout, RC4 weak/strong encryption, split/extended profiles, the XML/web representations,
+and the firmware functions that implement them), see
+[ATA configuration formats](docs/ata-config-formats.md).
+
 ```sh
 PTAG=/lawful/private/path/ptag.dat
 
