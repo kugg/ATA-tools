@@ -303,6 +303,39 @@ captured device profile back into readable text.
 * This channel is the natural place to look for runtime config traces (the "strings
   debugging" angle). `TraceFlags` / `SyslogIP` / `SyslogCtrl` control related logging.
 
+### 7.1 Enabling syslog  [proven]
+
+`SyslogIP` = `<collector_ip>.<udp_port>` (extended IP; `0.0.0.0.514` disables it) and
+`SyslogCtrl` = class bitmask (`0xFFFFFFFF` enables every recovered class; the class table is in
+`docs/ata-sip-firmware-services.md`). Apply with the live HTTP POST path (§7.2) for immediate
+effect; a fetched TFTP profile alone does not update these two in the running config.
+
+Messages arrive as single UDP datagrams in the PRI-like format `%s<%d>%s %s [%02d]:%s`, for
+example `[03]:ATA Config Update OK` or `[00]:ARP Update:MAC:..., IP:...`. Any UDP/514 listener
+works as collector; expect DHCP/TFTP/ARP/signaling classes as those subsystems run. The stream
+is diagnostic device state — keep it on the collector host unless a privacy review says
+otherwise.
+
+### 7.2 Applying configuration without a reboot  [proven]
+
+Three delivery paths, in order of immediacy:
+
+1. **HTTP POST to `/dev`** (the vendor `atapost.pl` mechanism): GET `http://<ata>/dev`, parse
+   the form fields (`name="Field" Value="..."`), replace the fields to change, and POST the
+   **entire field set** back as `application/x-www-form-urlencoded`. This applies immediately.
+   Example: enabling syslog (`SyslogIP`, `SyslogCtrl`) took effect live and the device logged
+   `ATA Config Update OK` with no reset.
+2. **TFTP profile resync**: send the device a SIP `NOTIFY` with `Event: check-sync` (for a
+   `chan_sip` peer: `sip notify check-sync <peer>`); the ATA re-fetches `<MAC>.cnf.xml`
+   immediately instead of waiting for `CfgInterval`.
+3. **Profile-driven reset**: serving a profile whose apply flow computes `cfgNeedReboot` makes
+   the device reset itself (see `docs/ata-sip-firmware-services.md`). Keep the DHCP responder
+   up across the reset so the device re-leases and re-fetches at boot.
+
+A power cycle is never required for configuration. Long DHCP leases (hours) make cycle-based
+workflows unreliable — the device has no reason to re-DHCP or re-fetch while its lease is
+valid; use a short lease for lab devices, or force configuration through (1)/(2).
+
 ---
 
 ## 8. Where the config code lives in the firmware  [partially resolved]
