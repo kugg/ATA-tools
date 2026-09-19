@@ -184,28 +184,34 @@ def _ksa_from_key_bytes(key: bytes | bytearray) -> bytearray:
     return s
 
 
+def _hex_pair_byte(pair: str) -> int:
+    """One key byte exactly as the original derives it.
+
+    The original builds the string ``"0xAA" + pair`` and calls
+    ``strtoul(..., 0)``, then keeps the low byte.  Because ``0xAA`` is the
+    high part, a valid pair yields its own value, but a non-hex character
+    stops parsing and the prefix's low bits leak through: ``"12"``->0x12,
+    ``"1g"``->0xA1, ``"g1"``->0xAA.
+    """
+    value = 0xAA
+    for ch in pair:
+        if ch in "0123456789abcdefABCDEF":
+            value = value * 16 + int(ch, 16)
+        else:
+            break
+    return value & 0xFF
+
+
 def _ksa_from_hex_string(key_str: str) -> bytearray:
     """KSA for ``-e`` / profile ``EncryptKey`` hex-string keys.
 
-    The original pads an odd-length key with ``'0'`` and converts each
-    pair as ``strtoul("0x"+pair, 0)`` (non-hex pairs yield 0).
+    The original pads an odd-length key with ``'0'`` and converts each pair
+    through :func:`_hex_pair_byte` (the ``"0xAA" + pair`` trick).
     """
     s = key_str
     if len(s) & 1:
         s = s + "0"
-    key = bytearray()
-    for i in range(0, len(s), 2):
-        pair = s[i:i + 2]
-        try:
-            key.append(int(pair, 16))
-        except ValueError:
-            v = 0
-            for ch in pair:
-                if ch in "0123456789abcdefABCDEF":
-                    v = v * 16 + int(ch, 16)
-                else:
-                    break
-            key.append(v & 0xFF)
+    key = bytearray(_hex_pair_byte(s[i:i + 2]) for i in range(0, len(s), 2))
     if not key:
         key = bytearray(b"\x00")
     return _ksa_from_key_bytes(key)
@@ -920,7 +926,13 @@ def _parse_encrypt_key_ex(profile: ParsedProfile, value: str) -> None:
 # binary building (FUN_0804b79c)
 
 def _wrap_1105(value: bytes) -> bytes:
-    inner = (bytes(value) + b"\x00" * 0x26)[:0x26]
+    """Wrap tag 0x1105 exactly as the original (FUN_0804a60c).
+
+    Layout: ``prefix(4) || checksum16 || value``; everything from byte 4 on is
+    RC4-encrypted with the fixed 16-byte key.  The original uses the value's
+    own length (no padding) and writes the TLV length as ``len(value) + 6``.
+    """
+    inner = bytes(value)
     csum = checksum_internet(inner)
     plain = _FIXED_1105_PREFIX + struct.pack(">H", csum) + inner
     enc_tail = RC4.from_bytes(_FIXED_1105_RC4KEY).crypt(plain[4:])

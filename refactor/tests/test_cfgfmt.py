@@ -131,6 +131,13 @@ class RC4Test(unittest.TestCase):
         rc2 = cfgfmt.RC4.from_hex_string("abc0")
         self.assertEqual(rc.crypt(b"hello"), rc2.crypt(b"hello"))
 
+    def test_hex_pair_matches_strtoul_0xaa_trick(self):
+        # The original builds "0xAA" + pair and keeps the low byte.
+        self.assertEqual(cfgfmt._hex_pair_byte("12"), 0x12)
+        self.assertEqual(cfgfmt._hex_pair_byte("ab"), 0xAB)
+        self.assertEqual(cfgfmt._hex_pair_byte("1g"), 0xA1)  # parse stops at 'g'
+        self.assertEqual(cfgfmt._hex_pair_byte("g1"), 0xAA)  # stops immediately
+
 
 class SecurityOptionsTest(unittest.TestCase):
     def test_inline_keys_are_rejected_without_echoing_them(self):
