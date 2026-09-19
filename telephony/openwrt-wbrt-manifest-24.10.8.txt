@@ -1,0 +1,19 @@
+# OpenWrt 24.10.8 x86_64 WebRTC (Phase 4 "wbrt") closure delta
+#
+# These five ipks are the only artifacts beyond the installed twin closure:
+#   asterisk-pjsip          -> pjsip channel driver + transports
+#   asterisk-res-pjproject  -> res_pjproject (pjsip dependency)
+#   asterisk-res-sorcery    -> res_sorcery (pjsip dependency)
+#   asterisk-res-srtp       -> SRTP media encryption for DTLS-SRTP
+#   libsrtp2-1              -> libsrtp2 (res-srtp dependency)
+#
+# Already installed on the APU from the twin closure: asterisk,
+# asterisk-res-http-websocket, libpjsip*, libpjmedia, libpjnath, libpjsua*,
+# libopenssl3, libstdcpp6. Fetch with:
+#   tests/openwrt/pin-fetch-twin-closure.py --manifest <this file> --stage
+asterisk-pjsip
+asterisk-res-pjproject
+asterisk-res-sorcery
+asterisk-res-srtp
+libsrtp2-1
+asterisk-res-clioriginate

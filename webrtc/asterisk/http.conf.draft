@@ -1,0 +1,14 @@
+; ============================================================================
+; Phase 4 "wbrt" DRAFT - Asterisk HTTP server with the WSS listener.
+; res_http_websocket serves the /ws path on this listener:
+;   wss://<apu>:8089/ws
+; NOT applied. Self-signed certs are acceptable for the LAN draft only.
+; ============================================================================
+
+[general]
+enabled=yes
+bindaddr=0.0.0.0
+tlsenable=yes
+tlsbindaddr=0.0.0.0:8089
+tlscertfile=/etc/asterisk/keys/webrtc.crt
+tlsprivatekey=/etc/asterisk/keys/webrtc.key

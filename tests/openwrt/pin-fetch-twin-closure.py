@@ -29,12 +29,12 @@ FEEDS = {
 }
 ABS_MANIFEST = "/Users/user/devel/ata/telephony/openwrt-twin-manifest-24.10.8.txt"
 
-def fetch_gz(url: str) -> bytes:
+def fetch_gz(url: str, gunzip: bool = True) -> bytes:
     ctx = ssl.create_default_context()
     req = urllib.request.Request(url, headers={"User-Agent": "ata-twin-closure-pin/1.0"})
     with urllib.request.urlopen(req, timeout=60, context=ctx) as r:
         data = r.read()
-    if data[:2] == b"\x1f\x8b":
+    if gunzip and data[:2] == b"\x1f\x8b":
         data = gzip.decompress(data)
     return data
 
@@ -58,10 +58,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", action="store_true", help="write verified ipks (default: dry-run)")
     ap.add_argument("--stage-dir", default=None)
+    ap.add_argument("--manifest", default=ABS_MANIFEST,
+                    help="package-name manifest (default: twin closure)")
     args = ap.parse_args()
 
     umask = os.umask(0o077)
-    with open(ABS_MANIFEST, "r", encoding="utf-8") as f:
+    with open(args.manifest, "r", encoding="utf-8") as f:
         manifest = [l.strip() for l in f
                     if l.strip() and not l.strip().startswith("#")]
 
@@ -100,7 +102,7 @@ def main() -> int:
         feed, fn, want = index[name]
         url = FEEDS[feed].rsplit("/", 1)[0] + "/" + fn
         try:
-            data = fetch_gz(url)
+            data = fetch_gz(url, gunzip=False)
         except Exception as e:
             print(f"FETCH-FAIL {name}: {e}"); return 4
         got = hashlib.sha256(data).hexdigest()

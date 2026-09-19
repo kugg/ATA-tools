@@ -1,0 +1,44 @@
+; ============================================================================
+; Phase 4 "wbrt" - pjsip WebRTC transport + LAN/WG endpoint (applied 2026-09-18).
+; The ATA path uses chan_sip and is intentionally untouched.
+; Plain HTTP stays on loopback (see http.conf); WSS listener 0.0.0.0:8089.
+; AOR "180" = the web page(s): browsers REGISTER as sip:180@<host>; dialing
+; PJSIP/webrtc-lan forks to all registered pages (max_contacts=8).
+; ============================================================================
+
+[transport-wss]
+type=transport
+protocol=wss
+bind=0.0.0.0:8089
+cert_file=/etc/asterisk/keys/webrtc.crt
+priv_key_file=/etc/asterisk/keys/webrtc.key
+
+[webrtc](!)
+type=endpoint
+context=from-webrtc
+disallow=all
+allow=ulaw
+allow=alaw
+webrtc=yes
+media_encryption=dtls
+dtls_auto_generate_cert=no
+use_avpf=yes
+ice_support=yes
+rtcp_mux=yes
+rtp_symmetric=yes
+direct_media=no
+force_rport=yes
+rewrite_contact=yes
+
+[webrtc-lan](webrtc)
+aors=180
+
+[180]
+type=aor
+max_contacts=8
+
+[webrtc-lan-identify]
+type=identify
+endpoint=webrtc-lan
+match=192.168.2.0/24
+match=10.47.11.0/24

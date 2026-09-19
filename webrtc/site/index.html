@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Office phone bridge</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <h1>Office phone bridge</h1>
+  <p id="status" class="status idle">Starting...</p>
+  <div class="controls">
+    <button id="call" class="primary">Call the office</button>
+    <button id="accept" class="primary" hidden>Accept</button>
+    <button id="reject" class="danger" hidden>Reject</button>
+  </div>
+  <div class="controls">
+    <button id="mute" disabled>Mute</button>
+    <button id="hangup" disabled>Hang up</button>
+  </div>
+  <audio id="remoteAudio" autoplay></audio>
+  <p id="hint" class="hint"></p>
+</main>
+<script src="vendor/sip.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

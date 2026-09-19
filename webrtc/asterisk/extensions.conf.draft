@@ -1,0 +1,10 @@
+; ============================================================================
+; Phase 4 "wbrt" DRAFT - dialplan context for browser callers.
+; Kept separate from [from-ata] so the ATA path is untouched.
+; No Answer() before Dial: the caller must stay in "early" state so it sees
+; 180/183 ringing from the office phone. "r" generates ringback tone.
+; ============================================================================
+
+[from-webrtc]
+exten => 100,1,Dial(SIP/100,30,r)
+ same => n,Hangup()
