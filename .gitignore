@@ -35,3 +35,7 @@ ptag.dat
 # Local-only rebuildable C research tree and proprietary decompiled/derived
 # outputs (disassembly dumps, decompiled C, rename maps); never publish.
 research/
+WORKLOG.md
+TODO.md
+docs/handoff.md
+docs/install-day-2026-09-18.md
