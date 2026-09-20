@@ -4,6 +4,7 @@
     wssUrl: "wss://" + host + ":8089/ws",
     sipDomain: host,
     targetExtension: "100",
+    echoExtension: "999",
     displayName: "Office visitor",
     iceServers: []
   };

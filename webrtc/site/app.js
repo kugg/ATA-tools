@@ -3,6 +3,7 @@
   const $ = (id) => document.getElementById(id);
   const statusEl = $("status");
   const callBtn = $("call");
+  const echoBtn = $("echo");
   const acceptBtn = $("accept");
   const rejectBtn = $("reject");
   const muteBtn = $("mute");
@@ -86,6 +87,7 @@
 
   function resetButtons() {
     callBtn.disabled = false;
+    if (echoBtn) echoBtn.disabled = false;
     acceptBtn.hidden = true;
     rejectBtn.hidden = true;
     muteBtn.disabled = true;
@@ -205,8 +207,9 @@
     }
   }
 
-  async function call() {
+  async function call(ext, what) {
     callBtn.disabled = true;
+    if (echoBtn) echoBtn.disabled = true;
     setStatus("Calling...", "busy");
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
@@ -215,7 +218,7 @@
     try {
       const agent = await ensureUA();
       const target = SIP.UserAgent.makeURI(
-        "sip:" + cfg.targetExtension + "@" + cfg.sipDomain
+        "sip:" + ext + "@" + cfg.sipDomain
       );
       if (!target) throw new Error("bad target URI");
       const inviter = new SIP.Inviter(agent, target);
@@ -223,17 +226,17 @@
       inviter.delegate = {
         onProgress: () => {
           if (session === inviter) {
-            setStatus("Ringing the office phone...", "busy");
+            setStatus("Ringing " + what + "...", "busy");
             startRingback();
           }
         }
       };
       inviter.stateChange.addListener((state) => {
         if (state === SIP.SessionState.Establishing) {
-          setStatus("Calling " + cfg.targetExtension + "...", "busy");
+          setStatus("Calling " + ext + "...", "busy");
         } else if (state === SIP.SessionState.Established) {
           stopRingback();
-          setStatus("Connected - the office answered", "ok");
+          setStatus("Connected - " + what + " answered", "ok");
           muteBtn.disabled = false;
           hangupBtn.disabled = false;
           attachRemote(inviter);
@@ -255,7 +258,10 @@
     }
   }
 
-  callBtn.addEventListener("click", call);
+  callBtn.addEventListener("click", () => call(cfg.targetExtension, "the office"));
+  if (echoBtn) {
+    echoBtn.addEventListener("click", () => call(cfg.echoExtension || "999", "echo test"));
+  }
   acceptBtn.addEventListener("click", acceptIncoming);
   rejectBtn.addEventListener("click", rejectIncoming);
   muteBtn.addEventListener("click", toggleMute);

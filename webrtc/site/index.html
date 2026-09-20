@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Office phone bridge</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <main>
@@ -12,6 +12,7 @@
   <p id="status" class="status idle">Starting...</p>
   <div class="controls">
     <button id="call" class="primary">Call the office</button>
+    <button id="echo">Echo test</button>
     <button id="accept" class="primary" hidden>Accept</button>
     <button id="reject" class="danger" hidden>Reject</button>
   </div>
@@ -23,7 +24,7 @@
   <p id="hint" class="hint"></p>
 </main>
 <script src="vendor/sip.min.js"></script>
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script src="config.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
