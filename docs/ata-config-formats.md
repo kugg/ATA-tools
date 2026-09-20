@@ -287,7 +287,10 @@ captured device profile back into readable text.
 * **HTTP POST**: `atapost.pl <ip> -field=value` (v2.0+) and `-xml` (v3.0+) — requires the
   web interface enabled (`OpFlags` bit 7 clear).
 * **IVR voice menu**: numeric access codes (e.g. `7387277` for `UIPassword`, `81#` for
-  `NPrintf`); `*` enters the dot in IP addresses.
+  `NPrintf`); `*` enters the dot in IP addresses. Entry: press the red function button on
+  the ATA, then dial on the attached phone. For alphanumeric values, multi-tap a key to
+  cycle characters, `#` saves the current character, then press `#` again and `3` to save
+  the whole string.
 * **PC upgrade server**: `sata186us` serves `.zup` (software) / `.kup` (language) images on
   port 8000; the phone is told `100#<pc_ip>*8000#` (software) or `101#…` (language).
 

@@ -44,6 +44,10 @@ TFTP config in that mode.
   version.
 - Note the MAC on the label: the ATA asks TFTP for `<mac>.cnf.xml` (lowercase),
   e.g. `ata00070e36e57b.cnf.xml`.
+- **Entering IVR codes:** press the red **function button** on the ATA itself,
+  then dial on the attached phone. If a value contains letters, multi-tap a key
+  to cycle through its characters; `#` saves the current character, then press
+  `#` again and `3` to save the whole string.
 - Useful IVR codes: `123#` version, `81#` NPrintf (debug), `7387277` UI
   password, `792#` config dump (more in `docs/ata-sip-firmware-services.md`).
 
