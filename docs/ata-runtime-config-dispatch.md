@@ -69,6 +69,28 @@ call sites, 188 residual dynamic callbacks. Provenance of the tooling changes: W
 - **Log path:** `maybe_log_event` → `maybe_log_dispatch` (`0x100e8`) → resident
   `dispatcher_f82b38` (only records whose first byte is `0x60`).
 
+### 2.1 Data-span pointer tables are runtime addresses  [proven]
+
+A pointer stored in a type-8 mode-1 data span is a **runtime** word address; the
+payload-relative offset the decompiler uses is `value*4 - 0xc74c`. This resolves the
+`g_dispatch_7580` table (called as `(*(code *)(*(int *)(idx*4 + 0x7580) << 2))()`):
+
+```
+[ 0] sub_00055c70   [ 1] sub_000562c8   [ 2] sub_00056568   [ 3] sub_00056ca4
+[ 4] sub_00057968   [ 5] sub_000574b8   [ 6] sub_0005847c   [ 7] sub_00058064
+[ 8] sub_00057968   [ 9] sub_00058338   [10] sub_000583f0   [11] sub_000570bc
+[12] sub_000566b8   [13] sub_000585dc
+```
+
+All 14 resolve to function prologues. Reproduce with
+`python3 refactor/resolve_data_tables.py` (deterministic, evidence-backed; the result is
+recorded on `g_dispatch_7580` in `refactor/naming/packed_main.json`). The index is a runtime
+value, so the call *sites* remain dynamic, but the handler set is now known.
+
+Other callback families are context-relative and still dynamic: `unaff_r30 - 0x3c` (frame
+slot, 17 sites), `*+0x108` (context field, ~11 sites), `param_1 + 0x68` (arg field). Their
+targets depend on the runtime context struct, not a static table.
+
 ## 3. Does the config struct drive the dispatcher?
 
 Two facts bound the answer:

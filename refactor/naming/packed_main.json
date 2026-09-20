@@ -51,6 +51,8 @@
     {"address": "0x4026", "name": "g_cfg_tag_ref",
      "evidence": "descriptor +2 field searched by 0x24ae8 (tag->index). WORKLOG 2026-09-19b."},
     {"address": "0x2bc8", "name": "g_event_table",
-     "evidence": "resident event dispatch table (0..0x4f); zeroed then registration-populated. WORKLOG 2026-09-19d."}
+     "evidence": "resident event dispatch table (0..0x4f); zeroed then registration-populated. WORKLOG 2026-09-19d."},
+    {"address": "0x7580", "name": "g_dispatch_7580",
+     "evidence": "data-span table of 14 runtime function pointers (entries 0..13): payload sub_00055c70, sub_000562c8, sub_00056568, sub_00056ca4, sub_00057968, sub_000574b8, sub_0005847c, sub_00058064, sub_00057968, sub_00058338, sub_000583f0, sub_000570bc, sub_000566b8, sub_000585dc. Called as (*(code*)(*(int*)(idx*4+0x7580)<<2))(); the stored value is a RUNTIME address = payload_offset + 0xc74c. WORKLOG 2026-09-19h."}
   ]
 }
