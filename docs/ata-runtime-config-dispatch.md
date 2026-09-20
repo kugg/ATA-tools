@@ -189,14 +189,17 @@ disassembles). Progress:
 * **SLEIGH fix:** `movtos`/`movfrs` failed to decode for special-register codes 1/2 (only code 4
   was defined). Added `SpecTo` for `psw` (code 1) and `md` (code 2); recompiled and installed
   via `firmware/ghidra_module/install_cspec.sh`. A real module improvement.
-* The emulator now runs **10M steps without faulting** — but loops in the reset tail
-  (`0x7fdf8..0x7fe18`), so it never reaches the main resident or the config init.
+* The emulator now runs **10M steps without faulting** — but it is stuck in a launch-record
+  **word-copy loop** at `0x7fdf8` (`ld [r13],r2; st [r12],r2; r13+=4; r12+=4; r6--; bne r6,r0`),
+  i.e. the copy count `r6` (from the record) is wrong. It never reaches the main resident or the
+  config init.
 
 Remaining: get the **memory map** right. The reset region executes at low addresses and the
-reset tail branches within `0x7f400..0x80000`, while the decompiled resident is at `0x0CF8xxxx`;
-the low/high bank aliasing and the separate low-RAM window (where `0x2bc8`/`0x9d84` live) are
-not yet modelled. Mirroring the whole bank low makes `0x2bc8` read as bank code, which is wrong —
-the tables need a distinct low-RAM block.
+reset tail branches within `0x7f400..0x80000`, while the resident reads the launch header at
+`0x0CF80000` and the decompiled resident is at `0x0CF8xxxx`; the low/high bank aliasing and the
+separate low-RAM window (where `0x2bc8`/`0x9d84` live) are not modelled. Mirroring the whole bank
+low makes `0x2bc8` read as bank code, which is wrong — the tables need a distinct low-RAM block,
+and the bank must be visible at both low (reset/execution) and `0x0CF80000` (launch table).
 
 ## 6. Honest status
 
