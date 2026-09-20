@@ -210,5 +210,5 @@ ulaw/alaw, a small IVR) if you prefer not to hand-write them.
 
 - `docs/ata-config-formats.md` — all four config forms, compiling, live apply.
 - `docs/ata-sip-firmware-services.md` — services, syslog, reboot paths.
-- `docs/asterisk-integration.md` — the PBX package plan.
+- `docs/asterisk-integration.md` — moving the PBX from the QEMU twin to the device.
 - `firmware/FLASHING.md` — firmware-service protocol and safety.

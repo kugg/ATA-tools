@@ -14,7 +14,7 @@
 # ipk size is the download only, not the installed footprint. opkg additionally
 # pulls dependencies (for example libpjproject, libsrtp) not listed here.
 #
-# Phase mapping matches docs/asterisk-integration.md:
+# Tag mapping used in this list:
 #   all  = every phase
 #   sip  = Phase 1 engine + ATA SIP interop
 #   ivr  = Phase 2 prompts

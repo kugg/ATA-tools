@@ -8,7 +8,7 @@ mode-0700 directory. No engine is run, no socket is bound, and no ATA is
 contacted by this script.
 
 The generated values contain no credentials or device identities beyond the
-fixed, non-secret bench addresses documented in docs/asterisk-integration.md.
+fixed, non-secret bench addresses documented in telephony/ata00070e36e57b.txt.
 """
 
 import argparse
@@ -147,8 +147,8 @@ def rtp_conf(start, end):
 
 def notes(address, ata, extension):
     return (
-        "Asterisk 20 bench config generated for the ATA integration plan\n"
-        "(docs/asterisk-integration.md). Non-secret, fixed bench topology.\n"
+        "Asterisk 20 bench config generated for the ATA integration\n"
+        "(docs/getting-started.md). Non-secret, fixed bench topology.\n"
         "\n"
         "service address : %s\n"
         "ATA peer        : %s\n"

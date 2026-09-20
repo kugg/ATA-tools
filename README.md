@@ -46,7 +46,7 @@ syslog).
 - `docs/ata-sip-firmware-services.md` — services, syslog, remote reboot paths.
 - `docs/firmware-analysis.md` — firmware structure, packages, launch payloads.
 - `docs/ata-firmware-maintenance.md` — operator checklist for maintenance.
-- `docs/asterisk-integration.md` — the PBX package plan.
+- `docs/asterisk-integration.md` — moving the PBX from the QEMU twin to the device.
 - `firmware/FLASHING.md` — firmware-service protocol, validation and safety.
 
 ## Tests
