@@ -155,21 +155,28 @@ settings that gate features are identifiable (`OpFlags`, `CallFeatures`, `TraceF
 4. **Annotate the apply code** with the decoded flag semantics (edit
    `refactor/naming/packed_main.json` + comments, regenerate).
 
-## 5. Boot emulator attempt (option c)  [blocked]
+## 5. Boot emulator attempt (option c)  [blocked by emulator control flow]
 
 Running the resident from the reset stub (`0x7ff80`) with the correct byte pc (`mipsx_boot_trace`
-takes a byte, not a word — an earlier stall was a caller bug) reaches the launch-record walk at
-`0x7fd24..0x7fdcc` and loops forever:
+takes a byte, not a word — an earlier stall was a caller bug):
 
-* the walk dispatches on each record's first word (`ld [r10],r3`, a chain of `beq r2,r3`), stride
-  `0x10`;
-* in the emulator `r10` is set once to a garbage value and the record count `r11` is **never
-  initialised (0)**, so `bne r7,r11` never exits; it reads `0xffffffff` records indefinitely.
+* The reset stub **does read the launch header correctly**: at `0x0CF80000` it reads field0 `0`,
+  `table_address 0x0CFC0110`, `record_count 0x1B` (27), `field3 0x0D` — matching the package map.
+* It reaches the launch-record walk (`0x7fd24..0x7fdcc`, dispatch on each record's first word
+  `ld [r10],r3`, stride `0x10`) and loops forever: `r11` is not the count, so `bne r7,r11` never
+  exits and it reads `0xffffffff` records.
 
-The launch header lives at bank `0` (`table_address 0x0CFC0110`, 27 records of `0x10` bytes; the
-first record word is `0x1`), but the reset path does not materialise `r10`/`r11` from it in the
-model. So boot mode cannot reach the config init: the launch-header read / device state is not
-modelled. This is the concrete blocker for materialising `g_cfg_state` and `g_event_table`.
+The walk head `0x7fdc8` is reached when execution **starts** at the `bra` (`0x7fe94` → `0x7fdc8`,
+verified in isolation), but the full boot's `run()` **never records `0x7fdc8`** — the `bra`s in the
+handler tail do not transfer under the boot's accumulated branch/delay-slot state. This is an
+**emulator control-flow bug** (state-dependent two-delay-slot handling), not missing device state:
+the header is read fine and the branch works in isolation. The three legacy emulators
+(`boot_run`, `mipsx_boot_trace`, `dispatch_resolve`) already disagreed on delay-slot accounting
+(WORKLOG 2026-09-18), which is the same root cause.
+
+So boot mode is blocked by emulator correctness, not by the launch-header read. Reaching the
+config init needs one correct, unified MIPS-X control-flow model (ideally driven from the Ghidra
+sleigh) rather than another patch to this interpreter.
 
 ## 6. Honest status
 
@@ -179,6 +186,6 @@ modelled. This is the concrete blocker for materialising `g_cfg_state` and `g_ev
   config-derived.
 * **Runtime-built (not statically dumpable):** `g_cfg_state` (`0x9d84`) and `g_event_table`
   (`0x2bc8`). Both need the launch sequence.
-* **Blocker:** the boot emulator does not apply the launch header (r10/r11 unset), so it never
-  reaches the config init. Next work is to model the launch-header read (a bounded, concrete
-  target) rather than the whole device.
+* **Blocker:** the boot emulator's state-dependent branch/delay-slot handling prevents reaching
+  the launch walk (the header read itself is fine). Next work is a single correct control-flow
+  model (unify on the Ghidra sleigh p-code emulator), then re-run to reach the config init.
