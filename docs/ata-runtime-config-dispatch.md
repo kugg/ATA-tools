@@ -91,6 +91,24 @@ Other callback families are context-relative and still dynamic: `unaff_r30 - 0x3
 slot, 17 sites), `*+0x108` (context field, ~11 sites), `param_1 + 0x68` (arg field). Their
 targets depend on the runtime context struct, not a static table.
 
+### 2.2 The `+0x108` callbacks belong to a per-channel state machine, not config  [proven]
+
+Tracing the `*+0x108` family:
+
+* A table of context pointers lives at RAM **`0xbe98`** (in the type-2 zero-fill gap, so built
+  at run time), indexed by a channel/call number.
+* `sub_000068bc(0x1a8)` allocates a **`0x1a8`-byte context**; the allocator (`sub_00058dd4` /
+  `sub_00058df4`) stores the pointer at `0xbe98 + index*4`, sets `*ctx = index`, and clears
+  `ctx+0xdc` / `ctx+0x104`.
+* Each context holds records at **stride `0x6c`**; a record's `+8` is the **`g_dispatch_7580`
+  handler index** (`sub_…` at line 118525 returns `*(int*)(*(int*)(index*4+0xbe98) + rec*0x6c + 8)`).
+* `sub_00058f60(index, callback)` sets `ctx+0x108`; the dispatcher `sub_00059310` calls
+  `table[handler_index](context, …)`, and handlers invoke `(*(code*)(*(int*)(ctx+0x108)<<2))()`.
+
+So `+0x108` is a **per-channel state-machine callback**, allocated and set during call setup —
+**not** the config struct. The config→callback hypothesis is therefore not satisfied through
+this family; the config struct (`g_cfg_state`, `0x9d84`) remains a separate, gating input.
+
 ## 3. Does the config struct drive the dispatcher?
 
 Two facts bound the answer:
