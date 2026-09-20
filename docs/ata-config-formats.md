@@ -282,6 +282,9 @@ captured device profile back into readable text.
 * **TFTP profile download**: ATA is a TFTP client (`UseTftp`, `TftpURL`, `AltTftpURL`,
   `CfgInterval`). The binary profile is fetched periodically (bench: `CfgInterval:3600`).
   Firmware-side strings: `tftp(0x%08x,%s)`, `tftpGet` (`docs/ata-sip-firmware-services.md`).
+  The DHCP server advertises the TFTP host with option **66** (`tftp_server_name`) and/or
+  option **150** (Cisco TFTP address list); the device requests its own filename
+  `<MAC>.cnf.xml` (lowercase), so option 67 is not required.
 * **Profile-driven reset**: applying a fetched profile that reports `cfgNeedReboot` triggers
   an immediate reset (see `docs/ata-sip-firmware-services.md`, "profile-driven reset").
 * **HTTP POST**: `atapost.pl <ip> -field=value` (v2.0+) and `-xml` (v3.0+) — requires the

@@ -197,6 +197,41 @@ ulaw/alaw, a small IVR) if you prefer not to hand-write them.
 - The WebRTC page and pjsip config drafts live in `webrtc/`; verify end-to-end
   with `tests/apu2/webrtc-echo-test.mjs` (headless Chromium; no manual clicks).
 
+## Common questions
+
+**Which DHCP field points the ATA at my TFTP server?**
+Option **66** (`tftp_server_name`) and/or option **150** (Cisco's TFTP server
+address list) — both carry the TFTP host's IP. The ATA derives its own filename
+from its MAC (`ata<mac>.cnf.xml`); option 67 is not required, though serving it
+with the same filename is harmless.
+
+**What format is the profile, and how do I create it?**
+Two supported forms: an **XML** file (`<MAC>.cnf.xml`, the path this guide uses)
+or the **binary TLV** profile (`#ata`) compiled from a text profile (`#txt`) with
+`firmware/cfgfmt.py`. Both describe the same ~73 parameters. Examples in the
+repo: `telephony/ATA00070E36E57B.cnf.xml` (XML) and
+`telephony/ata00070e36e57b.txt` (text).
+
+**Besides TFTP, how else can I push a configuration?**
+- **HTTP POST to `/dev`** (the vendor `atapost` mechanism) — applies live, no
+  reboot: `telephony/ata_dev_post.py`.
+- The same form in a browser at `http://<ata>/dev`.
+- **IVR keypad codes** (press the red function button first).
+- A **profile-driven reset** for changes that require a reboot
+  (`cfgNeedReboot`).
+
+**What services does the device expose?**
+An HTTP admin server (`/dev`, `/rtps`, `/clr0`, plus machine views `dev.xml`,
+`service.xml`, `stat.xml`; access control via `LoginID0/1`, `UseLoginID` and the
+`UIPassword` IVR code) and client roles: DHCP, TFTP, syslog
+(`SyslogIP`/`SyslogCtrl`), NPrintf debug, DNS SRV, STUN, SIP and RTP.
+
+**Is fax supported?**
+The recovered configuration table has **no fax-specific parameter** — fax
+travels as G.711 pass-through over the selected codec (PCMU/PCMA); there is no
+evidence of T.38. If your original manual documents additional fax knobs, follow
+the manual.
+
 ## Troubleshooting
 
 | Symptom | Look at |
