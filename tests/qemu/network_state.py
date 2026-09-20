@@ -13,7 +13,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from refactor import qemu_i386_flash  # noqa: E402
+from firmware import qemu_i386_flash  # noqa: E402
 
 
 MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024

@@ -23,7 +23,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from refactor import zup_bank
+    from firmware import zup_bank
 except ImportError:
     import zup_bank
 

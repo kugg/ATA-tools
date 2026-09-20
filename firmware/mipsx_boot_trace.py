@@ -33,7 +33,7 @@ import time
 
 try:
     from . import mipsx_image
-except ImportError:  # executed as a script with refactor/ on sys.path
+except ImportError:  # executed as a script with firmware/ on sys.path
     import mipsx_image
 
 
@@ -48,8 +48,8 @@ MAX_STEPS = 400_000_000
 RUNTIME_BASE = 0x0CF80000      # alias window start; identity with the bank
 PC_TAG = 0x40000000            # terminal type-3 PC tag, stripped on transfer
 
-# The bank image is no longer rebuilt here.  refactor/zup_bank.py owns
-# reconstruction and refactor/mipsx_image.py gates it on the pinned digest;
+# The bank image is no longer rebuilt here.  firmware/zup_bank.py owns
+# reconstruction and firmware/mipsx_image.py gates it on the pinned digest;
 # hardcoding region tables here previously dropped the four raw regions.
 
 # Pinned launch ABI register state (main launch table, records 0..26),
@@ -94,7 +94,7 @@ def shift_amount(encoded: int) -> int:
     return 32 - (((encoded & 0x70) >> 2) + adjustment)
 
 
-# Shared alias/memory model: refactor/mipsx_image.py owns address folding so
+# Shared alias/memory model: firmware/mipsx_image.py owns address folding so
 # the emulator, resolver, and table scanner cannot disagree about which byte
 # an address names.
 Memory = mipsx_image.Memory
@@ -265,7 +265,7 @@ class CPU:
 def build_runtime_image(package: bytes) -> bytes:
     """Reconstruct the pinned SIP bank through the single validated builder.
 
-    Delegates to refactor/mipsx_image.py (which wraps refactor/zup_bank.py)
+    Delegates to firmware/mipsx_image.py (which wraps firmware/zup_bank.py)
     and asserts the pinned SHA-256, so an incomplete or wrong image raises
     instead of silently steering the interpreter down a bogus branch.
     """

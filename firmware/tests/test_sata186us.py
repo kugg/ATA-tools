@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from refactor import sata186us
+from firmware import sata186us
 
 
 ROOT = Path(__file__).resolve().parents[2]

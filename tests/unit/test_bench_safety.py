@@ -499,7 +499,7 @@ class BenchSafety(unittest.TestCase):
             self.assertIn(os.fsencode(
                 f"if=pflash,format=raw,readonly=on,file={ovmf.resolve()}"), arguments)
             self.assertIn(os.fsencode(
-                f"local,path={tools.resolve()},mount_tag=refactor,"
+                f"local,path={tools.resolve()},mount_tag=firmware,"
                 "security_model=mapped-xattr,readonly=on"), arguments)
             rundir = next(root.glob("ata-qemu-tools.*"))
             for name in ("console.log", "pre-route4.txt", "pre-route6.txt",

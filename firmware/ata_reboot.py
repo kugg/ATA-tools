@@ -44,7 +44,7 @@ import time
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
-CFGFMT = os.path.join(REPO_ROOT, "refactor", "cfgfmt.py")
+CFGFMT = os.path.join(REPO_ROOT, "firmware", "cfgfmt.py")
 TFTP_TOOL = os.path.join(REPO_ROOT, "telephony", "tftp_profile.py")
 
 DEVICE_HTTP_HOST = "192.168.2.10"

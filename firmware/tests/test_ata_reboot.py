@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import importlib
 import types
 
-ata_reboot = importlib.import_module("refactor.ata_reboot") \
+ata_reboot = importlib.import_module("firmware.ata_reboot") \
     if False else importlib.import_module("ata_reboot")
 
 

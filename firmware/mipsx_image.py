@@ -4,7 +4,7 @@
 
 Every consumer (emulators, dispatch resolvers, table scanners) must build
 its memory from here, so "which bytes are we executing" has exactly one
-answer.  Reconstruction is delegated to refactor/zup_bank.py, which is
+answer.  Reconstruction is delegated to firmware/zup_bank.py, which is
 already validated to reproduce the pinned bank SHA-256 byte-for-byte.
 
 Two failure modes motivated this module and are now rejected:
@@ -27,12 +27,12 @@ import os
 import sys
 
 try:
-    from refactor import zup_bank
-except ImportError:  # executed with refactor/ on sys.path
+    from firmware import zup_bank
+except ImportError:  # executed with firmware/ on sys.path
     _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if _ROOT not in sys.path:
         sys.path.insert(0, _ROOT)
-    from refactor import zup_bank
+    from firmware import zup_bank
 
 
 # Pinned artifact digests (see docs/firmware-analysis.md "Pinned Inputs").

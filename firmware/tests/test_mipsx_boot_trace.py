@@ -15,7 +15,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from refactor.mipsx_boot_trace import (
+from firmware.mipsx_boot_trace import (
     CPU,
     Memory,
     resolve_dispatch,

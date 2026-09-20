@@ -57,7 +57,7 @@ f8000003    jpcrs
 ## Sources used for the ISA decisions
 
 - Stanford MIPS-X Instruction Set and Programmer's Manual (Paul Chow, 1986).
-- `kugg/ATA-tools`, especially `refactor/mipsx_dasm.py`.
+- `kugg/ATA-tools`, especially `firmware/mipsx_dasm.py`.
 - MAME `src/devices/cpu/mipsx/mipsxdasm.cpp` as a secondary decoder reference.
 - Ghidra's existing SLEIGH language definitions and compiler-spec documentation for module structure and p-code idioms.
 

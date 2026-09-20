@@ -4,12 +4,12 @@ Handoff document for a follow-on agent. Everything here is derived from the pinn
 local artifacts in this repository (no device contact, no network). It records the
 **configuration file formats** used by the Cisco ATA 186/188 SIP firmware
 `ata_03_01_00_sip_040211_1` (SW 3.1.0), the vendor tools that read/write them, and the
-Python reimplementations in `refactor/`.
+Python reimplementations in `firmware/`.
 
 Evidence levels are marked:
 
 * **[proven]** — reproduced from a pinned artifact, a passing test, or the vendor tool text.
-* **[inferred]** — reverse-engineered behaviour encoded in `refactor/cfgfmt.py`; plausible
+* **[inferred]** — reverse-engineered behaviour encoded in `firmware/cfgfmt.py`; plausible
   but not independently confirmed against a device.
 * **[open]** — unresolved; listed in "Open questions" for the next agent.
 
@@ -37,9 +37,9 @@ All under `ata_03_01_00_sip_040211_1/` unless noted.
 | `cptones.txt` | Per-country call-progress tone config | [proven] |
 | `telephony/ata00070e36e57b.txt` | Local working **text** profile | [proven] |
 | `telephony/ATA00070E36E57B.cnf.xml` | Local **XML** config for the same device | [proven] |
-| `refactor/cfgfmt.py` | Bounded Python reimplementation of `cfgfmt` + tests | [inferred] |
-| `refactor/prserv.py` | Bounded loopback observer of the debug UDP channel | [inferred] |
-| `refactor/sata186us.py` | Python upgrade-server model | [inferred] |
+| `firmware/cfgfmt.py` | Bounded Python reimplementation of `cfgfmt` + tests | [inferred] |
+| `firmware/prserv.py` | Bounded loopback observer of the debug UDP channel | [inferred] |
+| `firmware/sata186us.py` | Python upgrade-server model | [inferred] |
 
 Pinned digests live in `docs/firmware-analysis.md` ("Pinned Inputs"). The package
 `ATA030100SIP040211A.zup` SHA-256 is `b8597657…`; the reconstructed 512 KiB bank is
@@ -115,7 +115,7 @@ select descriptors by this field.
 ### 2.3 Aliases / obsoleted names
 
 Several tags have multiple names (the *last matching line wins* on lookup — see
-`_lookup_by_tag`, `refactor/cfgfmt.py:1088`). Examples: `RxCodec`/`PrfCodec` (tag 7),
+`_lookup_by_tag`, `firmware/cfgfmt.py:1088`). Examples: `RxCodec`/`PrfCodec` (tag 7),
 `UseSIP`/`UseMGCP` (18), `UID0`/`CA0UID` (25), `GkOrProxy`/`CA0orCM0` (29),
 `DialTone`/`DialToneFreq` (36). A follow-on agent should treat the first name as canonical
 for SIP.
@@ -128,7 +128,7 @@ See **Appendix A** (all 110 descriptors, verbatim).
 
 ## 3. Text profile format (`#txt`)  [proven]
 
-From `sip_example.txt` (header comment) and `refactor/cfgfmt.py:747` (`parse_text_profile`):
+From `sip_example.txt` (header comment) and `firmware/cfgfmt.py:747` (`parse_text_profile`):
 
 * **Must begin with `#txt`** for `cfgfmt` to treat the file as text.
 * Lines beginning with `#` are comments.
@@ -143,7 +143,7 @@ From `sip_example.txt` (header comment) and `refactor/cfgfmt.py:747` (`parse_tex
   * bitmap / unsigned hex — `0x00060400`
   * 32-bit integer — `2147483647`
 * `#include`-style includes are parsed relative to the source directory and are
-  path-confined (`_safe_include_path`, `refactor/cfgfmt.py:726`) — the original followed
+  path-confined (`_safe_include_path`, `firmware/cfgfmt.py:726`) — the original followed
   arbitrary includes; the reimplementation refuses escapes.
 
 ### 3.1 Pseudo parameters (not in `ptag.dat`)  [inferred]
@@ -163,10 +163,10 @@ Handled specially in `parse_text_profile` / `_store_pseudo`:
 
 ---
 
-## 4. Binary TLV profile format (`#ata`)  [inferred, from `refactor/cfgfmt.py`]
+## 4. Binary TLV profile format (`#ata`)  [inferred, from `firmware/cfgfmt.py`]
 
 The binary format is byte-oriented and big-endian. Build path: `build_records`
-(`refactor/cfgfmt.py:930`), `_header_block` (`:963`), `_write_one_file` (`:1035`).
+(`firmware/cfgfmt.py:930`), `_header_block` (`:963`), `_write_one_file` (`:1035`).
 
 ### 4.1 Overall layout (unencrypted, unsplit)
 
@@ -226,7 +226,7 @@ private key file is supplied):
 key is 32 hex chars (16 bytes); the MAC is 6 bytes (or zeros).
 
 RC4 matches the firmware's KSA/PRGA (`FUN_08048d08`, `FUN_08048be4`); see
-`_ksa_from_key_bytes` / `_ksa_from_hex_string` (`refactor/cfgfmt.py:173`). Non-hex key
+`_ksa_from_key_bytes` / `_ksa_from_hex_string` (`firmware/cfgfmt.py:173`). Non-hex key
 characters trigger a strength warning.
 
 ### 4.6 Special tag `0x1105`
@@ -298,7 +298,7 @@ captured device profile back into readable text.
 * Parameter `NPrintf` = `<ip>.<port>` (extended-IP format); the ATA sends diagnostic text to
   that UDP endpoint. Bench profile uses `NPrintf:0.0.0.0.0` (disabled).
 * `prserv` (v2.0) receives it, default UDP port **9001**, writes `<port>.log`; `-t` prefixes
-  local timestamps. `refactor/prserv.py` is a bounded loopback observer (never persists packet
+  local timestamps. `firmware/prserv.py` is a bounded loopback observer (never persists packet
   contents) — useful for offline inspection without contacting a device.
 * This channel is the natural place to look for runtime config traces (the "strings
   debugging" angle). `TraceFlags` / `SyslogIP` / `SyslogCtrl` control related logging.
@@ -375,7 +375,7 @@ pinned digest).
 
 ### 8.2 The `FUN_0804xxxx` addresses are **cfgfmt.linux**, not firmware  [resolved]
 
-`refactor/cfgfmt.py` cites these as "the original firmware functions". They are actually
+`firmware/cfgfmt.py` cites these as "the original firmware functions". They are actually
 functions in the **PC tool `cfgfmt.linux`** (i386 ELF, image base `0x08048000`), confirmed by
 importing it into Ghidra and matching behaviour:
 
@@ -510,7 +510,7 @@ PC-side format exactly.
 
 All three were imported into the Ghidra project (`/vendor-tools/…`) and `cfgfmt.linux`'s
 format functions were identified and named (§8.2). The remaining step is a behavioural diff of
-`refactor/cfgfmt.py` against `maybe_build_binary_profile` / `maybe_decode_binary_profile` /
+`firmware/cfgfmt.py` against `maybe_build_binary_profile` / `maybe_decode_binary_profile` /
 `maybe_rc4_key_setup` to confirm the reimplementation field-for-field.
 
 ---
@@ -535,23 +535,23 @@ P=ata_03_01_00_sip_040211_1/ptag.dat
 
 # text profile -> binary TLV profile (prepend the required #txt magic)
 { printf '#txt\n'; cat telephony/ata00070e36e57b.txt; } > /tmp/profile.txt
-python3 refactor/cfgfmt.py -t$P /tmp/profile.txt /tmp/out.bin
+python3 firmware/cfgfmt.py -t$P /tmp/profile.txt /tmp/out.bin
 
 # binary profile -> text (auto-detected; input must not begin with "#txt")
-python3 refactor/cfgfmt.py -t$P /tmp/out.bin /tmp/recovered.txt
+python3 firmware/cfgfmt.py -t$P /tmp/out.bin /tmp/recovered.txt
 
 # protocol-filtered build (only SIP-context descriptors)
-python3 refactor/cfgfmt.py -t$P -sip /tmp/profile.txt /tmp/sip.bin
+python3 firmware/cfgfmt.py -t$P -sip /tmp/profile.txt /tmp/sip.bin
 
 # encryption: weak (RC4 hex key) or strong, from private key files only
-python3 refactor/cfgfmt.py -t$P --key-file=/path/mode0600.key  /tmp/profile.txt /tmp/out.bin
-python3 refactor/cfgfmt.py -t$P --xkey-file=/path/mode0600.xkey /tmp/profile.txt /tmp/out.bin
+python3 firmware/cfgfmt.py -t$P --key-file=/path/mode0600.key  /tmp/profile.txt /tmp/out.bin
+python3 firmware/cfgfmt.py -t$P --xkey-file=/path/mode0600.xkey /tmp/profile.txt /tmp/out.bin
 
 # Offline observer of the NPrintf debug channel (loopback only)
-python3 refactor/prserv.py 9001
+python3 firmware/prserv.py 9001
 
 # Tests
-python3 -m unittest refactor.tests.test_cfgfmt
+python3 -m unittest firmware.tests.test_cfgfmt
 ```
 
 Verified locally: the compile produced a `#ata` file (791 bytes) whose header is
@@ -560,7 +560,7 @@ Verified locally: the compile produced a `#ata` file (791 bytes) whose header is
 `warning: unknown attribute at line 27` because `OutBoundProxy` is not a `ptag.dat` name (the
 tag is `SipOutBoundProxy`, tag 75) — a real inconsistency in the local profile worth fixing.
 
-Flags (from `parse_options`, `refactor/cfgfmt.py:1196`): `-v` verbose, `-g` omit sensitive
+Flags (from `parse_options`, `firmware/cfgfmt.py:1196`): `-v` verbose, `-g` omit sensitive
 (`0x4000`) parameters, `-t<file>` tag table, `-split` force split, `-sip`/`-h323`/`-mgcp`/
 `-sccp` protocol filters, `--key-file=`/`--xkey-file=` private keys. The positional arguments
 are exactly `input output`.
@@ -588,7 +588,7 @@ are exactly `input output`.
 7. **`bitaid`**: reconstruct the exact bit-range semantics for the bitmap parameters
    (`OpFlags`, `CallFeatures`, `VLANSetting`, …).
 8. **Tones**: `cptones.txt` per-country tables vs the `DialTone`/`BusyTone` array encoding
-   (`tone_pair`, `refactor/cfgfmt.py:484`).
+   (`tone_pair`, `firmware/cfgfmt.py:484`).
 9. **Provisioning security**: the profile is RC4-protected, not authenticated; document the
    threat model before any live use (see `docs/security.md`).
 

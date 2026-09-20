@@ -27,8 +27,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from refactor import mipsx_dasm, zup_bank
-except ImportError:  # executed with refactor/ on sys.path
+    from firmware import mipsx_dasm, zup_bank
+except ImportError:  # executed with firmware/ on sys.path
     import mipsx_dasm
     import zup_bank
 

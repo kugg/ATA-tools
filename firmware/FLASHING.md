@@ -127,7 +127,7 @@ Never automatically redial or rerun after an ambiguous attempt.
 ## Reference Qualification
 
 ```sh
-python3 -B refactor/sata186us.py --qualify \
+python3 -B firmware/sata186us.py --qualify \
   firmware/ATA030100SIP040211A.zup
 ```
 

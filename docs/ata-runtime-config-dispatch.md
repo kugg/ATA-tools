@@ -10,25 +10,25 @@ artifacts; names are evidence-backed and the generated C is reproducible.
 The packed-main C is generated, not hand-edited:
 
 ```
-python3 refactor/regenerate_readable_c.py            # temp project
-python3 refactor/regenerate_readable_c.py --project ghidra-project-packed   # persistent (stop the MCP first)
+python3 firmware/regenerate_readable_c.py            # temp project
+python3 firmware/regenerate_readable_c.py --project ghidra-project-packed   # persistent (stop the MCP first)
 ```
 
 Stages:
 
-1. `refactor/ghidra_decompile_packed.py --names refactor/naming/packed_main.json`
+1. `firmware/ghidra_decompile_packed.py --names firmware/naming/packed_main.json`
    - expands the checked type-8 payload (`zup_bank`), resolves `jspci` call/tail targets
      (`mipsx_dasm`), imports into Ghidra (MIPS-X, corrected cspec/sleigh), linear-sweeps,
      links `COMPUTED_CALL`/`COMPUTED_JUMP`, creates functions, **applies the naming map**, and
      decompiles.
    - Output: `research/decompiled/named/packed_main_readable.c` (3,026 functions).
-2. `refactor/annotate_packed_c.py --names …`
+2. `firmware/annotate_packed_c.py --names …`
    - substitutes the resolved `r23` (in-payload) and `r24` (cross-module → resident) call
      targets, preferring the evidence-backed name over `sub_XXXXXXXX`, and normalises scalar
      `undefined4` to `int`.
    - Output: `research/decompiled/named/packed_main_annotated.c`.
 
-**Naming policy.** `refactor/naming/packed_main.json` holds every function/global name with a
+**Naming policy.** `firmware/naming/packed_main.json` holds every function/global name with a
 mandatory `evidence` string; the generator writes that evidence as a plate comment above the
 definition. Names use the `ghidra-mcp-ng` `rules.yaml` prefixes (`guess_`/`maybe_`/`likely_`).
 To rename, edit the JSON and re-run — never edit the generated C.
@@ -83,8 +83,8 @@ payload-relative offset the decompiler uses is `value*4 - 0xc74c`. This resolves
 ```
 
 All 14 resolve to function prologues. Reproduce with
-`python3 refactor/resolve_data_tables.py` (deterministic, evidence-backed; the result is
-recorded on `g_dispatch_7580` in `refactor/naming/packed_main.json`). The index is a runtime
+`python3 firmware/resolve_data_tables.py` (deterministic, evidence-backed; the result is
+recorded on `g_dispatch_7580` in `firmware/naming/packed_main.json`). The index is a runtime
 value, so the call *sites* remain dynamic, but the handler set is now known.
 
 Other callback families are context-relative and still dynamic: `unaff_r30 - 0x3c` (frame
@@ -153,7 +153,7 @@ settings that gate features are identifiable (`OpFlags`, `CallFeatures`, `TraceF
 3. **Trace the callback context structs.** Done (§2.2): the `+0x108` family is a per-channel
    state machine, not config-derived.
 4. **Annotate the apply code** with the decoded flag semantics (edit
-   `refactor/naming/packed_main.json` + comments, regenerate).
+   `firmware/naming/packed_main.json` + comments, regenerate).
 
 ## 5. Boot emulator attempt (option c)  [blocked by emulator control flow]
 

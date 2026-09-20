@@ -68,7 +68,7 @@ to the ATA and validates the image before sending anything.
 4. Keep your TFTP config server running: the ATA looks for a profile as soon as
    it boots.
 
-Protocol, validation and network-safety checks: `refactor/FLASHING.md` and
+Protocol, validation and network-safety checks: `firmware/FLASHING.md` and
 `docs/ata-firmware-maintenance.md`.
 
 ## Step 3 — A good default config, fast
@@ -95,7 +95,7 @@ Compile and serve it:
 
 ```sh
 { printf '#txt\n'; cat profile.txt; } > /tmp/profile.txt
-python3 refactor/cfgfmt.py -t ata_03_01_00_sip_040211_1/ptag.dat /tmp/profile.txt /tmp/profile.bin
+python3 firmware/cfgfmt.py -t ata_03_01_00_sip_040211_1/ptag.dat /tmp/profile.txt /tmp/profile.bin
 python3 telephony/tftp_profile.py --apply --serve <mac>.cnf.xml   # or any TFTP server
 ```
 
@@ -207,4 +207,4 @@ ulaw/alaw, a small IVR) if you prefer not to hand-write them.
 - `docs/ata-config-formats.md` — all four config forms, compiling, live apply.
 - `docs/ata-sip-firmware-services.md` — services, syslog, reboot paths.
 - `docs/asterisk-integration.md` — the PBX package plan.
-- `refactor/FLASHING.md` — firmware-service protocol and safety.
+- `firmware/FLASHING.md` — firmware-service protocol and safety.

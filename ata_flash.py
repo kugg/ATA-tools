@@ -19,7 +19,7 @@ import sys
 from typing import Any
 
 import dhcp
-from refactor import sata186us
+from firmware import sata186us
 
 
 DEFAULT_DHCP_TIMEOUT_SECONDS = 600

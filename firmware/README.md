@@ -37,9 +37,9 @@ directory has a live-device mode; they are offline analysis and converters.
 These commands do not open a firmware-service socket:
 
 ```sh
-python3 -B refactor/sata186us.py
-python3 -B refactor/sata186us.py --inspect firmware/IMAGE.zup
-python3 -B refactor/zup_bank.py firmware/IMAGE.zup
+python3 -B firmware/sata186us.py
+python3 -B firmware/sata186us.py --inspect firmware/IMAGE.zup
+python3 -B firmware/zup_bank.py firmware/IMAGE.zup
 ```
 
 `sata186us.py` without a mode performs no file or socket I/O. `--inspect` reads one
@@ -51,7 +51,7 @@ the complete bank-structure validator.
 The qualifier is intentionally limited to the exact analyzed SIP reference image:
 
 ```sh
-python3 -B refactor/sata186us.py --qualify \
+python3 -B firmware/sata186us.py --qualify \
   firmware/ATA030100SIP040211A.zup
 ```
 
@@ -80,10 +80,10 @@ are intentionally absent from a clean checkout.
 PTAG=/lawful/private/path/ptag.dat
 
 # Text to binary.
-python3 -B refactor/cfgfmt.py "-t$PTAG" -sip profile.txt ata-profile
+python3 -B firmware/cfgfmt.py "-t$PTAG" -sip profile.txt ata-profile
 
 # Binary to text.
-python3 -B refactor/cfgfmt.py "-t$PTAG" -sip ata-profile decoded.txt
+python3 -B firmware/cfgfmt.py "-t$PTAG" -sip ata-profile decoded.txt
 ```
 
 The converter provides protocol filters (`-sip`, `-h323`, `-mgcp`, and `-sccp`),
@@ -95,7 +95,7 @@ existing path.
 Compatibility encryption keys must come from owner-only bounded files:
 
 ```sh
-python3 -B refactor/cfgfmt.py "-t$PTAG" \
+python3 -B firmware/cfgfmt.py "-t$PTAG" \
   --key-file=profile.key profile.txt ata-profile
 ```
 
@@ -111,29 +111,29 @@ buffer.
 
 ```sh
 # Validate and summarize a +kxz package.
-python3 -B refactor/zup_bank.py firmware/IMAGE.zup
+python3 -B firmware/zup_bank.py firmware/IMAGE.zup
 
 # Create one new private reconstructed bank.
-python3 -B refactor/zup_bank.py firmware/IMAGE.zup \
+python3 -B firmware/zup_bank.py firmware/IMAGE.zup \
   --extract-bank analysis/bank.bin
 
 # Print a checked launch table or inspect nested payloads.
-python3 -B refactor/zup_bank.py firmware/IMAGE.zup --launch-header OFFSET
-python3 -B refactor/zup_bank.py firmware/IMAGE.zup --nested-payload OFFSET
-python3 -B refactor/zup_bank.py firmware/IMAGE.zup --type8-payload OFFSET
+python3 -B firmware/zup_bank.py firmware/IMAGE.zup --launch-header OFFSET
+python3 -B firmware/zup_bank.py firmware/IMAGE.zup --nested-payload OFFSET
+python3 -B firmware/zup_bank.py firmware/IMAGE.zup --type8-payload OFFSET
 
 # Rebuild a new package from a validated template and exact 512 KiB bank.
-python3 -B refactor/zup_rebuild.py \
+python3 -B firmware/zup_rebuild.py \
   firmware/TEMPLATE.zup analysis/bank.bin analysis/rebuilt.zup
 
 # Decompose a package into an editable directory, change files, recompose.
 # All outputs are new private mode-0600 paths; existing paths are never replaced.
-python3 -B refactor/zup_extract.py firmware/IMAGE.zup --out "$PRIVATE_TMP/decomp"
-python3 -B refactor/zup_extract.py --compose "$PRIVATE_TMP/decomp" \
+python3 -B firmware/zup_extract.py firmware/IMAGE.zup --out "$PRIVATE_TMP/decomp"
+python3 -B firmware/zup_extract.py --compose "$PRIVATE_TMP/decomp" \
   --bank "$PRIVATE_TMP/edited-bank.bin"
 
 # Decode a selected bank region.
-python3 -B refactor/mipsx_dasm.py analysis/bank.bin \
+python3 -B firmware/mipsx_dasm.py analysis/bank.bin \
   --region START:END --stats
 ```
 
@@ -157,13 +157,13 @@ Its MAME-derived decode table and BSD-3-Clause terms are recorded in
 
 ```sh
 python3 -B -m unittest \
-  refactor.tests.test_ata_upgrade_client \
-  refactor.tests.test_cfgfmt \
-  refactor.tests.test_mipsx_dasm \
-  refactor.tests.test_sata186us \
-  refactor.tests.test_zup_bank \
-  refactor.tests.test_zup_rebuild \
-  refactor.tests.test_zup_extract -v
+  firmware.tests.test_ata_upgrade_client \
+  firmware.tests.test_cfgfmt \
+  firmware.tests.test_mipsx_dasm \
+  firmware.tests.test_sata186us \
+  firmware.tests.test_zup_bank \
+  firmware.tests.test_zup_rebuild \
+  firmware.tests.test_zup_extract -v
 ```
 
 Optional compatibility vectors are selected with `ATA186_TEST_ARTIFACT_DIR` and are

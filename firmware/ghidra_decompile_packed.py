@@ -12,8 +12,8 @@ cannot see that anchor, so its decompiler prints unresolved
 
 This driver closes the gap without a new resolver:
 
-1. expand the checked type-8 payload through refactor/zup_bank.py;
-2. reuse refactor/mipsx_dasm.py to resolve the call targets;
+1. expand the checked type-8 payload through firmware/zup_bank.py;
+2. reuse firmware/mipsx_dasm.py to resolve the call targets;
 3. create a Ghidra function at every resolved target and decompile.
 
 It only reads the pinned package and writes a temporary payload/target
@@ -33,8 +33,8 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from refactor import mipsx_dasm, zup_bank
-except ImportError:  # executed with refactor/ on sys.path
+    from firmware import mipsx_dasm, zup_bank
+except ImportError:  # executed with firmware/ on sys.path
     import mipsx_dasm
     import zup_bank
 

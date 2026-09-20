@@ -14,7 +14,7 @@ from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from refactor import mipsx_dasm, zup_bank
+from firmware import mipsx_dasm, zup_bank
 
 
 ROOT = Path(__file__).resolve().parents[2]

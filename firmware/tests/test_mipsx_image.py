@@ -10,7 +10,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from refactor import mipsx_image
+from firmware import mipsx_image
 
 
 ROOT = Path(__file__).resolve().parents[2]

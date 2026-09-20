@@ -11,8 +11,8 @@ from unittest.mock import Mock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from refactor import ata_upgrade_client
-from refactor import sata186us
+from firmware import ata_upgrade_client
+from firmware import sata186us
 
 
 class ClientSimulatorTest(unittest.TestCase):

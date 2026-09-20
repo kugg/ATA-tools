@@ -2,7 +2,7 @@
 
 Status: decompilation-derived findings with execution-validated semantics.
 Local evidence chain: `WORKLOG.md` (2026-09-15 entries), the emulator
-`refactor/mipsx_boot_trace.py`, the scanner `refactor/mipsx_strings.py`.
+`firmware/mipsx_boot_trace.py`, the scanner `firmware/mipsx_strings.py`.
 Derived from the pinned image `ATA030100SIP040211A.zup` (bank sha256
 `ee2247ad…`). No live-device probes were used for these conclusions; the
 local bench was unreachable at research time (no route to 192.168.2.0/24;
@@ -24,7 +24,7 @@ authoritative source for the config surface below.
 
 ## Services present in this image
 
-Deterministic string inventory (`refactor/mipsx_strings.py`) over the two
+Deterministic string inventory (`firmware/mipsx_strings.py`) over the two
 string cabins:
 
 1. **HTTP server** (device admin, plain text): responses
@@ -127,7 +127,7 @@ the reboot flag through the dispatcher handle
    re-DHCPs; without a live responder it drops off the bench.  Run
    `dhcp.py --apply --interface <if>` (options 66/150 point at the bench
    TFTP) FIRST, with a capture deadline spanning the reset; it offers one
-   lease and exits after the device ACKs.  `refactor/ata_reboot.py dhcp`
+   lease and exits after the device ACKs.  `firmware/ata_reboot.py dhcp`
    wraps it with the same dry-run/apply discipline.
 1. Serve a modified profile via the proven TFTP flow; the device fetches
    it at `CfgInterval` (3600 s in the bench profile) or on the next resync,
@@ -176,7 +176,7 @@ Recommended remote-reboot recipe (operator-attended window):
 The alternative is a power-cycle (no profile I/O at all); no HTTP route
 or SIP handler for a bare reboot exists in the image.
 
-The full sequence embodies one command: `refactor/ata_reboot.py run
+The full sequence embodies one command: `firmware/ata_reboot.py run
 --apply --interface <if> --tftp-name <fetch-name>` (published, dry-run
 default, nine offline tests).  The device's boot-time profile fetch is
 PXE-early, so the revert payload must already be served when the device

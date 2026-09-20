@@ -1,7 +1,7 @@
 # Stanford MIPS-X SLEIGH specification -- big-endian ATA186 research profile
 #
 # Encoding is based on the MIPS-X Instruction Set and Programmer's Manual,
-# cross-checked against kugg/ATA-tools refactor/mipsx_dasm.py and MAME's
+# cross-checked against kugg/ATA-tools firmware/mipsx_dasm.py and MAME's
 # mipsx disassembler.  This is a reverse-engineering oriented implementation:
 # core integer/control-flow instructions have p-code; coprocessor, exception,
 # divide-step, and uncertain ES3210/ES3890 extensions are conservative userops.

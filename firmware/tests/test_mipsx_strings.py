@@ -12,7 +12,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from refactor.mipsx_strings import (
+from firmware.mipsx_strings import (
     extract_strings,
     function_starts,
     materialized_pointers,

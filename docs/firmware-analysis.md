@@ -51,7 +51,7 @@ path creates an `0xff`-filled `0x80000` bank, copies four raw regions, and expan
 seven raw-DEFLATE regions from the inner `+kxz` map. Independent reconstruction
 produced two byte-identical bank files with the pinned bank hash above.
 
-`refactor/zup_bank.py` now reproduces this process without vendor execution. It
+`firmware/zup_bank.py` now reproduces this process without vendor execution. It
 requires a bounded regular no-symlink input, validates the declared inner length
 and byte sum, bounds and de-overlaps every destination, requires exact raw-DEFLATE
 EOF plus the little-endian CRC-32/ISIZE trailer, and only publishes complete new
@@ -60,8 +60,8 @@ and map table; `transition.zup` has no gap. The decompiled extractor advances by
 declared stored lengths and accepts both exact forms.
 
 ```sh
-python3 -B refactor/zup_bank.py PATH_TO_ZUP
-python3 -B refactor/zup_bank.py PATH_TO_ZUP --extract-bank NEW_PRIVATE_BANK
+python3 -B firmware/zup_bank.py PATH_TO_ZUP
+python3 -B firmware/zup_bank.py PATH_TO_ZUP --extract-bank NEW_PRIVATE_BANK
 ```
 
 Key bank ranges are:
@@ -112,7 +112,7 @@ No extracted payload or reconstructed bank belongs in Git.
 
 ## Disassembly Availability
 
-`refactor/mipsx_dasm.py` can emit a complete linear disassembly for every confirmed
+`firmware/mipsx_dasm.py` can emit a complete linear disassembly for every confirmed
 MIPS-X program. Each line contains the selected byte-coordinate address, raw 32-bit
 word, and decoded instruction. Optional modes add resolved xrefs, register-base
 inference, and delay-slot-aware transfer summaries. This is reproducible disassembly,
@@ -144,18 +144,18 @@ instruction words:
 
 ```sh
 umask 077
-python3 -B refactor/zup_bank.py \
+python3 -B firmware/zup_bank.py \
   firmware/ATA030100SIP040211A.zup \
   --extract-bank "$PRIVATE_OUT/sip-bank.bin"
-python3 -B refactor/mipsx_dasm.py "$PRIVATE_OUT/sip-bank.bin" \
+python3 -B firmware/mipsx_dasm.py "$PRIVATE_OUT/sip-bank.bin" \
   --region 0xa00:0x2c9d4 --region 0x7d000:0x7e968 \
   --region 0x7f400:0x80000 --reg-base r24=0x40a00 \
   > "$PRIVATE_OUT/sip-resident.mipsx.txt"
-python3 -B refactor/mipsx_dasm.py \
+python3 -B firmware/mipsx_dasm.py \
   firmware/ATA030100SIP040211A.zup \
   --type8-payload 0x479bc --reg-base r23=0x40000 \
   --reg-base r24=0x40a00 > "$PRIVATE_OUT/sip-packed-main.mipsx.txt"
-python3 -B refactor/mipsx_dasm.py \
+python3 -B firmware/mipsx_dasm.py \
   firmware/ATA030100SIP040211A.zup \
   --type8-payload 0x70010 --reg-base r23=0x40000 \
   > "$PRIVATE_OUT/sip-packed-auxiliary.mipsx.txt"
@@ -165,14 +165,14 @@ The corresponding transition commands are:
 
 ```sh
 umask 077
-python3 -B refactor/zup_bank.py \
+python3 -B firmware/zup_bank.py \
   firmware/transition.zup \
   --extract-bank "$PRIVATE_OUT/transition-bank.bin"
-python3 -B refactor/mipsx_dasm.py "$PRIVATE_OUT/transition-bank.bin" \
+python3 -B firmware/mipsx_dasm.py "$PRIVATE_OUT/transition-bank.bin" \
   --region 0x20:0x2aa60 --region 0x79af8:0x7b460 \
   --region 0x7fd20:0x7fed4 --reg-base r24=0x40020 \
   > "$PRIVATE_OUT/transition-resident.mipsx.txt"
-python3 -B refactor/mipsx_dasm.py \
+python3 -B firmware/mipsx_dasm.py \
   firmware/transition.zup \
   --type8-payload 0x4f368 --reg-base r23=0x40000 \
   --reg-base r24=0x40020 > "$PRIVATE_OUT/transition-packed-main.mipsx.txt"
@@ -185,12 +185,12 @@ evidence; Git retains the decoder, tests, hashes, scalar findings, and commands 
 
 ## Reversible Package Rebuilding
 
-`refactor/zup_rebuild.py` rebuilds one new package from a validated template and an
+`firmware/zup_rebuild.py` rebuilds one new package from a validated template and an
 exact 512 KiB bank. It is an offline structural tool, not a signing, flashing, or
 device-qualification path:
 
 ```sh
-python3 -B refactor/zup_rebuild.py \
+python3 -B firmware/zup_rebuild.py \
   PATH_TO_TEMPLATE.zup PATH_TO_BANK NEW_PRIVATE_PACKAGE
 ```
 
@@ -237,10 +237,10 @@ the compressed size. Bytes after the CRC do not consistently contain a complete
 ISIZE and remain uninterpreted; the parser neither consumes nor assigns them.
 
 ```sh
-python3 -B refactor/zup_bank.py PATH_TO_ZUP --type8-payload OFFSET
+python3 -B firmware/zup_bank.py PATH_TO_ZUP --type8-payload OFFSET
 ```
 
-`refactor/zup_bank.py` accepts modes 0 and 1, caps both per-payload and aggregate
+`firmware/zup_bank.py` accepts modes 0 and 1, caps both per-payload and aggregate
 requested output at 512 KiB, and checks a mode-1 destination span against that same
 bound. The pinned outputs are:
 
@@ -260,7 +260,7 @@ the `0x80000` bank end. Complete big-endian scans produce the following contrast
 every decoded big-endian direct branch remains in its output range:
 
 ```sh
-python3 -B refactor/mipsx_dasm.py PATH_TO_ZUP \
+python3 -B firmware/mipsx_dasm.py PATH_TO_ZUP \
   --type8-payload MODE_ZERO_OFFSET --stats
 ```
 
@@ -313,6 +313,31 @@ the auxiliary data contains `Cisco IP Phone 7905`, `LDR0203`, and recovery filen
 `H323Dispatcher` and `admh323`, alongside ATA186 and SIP strings. These establish
 shared/recovery code and the transition image's protocol content, but do not identify
 a compiler, source release, signing chain, or physical chip.
+
+The SIP web interface lives as `printf`-style HTML templates inside the mode-1
+initialized span, not as separate files: the type-8 payload at bank `0x6cbcc`
+(mode 1, field `0x2fbc`, output `0x4bc8`) expands into the `0x2fbc..0x7b84`
+span and contains `<html>`, `<form method="post">`, `<input>` field templates,
+and links to `/dev` and `/rtps`. The transition bank carries the same template
+markers at `0x73ce2` and `0x73e42`, further shared-UI evidence. No other HTML,
+CGI, or filesystem structure was found; the raw bank itself has only 1390
+short printable runs, of which the sole meaningful ASCII outside code noise is
+the NUL-terminated recovery filename slot `ZUP?ATA030100SIP040211A.zup` at bank
+`0x2ea0c` (28 used bytes of its `0xf4` raw region, remainder `0xff`).
+
+Mapped-vs-fill layout of the SIP bank is now explicit. Never-mapped `0xff`
+fill totals roughly 90 KiB: `0x100..0xa00`, a `0x11500`-byte hole at
+`0x2eb00..0x40000`, `0x6f300..0x70000`, `0x7a400..0x7d000`, and
+`0x7ef00..0x7f400`. The helper output `0x7d000..0x7ef00` ends with 984 `0xff`
+bytes past its `0x7eb28` module end, i.e. padded initialized output. The reset
+tail's fixed data at `0x7f520`/`0x7f55f` holds dial-plan-like digit-map text
+(`911`, `St4` alternatives) and feature-code-like vectors (`*67`, `#90`
+forms); these are described, not quoted, and their consumer is unidentified.
+The nested `+kbz` output at `0x2c9d4` holds call-control-like error text
+(`Call Leg/Transaction Does Not Exist`) with tone-script-like vectors, while
+the other three nested outputs are numeric table data. There is still no
+recovered archive, object, or filesystem container: component boundaries rest
+on launch spans, payload headers, and these string markers only.
 
 ### Shared Inflate Helper
 
@@ -387,7 +412,7 @@ addressing is consistently big-endian. It also documents two delay slots for
 branches and jumps, the canonical `nop` word `0x60000019`, and `jspci` as a
 17-bit signed word displacement added to a source register.
 
-`refactor/mipsx_dasm.py` is a bounded offline decoder and scanner. Its decode
+`firmware/mipsx_dasm.py` is a bounded offline decoder and scanner. Its decode
 table follows MAME's BSD-3-Clause `mipsxdasm.cpp` at commit
 `844b0763d46e1fbd2f21aea9528316a7b0cab7da`; redistribution terms are retained
 in `THIRD_PARTY_NOTICES.md`. The decoder retains an explicit warning around
@@ -397,7 +422,7 @@ nonstandard ES3210/ES3890 variants may use related forms for byte operations.
 Run both executable regions with a private reconstructed bank path:
 
 ```sh
-python3 -B refactor/mipsx_dasm.py PATH_TO_BANK \
+python3 -B firmware/mipsx_dasm.py PATH_TO_BANK \
   --region 0xa00:0x2c9d4 \
   --region 0x7d000:0x7e968 \
   --reg-base r24=0x40a00 \
@@ -425,7 +450,7 @@ little-endian control has `19113` unknown words out of `46671`, plus `5533`
 out-of-range apparent branches:
 
 ```sh
-python3 -B refactor/mipsx_dasm.py PATH_TO_BANK \
+python3 -B firmware/mipsx_dasm.py PATH_TO_BANK \
   --region 0xa00:0x2c9d4 \
   --region 0x7d000:0x7e968 \
   --byte-order little --stats
@@ -448,7 +473,7 @@ candidate is then scored for calls landing within selected code and for
 `addi`-materialized function pointers landing on stack prologues.
 
 ```sh
-python3 -B refactor/mipsx_dasm.py PATH_TO_BANK \
+python3 -B firmware/mipsx_dasm.py PATH_TO_BANK \
   --region 0xa00:0x2c9d4 \
   --region 0x7d000:0x7e968 \
   --infer-base r24 --candidate-limit 10
@@ -481,7 +506,7 @@ the return location after both slots. The bounded control-transfer summary expos
 rules rather than applying conventional single-slot MIPS behavior:
 
 ```sh
-python3 -B refactor/mipsx_dasm.py PATH_TO_BANK \
+python3 -B firmware/mipsx_dasm.py PATH_TO_BANK \
   --region 0xa00:0x2c9d4 --region 0x7d000:0x7e968 \
   --reg-base r24=0x40a00 --cfg-summary 100
 ```
@@ -510,7 +535,7 @@ absolute `r23` value. Equal resident call targets imply
 `second_base - first_base = first_displacement - second_displacement`:
 
 ```sh
-python3 -B refactor/mipsx_dasm.py SIP_BANK \
+python3 -B firmware/mipsx_dasm.py SIP_BANK \
   --region 0xa00:0x2c9d4 --region 0x7d000:0x7e968 \
   --compare-image TRANSITION_BANK --compare-region 0x20:0x2aa60 \
   --infer-shared-delta r23 --candidate-limit 5
@@ -589,7 +614,7 @@ suffix, which remains a runtime hypothesis.
 
 ## Launch-Record Clues
 
-`refactor/zup_bank.py --launch-header OFFSET` validates and prints one launch
+`firmware/zup_bank.py --launch-header OFFSET` validates and prints one launch
 header and its counted records directly from the reconstructed in-memory bank.
 It does not assign names to unknown record types. For the SIP package, offsets
 `0` and `0x70000` select the main and auxiliary tables; transition uses offset
@@ -646,9 +671,11 @@ Every SIP image group also contains the type-1 copy
 `(0x0cffe968,0x0007fc00,0x70)`, and every group repeats `0x0007fc00` in a type-6
 record. That now-identified inflate helper's `r25` references cover 16 fields at
 offsets `0x0..0x18` and `0x11c..0x13c`, while its derived pointers cover eight
-offsets through `0x140`. The copied block, reference range, and repeated type-6
-value strongly identify `r25=0x0007fc00`; a static loader assignment or record-type
-definition remains unavailable.
+offsets through `0x140`. The resident dispatcher directly loads type-6 field 1
+into `r25`, establishing the context/table assignment for `r25=0x0007fc00`.
+Only the initial outer/pre-launch `r25` value remains in the unavailable
+bootstrap context. The bounded `firmware/zup_launch_trace.c` model traces this
+assignment without executing guest code.
 
 ## Transition Differential
 
@@ -719,6 +746,81 @@ support for 95 percent of the instruction set. OpenAlex marks the paper closed, 
 no repository full text or PDF; no released simulator implementation was located in
 the bounded public search. This is useful historical context, not ATA186 processor or
 firmware evidence.
+
+## Ghidra Decomilation with MCP
+
+### Prerequisites
+
+- Ghidra 12.1.3+ with `ghidra-mcp-ng` extension installed
+- Custom MIPS-X processor module at `MIPSX_Ghidra_ATA186/` (installed to Ghidra's Processors directory)
+- Python 3.8+ for the MCP bridge
+
+### Setup
+
+1. Install the MIPS-X processor module:
+   ```sh
+   cp -r MIPSX_Ghidra_ATA186/MIPSX /usr/local/Cellar/ghidra/12.1.3/libexec/Ghidra/Processors/
+   ```
+
+2. Start Ghidra headless MCP server:
+   ```sh
+   python3 start.py --ghidra /usr/local/Cellar/ghidra/12.1.3/libexec \
+     --project /Users/user/devel/ata/ghidra-project/ATA \
+     --rules /Users/user/devel/ghidra-mcp-ng/rules.yaml
+   ```
+
+3. Start the MCP bridge:
+   ```sh
+   python3 bridge.py --url http://127.0.0.1:8192
+   ```
+
+4. Configure OpenCode (`~/.config/opencode/opencode.jsonc`):
+   ```json
+   "mcp": {
+     "ghidra": {
+       "type": "local",
+       "command": ["python3", "/path/to/bridge.py", "--url", "http://127.0.0.1:8192"]
+     }
+   }
+   ```
+
+### Bank Decompilation Workflow
+
+The bank binary is a container with multiple sections, not a flat executable. The extracted payloads are the actual MIPS-X programs.
+
+1. **Extract and import the bank**:
+   ```sh
+   python3 -B firmware/zup_extract.py firmware/ATA030100SIP040211A.zup \
+     --out /tmp/sip_extract --disasm
+   ```
+
+2. **Import into Ghidra via MCP** (the bank needs functions seeded):
+   ```json
+   {"program": "bank.bin", "project_dir": "sip_bank", "language_id": "MIPS-X:BE:32:ATA186", "base_address": "0xcf80000"}
+   ```
+
+3. **Seed functions from known entry points** (Ghidra auto-analyzer doesn't find MIPS-X functions):
+   - Run `SeedAllFunctions.java` via Ghidra headless, OR
+   - Use `CreateFunc.java` to create functions at specific addresses
+
+4. **Decompile via MCP**:
+   ```json
+   {"program": "/sip_bank/bank.bin", "name_or_address": "0xcf80a00"}
+   ```
+
+### Known Issues
+
+- **add_script/delete_script ClassCastException**: The ghidra-mcp-ng extension has a bug where adding/deleting scripts via MCP fails. Workaround: copy scripts directly to Ghidra's script directories.
+  - Bug documented in `/Users/user/devel/ghidra-mcp-ng/BUG_ADD_SCRIPT_CLASSCAST.md`
+- **Auto-analyzer finds 0 functions**: MIPS-X has no standard function prologue pattern. Must seed functions manually from known entry points (addresses with `addi r29` prologues).
+
+### Processor Module Details
+
+The MIPS-X processor module (`MIPSX_Ghidra_ATA186/`) provides:
+- Language ID: `MIPS-X:BE:32:ATA186`
+- SLEIGH specification for instruction decoding
+- Compiler spec (`mipsx.cspec`) with conservative ABI model
+- Processor spec (`mipsx.pspec`) with r29 as stack pointer
 
 ## Open Questions
 

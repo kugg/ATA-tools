@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for refactor/cfgfmt.py.
+"""Tests for firmware/cfgfmt.py.
 
 Expected byte vectors were captured from the original ``cfgfmt.linux``
 running under ``docker run --platform linux/386 i386/ubuntu:20.04``.
@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from refactor import cfgfmt
+from firmware import cfgfmt
 
 
 ROOT = Path(__file__).resolve().parents[2]

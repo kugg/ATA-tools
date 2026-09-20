@@ -1,7 +1,7 @@
 {
   "_comment": [
     "Evidence-backed names for the packed-main program (/payload.bin, base 0).",
-    "Applied deterministically by refactor/ghidra_decompile_packed.py --names.",
+    "Applied deterministically by firmware/ghidra_decompile_packed.py --names.",
     "Every entry MUST carry evidence; the generator refuses entries without it.",
     "Names use the ghidra-mcp-ng rules.yaml prefixes: guess_/maybe_/likely_.",
     "Do not hand-edit the generated C; edit here and regenerate."

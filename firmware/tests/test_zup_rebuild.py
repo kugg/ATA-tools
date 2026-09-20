@@ -15,7 +15,7 @@ import zlib
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from refactor import zup_bank, zup_rebuild
+from firmware import zup_bank, zup_rebuild
 
 
 ROOT = Path(__file__).resolve().parents[2]

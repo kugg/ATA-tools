@@ -27,8 +27,8 @@ authorization to operate on a device or network you do not own.
 - Run both local inspection commands:
 
 ```sh
-python3 -B refactor/sata186us.py --inspect firmware/IMAGE.zup
-python3 -B refactor/zup_bank.py firmware/IMAGE.zup
+python3 -B firmware/sata186us.py --inspect firmware/IMAGE.zup
+python3 -B firmware/zup_bank.py firmware/IMAGE.zup
 ```
 
 - Confirm the outer metadata, platform, protocol, version, and reconstructed-map
@@ -57,7 +57,7 @@ Run the public test commands from `README.md`. For the known reference image, al
 run:
 
 ```sh
-python3 -B refactor/sata186us.py --qualify \
+python3 -B firmware/sata186us.py --qualify \
   firmware/ATA030100SIP040211A.zup
 ```
 
@@ -118,7 +118,7 @@ retry is safe.
 Use `http://<ATA-IP>/dev` for manual configuration or one intentionally managed TFTP
 profile path, not both accidentally. TFTP refresh can replace web/IVR settings. See
 the configuration section in `../README.md` for field names, private profile handling,
-and `refactor/cfgfmt.py` examples.
+and `firmware/cfgfmt.py` examples.
 
 The historical web UI and provisioning protocols do not meet modern transport-
 security expectations. Keep them isolated and do not reuse valuable credentials.
@@ -127,5 +127,5 @@ security expectations. Keep them isolated and do not reuse valuable credentials.
 
 - [Cisco ATA186/188 SIP configuration guide](https://web.archive.org/web/20040221155736id_/http://www.cisco.com/univercd/cc/td/doc/product/voice/ata/ataadmn/sip30ad/sip88ch3.htm)
 - [Cisco ATA186/188 3.1 release notes](https://web.archive.org/web/20090704161416id_/http://www.cisco.com/en/US/docs/voice_ip_comm/cata/186_188/3_1_0/english/release/notes/atarn3_1.html)
-- `../refactor/FLASHING.md` for protocol and completion semantics
+- `../firmware/FLASHING.md` for protocol and completion semantics
 - `firmware-analysis.md` for the current static-analysis evidence

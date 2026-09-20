@@ -25,15 +25,15 @@ syslog).
 
 ## Tools
 
-- `ata_flash.py`, `refactor/sata186us.py`, `refactor/ata_upgrade_client.py` —
+- `ata_flash.py`, `firmware/sata186us.py`, `firmware/ata_upgrade_client.py` —
   firmware-service (KBOX) coordinator, image validation and loopback client.
 - `dhcp.py` — bounded DHCP responder for the firmware-service window.
-- `refactor/cfgfmt.py` — text ⇄ binary profile compiler (with `ptag.dat`).
+- `firmware/cfgfmt.py` — text ⇄ binary profile compiler (with `ptag.dat`).
 - `telephony/tftp_profile.py` — bounded TFTP profile server.
 - `telephony/ata_dev_post.py` — live `/dev` config POST (no reboot needed).
-- `refactor/zup_bank.py`, `refactor/zup_extract.py`, `refactor/zup_rebuild.py` —
+- `firmware/zup_bank.py`, `firmware/zup_extract.py`, `firmware/zup_rebuild.py` —
   package and bank tools.
-- `refactor/ghidra_module/`, `refactor/ghidra_*.py` — MIPS-X SLEIGH support and
+- `firmware/ghidra_module/`, `firmware/ghidra_*.py` — MIPS-X SLEIGH support and
   decompilation drivers.
 - `webrtc/`, `tests/apu2/`, `tests/qemu/` — Asterisk/WebRTC deployment, the QEMU
   twin harness, and the automated echo test.
@@ -47,13 +47,13 @@ syslog).
 - `docs/firmware-analysis.md` — firmware structure, packages, launch payloads.
 - `docs/ata-firmware-maintenance.md` — operator checklist for maintenance.
 - `docs/asterisk-integration.md` — the PBX package plan.
-- `refactor/FLASHING.md` — firmware-service protocol, validation and safety.
+- `firmware/FLASHING.md` — firmware-service protocol, validation and safety.
 
 ## Tests
 
 ```sh
 python3 -m unittest discover -s tests -v
-python3 -m unittest discover -s refactor/tests -v
+python3 -m unittest discover -s firmware/tests -v
 ```
 
 ## License and trademarks

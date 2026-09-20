@@ -8,10 +8,10 @@
 # user-mode networking in isolated (restrict) mode and no host forwards,
 # so it cannot reach the bench ATA, the office LAN, or the WAN. The ATA
 # firmware maintenance gate stays blocked; see
-# docs/ata-firmware-maintenance.md and refactor/FLASHING.md.
+# docs/ata-firmware-maintenance.md and firmware/FLASHING.md.
 #
-# Layout: the refactor/ tools directory is shared into the guest
-# read-only via 9p virtfs (mount tag "refactor"). The vintage
+# Layout: the firmware/ tools directory is shared into the guest
+# read-only via 9p virtfs (mount tag "firmware"). The vintage
 # ata_03_01_00_sip_040211_1/ directory is shared the same way (mount tag
 # "legacy") for its data files (ptag.dat, example profiles, images,
 # docs). Legacy binaries stay reference-only: the guest mount commands
@@ -47,8 +47,8 @@ usage() {
     cat <<EOF
 Usage: $SCRIPT_NAME --disk GUEST_IMAGE [options]
 
-Launches one isolated QEMU x86_64 guest with this repository's refactor/
-tools shared inside read-only (9p mount tag "refactor"), plus the vintage
+Launches one isolated QEMU x86_64 guest with this repository's firmware/
+tools shared inside read-only (9p mount tag "firmware"), plus the vintage
 ATA reference directory shared read-only (9p mount tag "legacy") for its
 data files (ptag.dat, example profiles, images, docs). Legacy binaries
 stay reference-only: mount with "noexec" and do not execute them.
@@ -62,7 +62,7 @@ Options:
   --mem MB           Guest RAM in MB (default $DEFAULT_MEM_MB, 256-8192).
   --timeout SECS     Bounded runtime in seconds (default
                      $DEFAULT_TIMEOUT_SECS, $MIN_TIMEOUT_SECS-$MAX_TIMEOUT_SECS).
-  --tools DIR        Tools directory to share (default: <repo>/refactor).
+  --tools DIR        Tools directory to share (default: <repo>/firmware).
   --legacy DIR       Vintage reference directory to share read-only for
                      data files (default: <repo>/ata_03_01_00_sip_040211_1).
                      Binaries inside stay reference-only (noexec).
@@ -79,7 +79,7 @@ EOF
 # Resolve repository root (script lives in tests/qemu/).
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)"
-DEFAULT_TOOLS_DIR="$REPO_ROOT/refactor"
+DEFAULT_TOOLS_DIR="$REPO_ROOT/firmware"
 DEFAULT_LEGACY_DIR="$REPO_ROOT/ata_03_01_00_sip_040211_1"
 BOUNDED_COMMAND="$SCRIPT_DIR/bounded_command.py"
 NETWORK_STATE="$SCRIPT_DIR/network_state.py"
@@ -240,7 +240,7 @@ QEMU_ARGS=(
     -serial mon:stdio
     -nic user,model=virtio-net-pci,restrict=on
     -drive "file=$DISK,format=$FORMAT,if=virtio,snapshot=on"
-    -virtfs "local,path=$TOOLS_DIR,mount_tag=refactor,security_model=mapped-xattr,readonly=on"
+    -virtfs "local,path=$TOOLS_DIR,mount_tag=firmware,security_model=mapped-xattr,readonly=on"
     -virtfs "local,path=$LEGACY_DIR,mount_tag=legacy,security_model=mapped-xattr,readonly=on"
 )
 if [ -n "$OVMF" ]; then
@@ -267,11 +267,11 @@ log "$QEMU_COMMAND"
 if [ "$APPLY" != "1" ]; then
     log "dry run: launch suppressed (re-run with --apply to start the VM)"
     log "in-guest follow-ups once booted:"
-    log "  mount -t 9p -o version=9p2000.L,ro,trans=virtio refactor /mnt/refactor"
+    log "  mount -t 9p -o version=9p2000.L,ro,trans=virtio firmware /mnt/firmware"
     log "  mount -t 9p -o version=9p2000.L,ro,trans=virtio,noexec legacy /mnt/legacy"
     log "  legacy binaries are reference-only: do not execute them (repo policy)"
-    log "  python3 -B /mnt/refactor/sata186us.py --help"
-    log "  cd /mnt && python3 -B -m unittest refactor.tests.test_sata186us"
+    log "  python3 -B /mnt/firmware/sata186us.py --help"
+    log "  cd /mnt && python3 -B -m unittest firmware.tests.test_sata186us"
     exit 0
 fi
 
@@ -384,10 +384,10 @@ trap - EXIT HUP INT TERM
 log "qemu exited with status $STATUS (timeout=$TIMED_OUT)"
 log "logs kept at: $RUNDIR"
 log "in-guest follow-ups for next session:"
-log "  mount -t 9p -o version=9p2000.L,ro,trans=virtio refactor /mnt/refactor"
+log "  mount -t 9p -o version=9p2000.L,ro,trans=virtio firmware /mnt/firmware"
 log "  mount -t 9p -o version=9p2000.L,ro,trans=virtio,noexec legacy /mnt/legacy"
 log "  legacy binaries are reference-only: do not execute them (repo policy)"
-log "  python3 -B /mnt/refactor/sata186us.py --help"
+log "  python3 -B /mnt/firmware/sata186us.py --help"
 if [ "$TIMED_OUT" = "1" ]; then
     exit 124
 fi

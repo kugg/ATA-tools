@@ -9,7 +9,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from refactor import annotate_packed_c
+from firmware import annotate_packed_c
 
 
 class AnnotateTests(unittest.TestCase):

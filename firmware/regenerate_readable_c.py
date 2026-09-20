@@ -3,7 +3,7 @@
 """Regenerate the readable packed-main C deterministically.
 
 Two stages, both driven only by pinned artifacts and the evidence-backed
-naming map (refactor/naming/packed_main.json):
+naming map (firmware/naming/packed_main.json):
 
 1. ``ghidra_decompile_packed.py`` decompiles the packed main, resolves the
    jspci call/tail targets, and applies the naming map (function names and

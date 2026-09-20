@@ -5,7 +5,7 @@ below covers the identified adapted third-party material.
 
 ## MAME MIPS-X disassembler
 
-`refactor/mipsx_dasm.py` adapts the instruction decode table from MAME's
+`firmware/mipsx_dasm.py` adapts the instruction decode table from MAME's
 `src/devices/cpu/mipsx/mipsxdasm.cpp` at commit
 `844b0763d46e1fbd2f21aea9528316a7b0cab7da`.
 
