@@ -282,9 +282,11 @@ captured device profile back into readable text.
 * **TFTP profile download**: ATA is a TFTP client (`UseTftp`, `TftpURL`, `AltTftpURL`,
   `CfgInterval`). The binary profile is fetched periodically (bench: `CfgInterval:3600`).
   Firmware-side strings: `tftp(0x%08x,%s)`, `tftpGet` (`docs/ata-sip-firmware-services.md`).
-  The DHCP server advertises the TFTP host with option **66** (`tftp_server_name`) and/or
-  option **150** (Cisco TFTP address list); the device requests its own filename
-  `<MAC>.cnf.xml` (lowercase), so option 67 is not required.
+  The DHCP server advertises the TFTP host with **option 150** (TFTP server IP) or standard
+  **option 66** (TFTP server name) - if 150 is present the device ignores 66, so 150 must be
+  off/0 when 66 is used (Administrator's Guide, Chapter 3). The DHCP boot-file-name field may
+  carry the binary profile name `ata<macaddress>`; otherwise the device requests its own
+  `<MAC>.cnf.xml` (lowercase).
 * **Profile-driven reset**: applying a fetched profile that reports `cfgNeedReboot` triggers
   an immediate reset (see `docs/ata-sip-firmware-services.md`, "profile-driven reset").
 * **HTTP POST**: `atapost.pl <ip> -field=value` (v2.0+) and `-xml` (v3.0+) — requires the
@@ -294,6 +296,9 @@ captured device profile back into readable text.
   the ATA, then dial on the attached phone. For alphanumeric values, multi-tap a key to
   cycle characters, `#` saves the current character, then press `#` again and `3` to save
   the whole string.
+* **HTTP refresh/reset**: `http://<ata>/refresh` forces a configuration-file update (same
+  effect as a resync); `http://<ata>/reset` refreshes and restarts the device. `OpFlags`
+  bits 8/9 can disable each.
 * **PC upgrade server**: `sata186us` serves `.zup` (software) / `.kup` (language) images on
   port 8000; the phone is told `100#<pc_ip>*8000#` (software) or `101#…` (language).
 
