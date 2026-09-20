@@ -1,12 +1,15 @@
 {
   "_comment": [
-    "Evidence-backed names for the packed-main program (/payload.bin, base 0).",
+    "Function addresses are payload-relative and relocated by the loader to code start 0xc74c.",
+    "Global addresses are runtime low-memory addresses.",
     "Applied deterministically by firmware/ghidra_decompile_packed.py --names.",
     "Every entry MUST carry evidence; the generator refuses entries without it.",
     "Names use the ghidra-mcp-ng rules.yaml prefixes: guess_/maybe_/likely_.",
     "Do not hand-edit the generated C; edit here and regenerate."
   ],
-  "program": "/payload.bin",
+  "program": "/sip_main_code.bin",
+  "function_addresses": "payload-relative",
+  "global_addresses": "runtime",
   "functions": [
     {"address": "0x37a1c", "name": "maybe_cfg_parse_profile",
      "evidence": "reads two varints (0x10dfc), requires tag==0x7FFE && len==4, verifies checksum (0xff7c), then runs the TLV loop (0x380c0). WORKLOG 2026-09-19b."},
@@ -39,9 +42,13 @@
     {"address": "0x381e4", "name": "maybe_cfg_report_error",
      "evidence": "tail target on error paths of 0x37a1c/0x380c0, called with 0x60xx codes. WORKLOG 2026-09-19b."},
     {"address": "0x380a8", "name": "maybe_cfg_apply_error",
-     "evidence": "tail target after special-tag 0x23/0x66 handling in 0x380c0. WORKLOG 2026-09-19b."},
+      "evidence": "tail target after special-tag 0x23/0x66 handling in 0x380c0. WORKLOG 2026-09-19b."},
     {"address": "0x24af8", "name": "maybe_cfg_lookup_found",
-     "evidence": "tail target when 0x24ae8 finds the tag. WORKLOG 2026-09-19b."}
+      "evidence": "tail target when 0x24ae8 finds the tag. WORKLOG 2026-09-19b."},
+    {"address": "0x104c0", "name": "maybe_syslog_emit_class",
+       "evidence": "27 static callers pass class/mode/message; runtime 0x1cc0c checks the class mask table at 0x39dc, formats with PRI string 0x3a43, and dispatches output. WORKLOG 2026-09-20f."},
+    {"address": "0x271f4", "name": "maybe_http_config_post_handler",
+       "evidence": "builds HTTP success/error pages from strings 0x515c..0x53df; its success arm at runtime 0x33c48 passes class 3 and message 0x534c to maybe_syslog_emit_class. WORKLOG 2026-09-20f."}
   ],
   "globals": [
     {"address": "0x4024", "name": "g_cfg_descriptors",
@@ -53,6 +60,14 @@
     {"address": "0x2bc8", "name": "g_event_table",
      "evidence": "resident event dispatch table (0..0x4f); zeroed then registration-populated. WORKLOG 2026-09-19d."},
     {"address": "0x7580", "name": "g_dispatch_7580",
-     "evidence": "data-span table of 14 runtime function pointers (entries 0..13): payload sub_00055c70, sub_000562c8, sub_00056568, sub_00056ca4, sub_00057968, sub_000574b8, sub_0005847c, sub_00058064, sub_00057968, sub_00058338, sub_000583f0, sub_000570bc, sub_000566b8, sub_000585dc. Called as (*(code*)(*(int*)(idx*4+0x7580)<<2))(); the stored value is a RUNTIME address = payload_offset + 0xc74c. WORKLOG 2026-09-19h."}
+      "evidence": "data-span table of 14 runtime function pointers (entries 0..13): payload sub_00055c70, sub_000562c8, sub_00056568, sub_00056ca4, sub_00057968, sub_000574b8, sub_0005847c, sub_00058064, sub_00057968, sub_00058338, sub_000583f0, sub_000570bc, sub_000566b8, sub_000585dc. Called as (*(code*)(*(int*)(idx*4+0x7580)<<2))(); the stored value is a RUNTIME address = payload_offset + 0xc74c. WORKLOG 2026-09-19h."},
+    {"address": "0x534c", "name": "msg_ata_config_update_ok",
+       "evidence": "exact mode-1 string; loaded into r6 at runtime 0x33c54 in the HTTP configuration-success path. WORKLOG 2026-09-20f."},
+    {"address": "0x3bc", "name": "fmt_arp_update",
+       "evidence": "exact mode-1 ARP format string; resident instruction 0x0cf80bad4 passes it to the packed syslog emitter. WORKLOG 2026-09-20f."}
+  ],
+  "references": [
+    {"source": "0x33c54", "target": "0x534c",
+       "evidence": "addi r0,0x534c,r6 is the second delay-slot argument to the class-3 syslog call at 0x33c4c. WORKLOG 2026-09-20f."}
   ]
 }

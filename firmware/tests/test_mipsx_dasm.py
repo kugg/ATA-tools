@@ -14,6 +14,7 @@ from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
+from firmware import compare_function_hashes, ghidra_decompile_packed
 from firmware import mipsx_dasm, zup_bank
 
 
@@ -181,7 +182,99 @@ class ControlFlowTest(unittest.TestCase):
                     data, [(0, len(data))], "big", {24: 0})
 
 
+class FunctionHashTest(unittest.TestCase):
+    def test_compare_requires_unique_size_and_digest(self):
+        left = [(0x100, 8, "a" * 64), (0x200, 8, "b" * 64),
+                (0x300, 8, "b" * 64)]
+        right = [(0x120, 8, "a" * 64), (0x220, 8, "b" * 64)]
+        matches, deltas = compare_function_hashes.compare(left, right)
+        self.assertEqual(matches, [(0x100, 0x120, 8)])
+        self.assertEqual(deltas, {0x20: 1})
+
+    def test_reader_rejects_symlink(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = os.path.join(directory, "hashes.tsv")
+            link = os.path.join(directory, "link.tsv")
+            with open(target, "w", encoding="ascii") as output:
+                output.write("100\t8\t" + "a" * 64 + "\n")
+            os.symlink(target, link)
+            with self.assertRaisesRegex(ValueError, "regular file"):
+                compare_function_hashes.read_hashes(link)
+
+    def test_reader_rejects_invalid_numeric_fields(self):
+        with tempfile.TemporaryDirectory() as directory:
+            hashes = os.path.join(directory, "hashes.tsv")
+            with open(hashes, "w", encoding="ascii") as output:
+                output.write("100\t0\t" + "a" * 64 + "\n")
+            with self.assertRaisesRegex(ValueError, "row is invalid"):
+                compare_function_hashes.read_hashes(hashes)
+
+
 class PackedProgramTest(unittest.TestCase):
+    def test_naming_rows_reject_control_characters_and_out_of_range_addresses(self):
+        with self.assertRaisesRegex(ValueError, "evidence"):
+            ghidra_decompile_packed._metadata_text(
+                "trusted line\nforged row", "evidence")
+        with self.assertRaisesRegex(ValueError, "outside mapped memory"):
+            ghidra_decompile_packed._hex_address(
+                "0x100", "function address", 0, 0x100)
+
+    @unittest.skipUnless(ATA_ZUP.exists(), "needs pinned ATA package")
+    def test_sip_main_runtime_layout_and_addresses(self):
+        bank = zup_bank.build_bank(zup_bank.read_package(str(ATA_ZUP))).data
+        layout = ghidra_decompile_packed.build_runtime_layout(
+            bank, 0, 0x479BC)
+        self.assertEqual(
+            [(region.kind, region.start, region.end) for region in layout],
+            [("data", 0x100, 0x26D0),
+             ("zero", 0x26D0, 0x2FBC),
+             ("data", 0x2FBC, 0x7B84),
+             ("zero", 0x7B84, 0xC74C),
+             ("code", 0xC74C, 0x686A0)])
+        data = b"".join(
+            region.data for region in layout
+            if region.kind == "data")
+        self.assertIn(b"ATA Config Update OK", data)
+
+        code = layout[-1]
+        self.assertEqual(code.start + 0x27508, 0x33C54)
+        self.assertEqual(
+            mipsx_dasm.decode(
+                int.from_bytes(code.data[0x27508:0x2750C], "big"),
+                0x33C54).text,
+            "addi r0,+0x534c,r6")
+
+        sites = ghidra_decompile_packed.resolve_call_sites(
+            code.data, "big", {23: code.start + 0x40000}, code.start)
+        calls = [(source, target) for source, target, kind in sites
+                 if kind == "call"]
+        self.assertEqual((len(sites), len(calls),
+                          len({target for _, target in calls})),
+                         (5823, 3466, 806))
+        self.assertIn(code.start + 0x10268,
+                      {target for _, target in calls})
+        self.assertEqual(sum(
+            target == code.start + 0x10268 for _, target in calls), 108)
+        starts = ghidra_decompile_packed.resolve_function_starts(
+            code.data, "big", {23: code.start + 0x40000}, code.start)
+        self.assertEqual(len(starts), 807)
+        self.assertEqual((starts[0], starts[-1]), (0x68380, code.start))
+        self.assertEqual(starts, sorted(starts, reverse=True))
+
+    @unittest.skipUnless(TRANSITION_ZUP.exists(), "needs transition package")
+    def test_transition_runtime_layout(self):
+        bank = zup_bank.build_bank(
+            zup_bank.read_package(str(TRANSITION_ZUP))).data
+        layout = ghidra_decompile_packed.build_runtime_layout(
+            bank, 0, 0x4F368)
+        self.assertEqual(
+            [(region.kind, region.start, region.end) for region in layout],
+            [("data", 0x100, 0x2568),
+             ("zero", 0x2568, 0x3CE4),
+             ("data", 0x3CE4, 0xB514),
+             ("zero", 0xB514, 0xF41C),
+             ("code", 0xF41C, 0x68284)])
+
     @unittest.skipUnless(ATA_ZUP.exists() and TRANSITION_ZUP.exists(),
                          "needs pinned ATA packages")
     def test_launch_dispatcher_has_recorded_operations(self):

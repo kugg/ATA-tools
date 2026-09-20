@@ -18,7 +18,8 @@ class AnnotateTests(unittest.TestCase):
         target = ((annotate_packed_c.R23_ANCHOR_WORD - 0xFFB5) * 4) & 0xFFFFFFFF
         text = "  (*(code *)((in_r23 + -0xffb5) * 4))();\n"
         annotated, stats = annotate_packed_c.annotate(text, {target})
-        self.assertIn(f"sub_{target:08x}()", annotated)
+        self.assertIn(
+            f"sub_{annotate_packed_c.CODE_START + target:08x}()", annotated)
         self.assertEqual(stats["r23_resolved"], 1)
         self.assertEqual(stats["r23_unverified"], 0)
 
@@ -41,7 +42,8 @@ class AnnotateTests(unittest.TestCase):
         target = ((annotate_packed_c.R23_ANCHOR_WORD + pos) * 4) & 0xFFFFFFFF
         text = f"  (*(code *)((in_r23 + 0x{pos:x}) * 4))();\n"
         annotated, stats = annotate_packed_c.annotate(text, {target})
-        self.assertIn(f"sub_{target:08x}()", annotated)
+        self.assertIn(
+            f"sub_{annotate_packed_c.CODE_START + target:08x}()", annotated)
         self.assertEqual(stats["r23_resolved"], 1)
 
 

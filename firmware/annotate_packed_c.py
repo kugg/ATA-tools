@@ -5,9 +5,9 @@
 The Ghidra MIPS-X SLEIGH models ``jspci`` as ``call [(rN + disp) << 2]``,
 so the decompiler renders an unresolved indirect call even when a
 computed-call reference is present.  For the packed main the anchor is a
-known constant (``type7 * 4 = type9 + 0x40000``), and with the payload
-imported at base 0 that is ``r23 = 0x10000`` (word).  The substitution is
-therefore exact:
+known constant (``type7 * 4 = type9 + 0x40000``). Targets are calculated in
+payload-relative coordinates and then relocated to runtime code start
+`0xc74c`. The substitution is therefore exact:
 
     (*(code *)((in_r23 + disp) * 4))()   ->   sub_<target>()
 
@@ -36,6 +36,7 @@ except ImportError:  # executed with firmware/ on sys.path
 R23_ANCHOR_WORD = 0x10000  # type7*4 - type9 = 0x40000 byte, base-0 import
 R24_ANCHOR_WORD = 0x10280  # resident r24 anchor: the packed main calls the resident
 RUNTIME_BASE = 0x0CF80000
+CODE_START = 0xC74C
 
 CALL_R23 = re.compile(
     r'\(\*\(code \*\)\(\((?:unaff_|in_)?r23 \+ (-?0x[0-9a-fA-F]+)\) \* 4\)\)')
@@ -94,7 +95,8 @@ def annotate(text: str, valid_targets: set[int],
         target = ((R23_ANCHOR_WORD + displacement) * 4) & 0xFFFFFFFF
         if target in valid_targets:
             stats["r23_resolved"] += 1
-            return function_names.get(target, f"sub_{target:08x}")
+            return function_names.get(
+                target, f"sub_{CODE_START + target:08x}")
         stats["r23_unverified"] += 1
         return match.group(0)
 

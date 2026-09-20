@@ -51,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--package", default=DEFAULT_PACKAGE)
     parser.add_argument("--c", default=DEFAULT_C,
-                        help="named C used for payload-relative function names")
+                        help="named C using packed-main runtime addresses")
     parser.add_argument("--table", default="0x7580",
                         help="data-span address of the pointer table")
     parser.add_argument("--entries", type=int, default=14)
@@ -68,7 +68,7 @@ def main(argv: list[str] | None = None) -> int:
         value = int.from_bytes(span[off:off + 4], "big")
         runtime = (value * 4) & 0xFFFFFFFF
         payload = runtime - CODE_START
-        name = names.get(payload)
+        name = names.get(runtime)
         resolved.append(name or f"?0x{payload:05x}")
         print(f"  [{index:2d}] value=0x{value:08x} runtime=0x{runtime:05x} "
               f"payload=0x{payload:05x} {resolved[-1]}")

@@ -5,6 +5,12 @@ Handoff note for a follow-on agent. Companion to
 [the firmware analysis](firmware-analysis.md). Everything here is from the pinned
 artifacts; names are evidence-backed and the generated C is reproducible.
 
+> [!WARNING]
+> The 2026-09-20 re-audit found that the former pipeline created overlapping
+> functions at internal stack adjustments and tail targets. The corrected
+> conservative recovery and counts are recorded below. See
+> [`firmware-re-audit-2026-09-20.md`](firmware-re-audit-2026-09-20.md).
+
 ## 0. Deterministic, evidence-backed readable C
 
 The packed-main C is generated, not hand-edited:
@@ -18,10 +24,12 @@ Stages:
 
 1. `firmware/ghidra_decompile_packed.py --names firmware/naming/packed_main.json`
    - expands the checked type-8 payload (`zup_bank`), resolves `jspci` call/tail targets
-     (`mipsx_dasm`), imports into Ghidra (MIPS-X, corrected cspec/sleigh), linear-sweeps,
-     links `COMPUTED_CALL`/`COMPUTED_JUMP`, creates functions, **applies the naming map**, and
-     decompiles.
-   - Output: `research/decompiled/named/packed_main_readable.c` (3,026 functions).
+     (`mipsx_dasm`), derives the launch-time data/zero/code blocks, imports code
+     at runtime `0xc74c`, links calls before function recovery, creates functions
+     only for the entry and linked-call targets, links tail jumps afterward,
+     **applies the naming map**, and decompiles.
+   - Output: `research/decompiled/named/packed_main_readable.c` (806 functions
+     decompiled from 807 conservative seeds; one Ghidra address-space error).
 2. `firmware/annotate_packed_c.py --names …`
    - substitutes the resolved `r23` (in-payload) and `r24` (cross-module → resident) call
      targets, preferring the evidence-backed name over `sub_XXXXXXXX`, and normalises scalar
@@ -33,9 +41,17 @@ mandatory `evidence` string; the generator writes that evidence as a plate comme
 definition. Names use the `ghidra-mcp-ng` `rules.yaml` prefixes (`guess_`/`maybe_`/`likely_`).
 To rename, edit the JSON and re-run — never edit the generated C.
 
-Current coverage: 3,026 functions, `r23` resolved 11,941 (0 unverified), `r24` 207, 379 named
-call sites, 188 residual dynamic callbacks. Provenance of the tooling changes: WORKLOG
-2026-09-18…2026-09-19.
+Current corrected output: five explicit runtime blocks, 3,466 linked calls,
+2,357 tail references, 807 conservative seeds with no containment failures,
+806 decompiled functions, and no overlapping saved bodies. Annotation resolves
+2,532 `r23` and 35 `r24` textual expressions with zero arithmetic rejection.
+Function addresses in the naming map are payload-relative and are relocated by
+`0xc74c`; global addresses are runtime addresses. Provenance: WORKLOG
+2026-09-18…2026-09-20.
+
+Addresses in the tables below are historical payload-relative function offsets
+unless explicitly labeled runtime. Add `0xc74c` for the corrected packed runtime
+address; low globals such as `0x4024` are already runtime addresses.
 
 ## 1. The config parser and the config struct (packed main)
 

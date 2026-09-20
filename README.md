@@ -35,6 +35,8 @@ syslog).
   package and bank tools.
 - `firmware/ghidra_module/`, `firmware/ghidra_*.py` — MIPS-X SLEIGH support and
   decompilation drivers.
+- `firmware/syslog_lookup.py` — offline message/address lookup over the complete
+  27-call packed syslog atlas, with optional package-backed verification.
 - `webrtc/`, `tests/apu2/`, `tests/qemu/` — Asterisk/WebRTC deployment, the QEMU
   twin harness, and the automated echo test.
 
@@ -45,6 +47,7 @@ syslog).
   live apply.
 - `docs/ata-sip-firmware-services.md` — services, syslog, remote reboot paths.
 - `docs/firmware-analysis.md` — firmware structure, packages, launch payloads.
+- `docs/ata-syslog-atlas.md` — message-to-instruction/class/owner atlas and lookup.
 - `docs/ata-firmware-maintenance.md` — operator checklist for maintenance.
 - `docs/asterisk-integration.md` — moving the PBX from the QEMU twin to the device.
 - `firmware/FLASHING.md` — firmware-service protocol, validation and safety.

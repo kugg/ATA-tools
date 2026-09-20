@@ -62,6 +62,23 @@ def synthetic_bank() -> bytes:
     return bytes(bank)
 
 
+def synthetic_section_bank() -> bytes:
+    bank = bytearray(synthetic_bank())
+    struct.pack_into(">IIIIII", bank, zup_extract.SECTION_OFFSET,
+                     zup_extract.SECTION_MAGIC, 0,
+                     0x00000020, 0x00300010, 0x00400001, 0x00500001)
+    section = zup_extract._section_info(bytes(bank))
+    struct.pack_into(">I", bank, zup_extract.SECTION_OFFSET + 4,
+                     section["calculated"])
+    return bytes(bank)
+
+
+def synthetic_duplicate_header_bank() -> bytes:
+    bank = bytearray(synthetic_bank())
+    bank[0x40100:0x40110] = bank[0:0x10]
+    return bytes(bank)
+
+
 def synthetic_package(bank: bytes) -> bytes:
     compressor = zlib.compressobj(level=9, wbits=-15)
     stream = compressor.compress(bank) + compressor.flush()
@@ -124,6 +141,61 @@ class ExtractTest(unittest.TestCase):
             self.assertEqual(
                 struct.unpack_from(">I", composed, 0x10 + 4)[0],
                 original ^ 0xFF)
+
+    def test_compose_repairs_section_checksum_after_edit(self):
+        bank = synthetic_section_bank()
+        package = synthetic_package(bank)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = os.path.join(tmpdir, "decomp")
+            manifest = zup_extract.extract_package(package, out)
+            original_checksum = manifest["section"]["stored"]
+            manifest["launch_headers"][0]["records"][0]["field1"] ^= 0xFF
+            with open(os.path.join(out, "bank.bin"), "rb") as f:
+                bank_data = f.read()
+            composed = zup_extract.compose_bank(
+                manifest, bank_data,
+                lambda entry: _read_payload(out, entry))
+            section = zup_extract._section_info(composed)
+            self.assertNotEqual(section["stored"], original_checksum)
+            self.assertEqual(section["stored"], section["calculated"])
+
+    def test_compose_rejects_changed_source_bank(self):
+        bank = synthetic_bank()
+        package = synthetic_package(bank)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = os.path.join(tmpdir, "decomp")
+            manifest = zup_extract.extract_package(package, out)
+            changed = bytearray(bank)
+            changed[-1] ^= 1
+            with self.assertRaisesRegex(ValueError, "does not match"):
+                zup_extract.compose_bank(
+                    manifest, bytes(changed),
+                    lambda entry: _read_payload(out, entry))
+
+    def test_compose_rejects_tampered_payload_inventory(self):
+        bank = synthetic_bank()
+        package = synthetic_package(bank)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = os.path.join(tmpdir, "decomp")
+            manifest = zup_extract.extract_package(package, out)
+            manifest["payloads"][0]["offset"] += 4
+            with self.assertRaisesRegex(ValueError, "payload inventory"):
+                zup_extract.compose_bank(
+                    manifest, bank,
+                    lambda entry: _read_payload(out, entry))
+
+    def test_compose_rejects_disagreeing_duplicate_headers(self):
+        bank = synthetic_duplicate_header_bank()
+        package = synthetic_package(bank)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = os.path.join(tmpdir, "decomp")
+            manifest = zup_extract.extract_package(package, out)
+            self.assertEqual(len(manifest["launch_headers"]), 2)
+            manifest["launch_headers"][0]["records"][0]["field1"] ^= 4
+            with self.assertRaisesRegex(ValueError, "headers disagree"):
+                zup_extract.compose_bank(
+                    manifest, bank,
+                    lambda entry: _read_payload(out, entry))
 
     def test_compose_rejects_unknown_record_type(self):
         bank = synthetic_bank()
@@ -234,6 +306,16 @@ class ExtractTest(unittest.TestCase):
             with self.assertRaises(ValueError, msg="existing"):
                 zup_extract.extract_package(package, out)
 
+    def test_compose_reader_rejects_symlink(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = os.path.join(tmpdir, "target")
+            link = os.path.join(tmpdir, "link")
+            with open(target, "wb") as output_file:
+                output_file.write(b"bounded")
+            os.symlink(target, link)
+            with self.assertRaisesRegex(ValueError, "regular file"):
+                zup_extract._read_regular_file(link, 32, "test input")
+
     def test_cli_extract_and_compose(self):
         package = synthetic_package(synthetic_bank())
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -246,8 +328,9 @@ class ExtractTest(unittest.TestCase):
             bank_path = os.path.join(tmpdir, "recomposed.bin")
             self.assertEqual(
                 zup_extract.main(["--compose", out, "--bank", bank_path]), 0)
-            with open(os.path.join(out, "bank.bin"), "rb") as f:
-                self.assertEqual(open(bank_path, "rb").read(), f.read())
+            with open(os.path.join(out, "bank.bin"), "rb") as source_file, \
+                    open(bank_path, "rb") as composed_file:
+                self.assertEqual(composed_file.read(), source_file.read())
             self.assertEqual(
                 zup_extract.main([package_path, "--out", out]), 1)
             with self.assertRaises(SystemExit) as exited:
@@ -314,6 +397,8 @@ class ExtractTest(unittest.TestCase):
                              original_field ^ 0x04)
             nested = zup_bank.parse_nested_payload(composed, 0x78390)
             self.assertEqual(nested.data, shrunk)
+            section = zup_extract._section_info(composed)
+            self.assertEqual(section["stored"], section["calculated"])
 
     @unittest.skipUnless(TRANSITION_ZUP.exists(), "needs transition .zup")
     def test_pinned_transition_roundtrip(self):

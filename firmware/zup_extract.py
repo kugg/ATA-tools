@@ -282,15 +282,7 @@ def _require_int(value: object, name: str, low: int, high: int) -> int:
 
 
 def _load_manifest(path: str) -> dict:
-    if not hasattr(os, "O_NOFOLLOW"):
-        raise ValueError("secure manifest opening is unavailable")
-    size = os.lstat(path).st_size
-    if size > MAX_MANIFEST_BYTES:
-        raise ValueError("manifest exceeds bounded size")
-    with open(path, "rb") as manifest_file:
-        raw = manifest_file.read(MAX_MANIFEST_BYTES + 1)
-    if len(raw) > MAX_MANIFEST_BYTES:
-        raise ValueError("manifest exceeds bounded size")
+    raw = _read_regular_file(path, MAX_MANIFEST_BYTES, "manifest")
     try:
         manifest = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, ValueError) as exc:
@@ -298,6 +290,36 @@ def _load_manifest(path: str) -> dict:
     if not isinstance(manifest, dict) or manifest.get("format") != MANIFEST_FORMAT:
         raise ValueError("manifest format is unsupported")
     return manifest
+
+
+def _read_regular_file(path: str, limit: int, description: str) -> bytes:
+    """Read one bounded regular file without following or racing a symlink."""
+    if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_NONBLOCK"):
+        raise ValueError(f"secure {description} opening is unavailable")
+    before = os.lstat(path)
+    if not stat.S_ISREG(before.st_mode) or before.st_size > limit:
+        raise ValueError(f"{description} must be a bounded regular file")
+    descriptor = os.open(
+        path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+        | getattr(os, "O_CLOEXEC", 0))
+    try:
+        details = os.fstat(descriptor)
+        if not stat.S_ISREG(details.st_mode) or details.st_size > limit \
+                or (details.st_dev, details.st_ino) != (
+                    before.st_dev, before.st_ino):
+            raise ValueError(f"{description} must be a bounded regular file")
+        with os.fdopen(descriptor, "rb", closefd=False) as input_file:
+            data = input_file.read(limit + 1)
+        after = os.fstat(descriptor)
+        if len(data) != details.st_size or (
+                after.st_dev, after.st_ino, after.st_size,
+                after.st_mtime_ns, after.st_ctime_ns) != (
+                details.st_dev, details.st_ino, details.st_size,
+                details.st_mtime_ns, details.st_ctime_ns):
+            raise ValueError(f"{description} changed while being read")
+        return data
+    finally:
+        os.close(descriptor)
 
 
 def _validate_records(table_offset: int, count: int,
@@ -328,6 +350,136 @@ def _validate_records(table_offset: int, count: int,
     return parsed
 
 
+def _source_headers(bank: bytes) -> dict[int, zup_bank.LaunchTable]:
+    headers = {}
+    for offset in HEADER_CANDIDATES:
+        try:
+            headers[offset] = zup_bank.parse_launch_table(bank, offset)
+        except ValueError:
+            continue
+    return headers
+
+
+def _source_payloads(
+        bank: bytes, headers: dict[int, zup_bank.LaunchTable]) -> dict[tuple[str, int], dict]:
+    type8_offsets = sorted({
+        record.field1 - zup_bank.RUNTIME_BANK_BASE
+        for table in headers.values() for record in table.records
+        if record.record_type == 8
+        and zup_bank.RUNTIME_BANK_BASE <= record.field1
+        < zup_bank.RUNTIME_BANK_BASE + len(bank)
+    })
+    payloads: dict[tuple[str, int], dict] = {}
+    budget = zup_bank.MAX_TYPE8_OUTPUT_BYTES
+    for offset in type8_offsets:
+        payload = zup_bank.parse_type8_payload(bank, offset, budget)
+        budget -= payload.output_size
+        payloads[("type8", offset)] = {
+            "kind": "type8", "offset": offset,
+            "file": f"payloads/type8_0x{offset:x}.bin",
+            "mode": payload.mode, "field": payload.field,
+            "compressed_size": payload.compressed_size,
+            "output_size": payload.output_size, "crc32": payload.crc32,
+            "sha256": hashlib.sha256(payload.data).hexdigest(),
+        }
+    budget = zup_bank.MAX_NESTED_OUTPUT_BYTES
+    for offset in _scan_nested(bank):
+        payload = zup_bank.parse_nested_payload(bank, offset, budget)
+        budget -= payload.output_size
+        payloads[("nested", offset)] = {
+            "kind": "nested", "offset": offset,
+            "file": f"payloads/nested_0x{offset:x}.bin",
+            "mode": None, "field": None,
+            "compressed_size": payload.stored_size,
+            "output_size": payload.output_size, "crc32": payload.crc32,
+            "sha256": hashlib.sha256(payload.data).hexdigest(),
+        }
+    return payloads
+
+
+def _validate_source_manifest(manifest: dict, bank: bytes) -> tuple[
+        list[tuple[int, tuple[tuple[int, int, int, int], ...]]],
+        list[dict]]:
+    """Bind editable values to the immutable extracted bank and inventory."""
+    digest = manifest.get("bank_sha256")
+    if not isinstance(digest, str) or len(digest) != 64 \
+            or hashlib.sha256(bank).hexdigest() != digest:
+        raise ValueError("decomposition bank does not match its manifest")
+
+    headers = manifest.get("launch_headers")
+    payload_entries = manifest.get("payloads")
+    if not isinstance(headers, list) or not isinstance(payload_entries, list) \
+            or len(headers) > zup_bank.MAX_LAUNCH_HEADERS \
+            or len(payload_entries) > MAX_PAYLOAD_FILES:
+        raise ValueError("manifest structure is invalid")
+
+    source_headers = _source_headers(bank)
+    if len(headers) != len(source_headers):
+        raise ValueError("launch header inventory changed")
+    proposals: dict[int, tuple[tuple[int, int, int, int], ...]] = {}
+    seen_headers = set()
+    for header in headers:
+        if not isinstance(header, dict):
+            raise ValueError("manifest header entry is invalid")
+        header_offset = _require_int(
+            header.get("header_offset"), "header_offset",
+            0, zup_bank.BANK_BYTES - zup_bank.LAUNCH_RECORD_BYTES)
+        if header_offset in seen_headers or header_offset not in source_headers:
+            raise ValueError("launch header inventory changed")
+        seen_headers.add(header_offset)
+        source = source_headers[header_offset]
+        immutable = (
+            ("field0", source.field0),
+            ("table_address", source.table_address),
+            ("table_offset", source.table_offset),
+            ("record_count", source.record_count),
+            ("field3", source.field3),
+        )
+        for name, expected in immutable:
+            if _require_int(header.get(name), name, 0, 0xFFFFFFFF) != expected:
+                raise ValueError("launch header inventory changed")
+        records = header.get("records")
+        if not isinstance(records, list):
+            raise ValueError("manifest records entry is invalid")
+        parsed = tuple(_validate_records(
+            source.table_offset, source.record_count, records))
+        for index, record in enumerate(records):
+            if not isinstance(record, dict) or _require_int(
+                    record.get("offset"), "record offset", 0,
+                    zup_bank.BANK_BYTES - zup_bank.LAUNCH_RECORD_BYTES) != \
+                    source.table_offset + index * zup_bank.LAUNCH_RECORD_BYTES:
+                raise ValueError("launch record inventory changed")
+        previous = proposals.get(source.table_offset)
+        if previous is not None and previous != parsed:
+            raise ValueError("duplicate launch headers disagree")
+        proposals[source.table_offset] = parsed
+    if seen_headers != set(source_headers):
+        raise ValueError("launch header inventory changed")
+
+    source_payloads = _source_payloads(bank, source_headers)
+    entries: list[dict] = []
+    seen_payloads = set()
+    for entry in payload_entries:
+        if not isinstance(entry, dict):
+            raise ValueError("manifest payload entry is invalid")
+        kind = entry.get("kind")
+        offset = _require_int(entry.get("offset"), "offset",
+                              0, zup_bank.BANK_BYTES - 8)
+        key = (kind, offset)
+        if key in seen_payloads or key not in source_payloads:
+            raise ValueError("payload inventory changed")
+        seen_payloads.add(key)
+        source = source_payloads[key]
+        for name in ("file", "mode", "field", "compressed_size",
+                     "output_size", "crc32", "sha256"):
+            if entry.get(name) != source[name]:
+                raise ValueError("payload inventory changed")
+        entries.append(entry)
+    if seen_payloads != set(source_payloads):
+        raise ValueError("payload inventory changed")
+    return sorted(proposals.items()), entries
+
+
 def _repack_type8(data: bytes) -> bytes:
     if not data or len(data) > MAX_PAYLOAD_BYTES:
         raise ValueError("type-8 replacement size is invalid")
@@ -353,48 +505,38 @@ def compose_bank(manifest: dict, bank: bytes, read_payload) -> bytes:
     """Apply manifest record/payload edits onto ``bank``; return new bytes."""
     if len(bank) != zup_bank.BANK_BYTES:
         raise ValueError("compose requires one complete bank")
-    headers = manifest.get("launch_headers")
-    payload_entries = manifest.get("payloads")
-    if not isinstance(headers, list) or not isinstance(payload_entries, list) \
-            or len(headers) > zup_bank.MAX_LAUNCH_HEADERS \
-            or len(payload_entries) > MAX_PAYLOAD_FILES:
-        raise ValueError("manifest structure is invalid")
+    table_proposals, payload_entries = _validate_source_manifest(manifest, bank)
+    source_headers = _source_headers(bank)
+    source_section = _section_info(bank)
     out = bytearray(bank)
     table_spans = []
-    records_changed = 0
-    for header in headers:
-        if not isinstance(header, dict):
-            raise ValueError("manifest header entry is invalid")
-        table_offset = _require_int(
-            header.get("table_offset"), "table_offset",
-            0, zup_bank.BANK_BYTES - 16)
-        count = _require_int(header.get("record_count"), "record_count",
-                             1, zup_bank.MAX_LAUNCH_RECORDS)
-        records = header.get("records")
-        if not isinstance(records, list):
-            raise ValueError("manifest records entry is invalid")
-        parsed = _validate_records(table_offset, count, records)
-        end = table_offset + count * 16
+    for table_offset, parsed in table_proposals:
+        end = table_offset + len(parsed) * zup_bank.LAUNCH_RECORD_BYTES
         if end > len(out):
             raise ValueError("launch table exceeds bank bounds")
         table_spans.append((table_offset, end))
         for index, (record_type, field1, field2, field3) in enumerate(parsed):
-            offset = table_offset + index * 16
+            offset = table_offset + index * zup_bank.LAUNCH_RECORD_BYTES
             current = struct.unpack_from(">IIII", out, offset)
             if current != (record_type, field1, field2, field3):
                 struct.pack_into(">IIII", out, offset,
-                                 record_type, field1, field2, field3)
-                records_changed += 1
-    payloads_changed = 0
+                                  record_type, field1, field2, field3)
+    protected_spans = [
+        (offset, offset + zup_bank.LAUNCH_RECORD_BYTES)
+        for offset in source_headers
+    ]
+    protected_spans.append(
+        (SECTION_OFFSET, SECTION_OFFSET + 24))
+    for table_start, table_end in table_spans:
+        for protected_start, protected_end in protected_spans:
+            if _spans_overlap(table_start, table_end,
+                              protected_start, protected_end):
+                raise ValueError("launch inventory overlaps protected metadata")
+    protected_spans.extend(table_spans)
     for entry in payload_entries:
-        if not isinstance(entry, dict):
-            raise ValueError("manifest payload entry is invalid")
         kind = entry.get("kind")
-        offset = _require_int(entry.get("offset"), "offset",
-                              0, zup_bank.BANK_BYTES - 8)
+        offset = entry["offset"]
         expected = entry.get("sha256")
-        if not isinstance(expected, str) or len(expected) != 64:
-            raise ValueError("manifest payload digest is invalid")
         data = read_payload(entry)
         if not isinstance(data, bytes) or not data \
                 or len(data) > MAX_PAYLOAD_BYTES:
@@ -416,14 +558,25 @@ def compose_bank(manifest: dict, bank: bytes, read_payload) -> bytes:
             raise ValueError(
                 "replacement exceeds its original span; "
                 "relocation is unsupported")
-        for start, end in table_spans:
+        for start, end in protected_spans:
             if _spans_overlap(offset, offset + span, start, end):
-                raise ValueError("payload span overlaps a launch table")
+                raise ValueError("payload span overlaps protected metadata")
         out[offset:offset + len(replacement)] = replacement
         pad = span - len(replacement)
         if pad:
             out[offset + len(replacement):offset + span] = b"\xff" * pad
-        payloads_changed += 1
+    section = _section_info(bytes(out))
+    if source_section is None and section is not None:
+        raise ValueError("section metadata changed during composition")
+    if source_section is not None:
+        if section is None or section["descriptors"] != \
+                source_section["descriptors"]:
+            raise ValueError("section metadata changed during composition")
+        struct.pack_into(">I", out, section["offset"] + 4,
+                         section["calculated"])
+        checked = _section_info(bytes(out))
+        if checked is None or checked["stored"] != checked["calculated"]:
+            raise ValueError("section checksum repair failed")
     return bytes(out)
 
 
@@ -437,10 +590,7 @@ def _read_payload_file(base_dir: str, entry: dict) -> bytes:
     if os.path.dirname(os.path.abspath(path)) != os.path.join(
             os.path.abspath(base_dir), "payloads"):
         raise ValueError("manifest payload path escapes its directory")
-    if os.lstat(path).st_size > MAX_PAYLOAD_BYTES:
-        raise ValueError("payload file exceeds bounded size")
-    with open(path, "rb") as payload_file:
-        return payload_file.read(MAX_PAYLOAD_BYTES + 1)
+    return _read_regular_file(path, MAX_PAYLOAD_BYTES, "payload file")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -472,9 +622,9 @@ def main(argv: list[str] | None = None) -> int:
                 parser.error("compose takes no positional package or --out")
             manifest = _load_manifest(
                 os.path.join(arguments.compose, "manifest.json"))
-            with open(os.path.join(arguments.compose, "bank.bin"), "rb") \
-                    as bank_file:
-                bank = bank_file.read(zup_bank.BANK_BYTES + 1)
+            bank = _read_regular_file(
+                os.path.join(arguments.compose, "bank.bin"),
+                zup_bank.BANK_BYTES, "decomposition bank")
             if len(bank) != zup_bank.BANK_BYTES:
                 raise ValueError("decomposition bank must be 512 KiB")
             composed = compose_bank(
