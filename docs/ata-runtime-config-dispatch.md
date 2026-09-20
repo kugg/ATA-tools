@@ -109,6 +109,23 @@ So `+0x108` is a **per-channel state-machine callback**, allocated and set durin
 **not** the config struct. The config→callback hypothesis is therefore not satisfied through
 this family; the config struct (`g_cfg_state`, `0x9d84`) remains a separate, gating input.
 
+### 2.3 `g_event_table` (`0x2bc8`) is runtime-populated  [proven]
+
+The resident event table is not statically initialised:
+
+* It is zeroed by `sub_000068bc(0x2bc8, 0x140)` (0x50 entries) inside `func_0cf81e58`
+  (bank `0x1e58`) — which is itself a dispatch state machine, not a plain init.
+* `dispatcher_f82b38` reads `mem[0x2bc8 + code*4]` and, when non-zero, calls `0x26f0` with it;
+  `0x26f0` performs list/queue manipulation (`ld [r8],r2; ld [r2+8],r8; st [r3+8],r8; …`), so an
+  entry is a **pointer to a per-event structure**, not a bare function pointer.
+* The resident C contains **no writes** to `mem[0x2bc8 + code*4]`, and a scan of the bank found
+  **no static table** of ≥12 consecutive resident function pointers. The entries are therefore
+  allocated and linked at run time.
+
+Same conclusion as `g_cfg_state`: the dispatch tables are materialised during the launch
+sequence; only the config **schema** (`g_cfg_descriptors`) and the `g_dispatch_7580` handler set
+are statically recoverable.
+
 ## 3. Does the config struct drive the dispatcher?
 
 Two facts bound the answer:
