@@ -178,6 +178,26 @@ So boot mode is blocked by emulator correctness, not by the launch-header read. 
 config init needs one correct, unified MIPS-X control-flow model (ideally driven from the Ghidra
 sleigh) rather than another patch to this interpreter.
 
+### 5.1 Ghidra p-code emulator (the right model) — set up and progressing
+
+`firmware/ghidra_scripts/EmulateResident.java` runs the resident with Ghidra's
+`EmulatorHelper`, so delay-slot/branch semantics come from the SLEIGH (the same spec that
+disassembles). Progress:
+
+* Userops (`mipsx_xop5/xop7/mstart/coprocessor/…`) are registered as no-ops via
+  `registerDefaultCallOtherCallback` (conservative).
+* **SLEIGH fix:** `movtos`/`movfrs` failed to decode for special-register codes 1/2 (only code 4
+  was defined). Added `SpecTo` for `psw` (code 1) and `md` (code 2); recompiled and installed
+  via `firmware/ghidra_module/install_cspec.sh`. A real module improvement.
+* The emulator now runs **10M steps without faulting** — but loops in the reset tail
+  (`0x7fdf8..0x7fe18`), so it never reaches the main resident or the config init.
+
+Remaining: get the **memory map** right. The reset region executes at low addresses and the
+reset tail branches within `0x7f400..0x80000`, while the decompiled resident is at `0x0CF8xxxx`;
+the low/high bank aliasing and the separate low-RAM window (where `0x2bc8`/`0x9d84` live) are
+not yet modelled. Mirroring the whole bank low makes `0x2bc8` read as bank code, which is wrong —
+the tables need a distinct low-RAM block.
+
 ## 6. Honest status
 
 * **Statically recovered:** the config parser chain, `g_cfg_descriptors` schema (75/84 tags),

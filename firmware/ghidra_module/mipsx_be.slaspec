@@ -106,6 +106,8 @@ SpecFrom: "psw" is spec_pad=0 & spec_code=1 { export psw; }
 SpecFrom: "md" is spec_pad=0 & spec_code=2 { export md; }
 SpecFrom: "pcm4" is spec_pad=0 & spec_code=4 { export pcm4; }
 SpecTo: "pcml" is spec_pad=0 & spec_code=4 { export pcml; }
+SpecTo: "psw" is spec_pad=0 & spec_code=1 { export psw; }
+SpecTo: "md" is spec_pad=0 & spec_code=2 { export md; }
 
 # Trap vectors are stored one's-complemented in the instruction.
 TrapVec: vec is trap_venc [ vec = 255 - trap_venc; ] {
