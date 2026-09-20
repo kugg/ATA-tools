@@ -148,21 +148,37 @@ settings that gate features are identifiable (`OpFlags`, `CallFeatures`, `TraceF
 1. **Materialise `g_cfg_state` (`0x9d84`).** It is built by `sub_0002854c` per parameter from
    `g_cfg_descriptors`. Needs the init sequence (boot emulator) or a synthetic environment that
    stubs the resident globals the init reads. Then name the fields from `ptag.dat`.
-2. **Recover the `g_event_table` (`0x2bc8`) registration.** Only the zeroing `sub_000068bc` is
-   located; find the writers and check whether registration is config-gated → maps *config →
-   enabled event handlers*.
-3. **Trace the callback context structs.** For each `(*(code *)(*(int *)(ctx+off) << 2))()` site,
-   find where `ctx+off` is written and whether it derives from `g_cfg_state`. If so, those 188
-   sites become resolvable and config→callback is direct.
+2. **Recover the `g_event_table` (`0x2bc8`) registration.** Done (§2.3): it is
+   runtime-populated; no static source.
+3. **Trace the callback context structs.** Done (§2.2): the `+0x108` family is a per-channel
+   state machine, not config-derived.
 4. **Annotate the apply code** with the decoded flag semantics (edit
    `refactor/naming/packed_main.json` + comments, regenerate).
 
-## 5. Honest status
+## 5. Boot emulator attempt (option c)  [blocked]
 
-* Proven: the config parser chain, `g_cfg_descriptors` schema, the existence and layout of
-  `g_cfg_state`, the ABI, and the `jspci` dispatch families.
-* Runtime-built (not statically dumpable): `g_cfg_state` and `g_event_table` — both live in
-  type-2 zero-fill gaps and are filled at init; standalone emulation of the packed main
-  diverges into the data span without reaching the init.
-* Highest-value next step is (1)/(2)/(3) above; all are the same "execute the launch sequence"
-  problem that has bounded this effort.
+Running the resident from the reset stub (`0x7ff80`) with the correct byte pc (`mipsx_boot_trace`
+takes a byte, not a word — an earlier stall was a caller bug) reaches the launch-record walk at
+`0x7fd24..0x7fdcc` and loops forever:
+
+* the walk dispatches on each record's first word (`ld [r10],r3`, a chain of `beq r2,r3`), stride
+  `0x10`;
+* in the emulator `r10` is set once to a garbage value and the record count `r11` is **never
+  initialised (0)**, so `bne r7,r11` never exits; it reads `0xffffffff` records indefinitely.
+
+The launch header lives at bank `0` (`table_address 0x0CFC0110`, 27 records of `0x10` bytes; the
+first record word is `0x1`), but the reset path does not materialise `r10`/`r11` from it in the
+model. So boot mode cannot reach the config init: the launch-header read / device state is not
+modelled. This is the concrete blocker for materialising `g_cfg_state` and `g_event_table`.
+
+## 6. Honest status
+
+* **Statically recovered:** the config parser chain, `g_cfg_descriptors` schema (75/84 tags),
+  the `g_dispatch_7580` handler set (14), the ABI, and the `jspci` dispatch families; plus the
+  negative results that `g_event_table` and the `+0x108` callbacks are runtime/per-channel, not
+  config-derived.
+* **Runtime-built (not statically dumpable):** `g_cfg_state` (`0x9d84`) and `g_event_table`
+  (`0x2bc8`). Both need the launch sequence.
+* **Blocker:** the boot emulator does not apply the launch header (r10/r11 unset), so it never
+  reaches the config init. Next work is to model the launch-header read (a bounded, concrete
+  target) rather than the whole device.
