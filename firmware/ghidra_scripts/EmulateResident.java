@@ -62,19 +62,19 @@ public class EmulateResident extends GhidraScript {
         ensureBlock(mem, "win_0d", 0x0D000000L, 0x80000L);
         ensureBlock(mem, "win_bit31", 0x80000000L, 0x80000L);
 
-        // The reset region executes at low addresses; mirror the bank (loaded at
-        // 0x0CF80000) into low RAM so the resident runs there.  Tables the
-        // resident writes (0x2bc8, 0x9d84) live in this same low window.
+        // Low window: the reset tail (bank 0x7f400..0x80000) executes low; the rest
+        // of low RAM starts zero and receives the runtime tables (0x2bc8, 0x9d84).
+        // The bank itself stays at 0x0CF80000 for the launch header and main code.
         Address bankBase = toAddr(0x0CF80000L);
         MemoryBlock bankBlk = mem.getBlock(bankBase);
-        byte[] bank = new byte[(int) bankBlk.getSize()];
-        bankBlk.getBytes(bankBase, bank);
         Address low = toAddr(0x0L);
         if (mem.getBlock(low) == null) {
-            mem.createInitializedBlock("ram_low", low, bank.length,
+            mem.createInitializedBlock("ram_low", low, 0x80000L,
                     (byte) 0, monitor, false);
         }
-        mem.setBytes(low, bank);
+        byte[] tail = new byte[0x80000 - 0x7f400];
+        bankBlk.getBytes(toAddr(0x0CF80000L + 0x7f400L), tail);
+        mem.setBytes(toAddr(0x7f400L), tail);
 
         EmulatorHelper emu = new EmulatorHelper(currentProgram);
         emu.registerDefaultCallOtherCallback(new NoOpCallOther());
