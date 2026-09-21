@@ -351,38 +351,26 @@ valid; use a short lease for lab devices, or force configuration through (1)/(2)
 
 ## 8. Where the config code lives in the firmware  [partially resolved]
 
-### 8.1 The config/UI strings are in the **transition** image, not the SIP bank
+### 8.1 The SIP config/UI strings are in expanded mode-1 runtime data
 
-Direct string search over both reconstructed banks:
+The earlier bank-only scan was incomplete: it searched stored/compressed bank
+bytes but did not inflate the launch table's mode-1 type-8 payloads. The
+launch-derived runtime image contains the SIP web/config strings in low memory:
 
-| Needle | SIP bank (`ATA030100SIP040211A.zup`) | Transition bank (`transition.zup`) |
-| --- | ---: | ---: |
-| `#ata` (profile magic) | 0 | 1 (bank `0x7471c`) |
-| `StaticIP`, `UIPassword`, `DialPlan`, `CfgInterval` | 0 | present |
-| `<html>`, `HTTP/1.1`, `Content-Type` | 0 | present |
-| `<td bgcolor=…` (web form generator) | 0 | present (`0x73c40`) |
-| `ATA186` / `Cisco ATA 186` | 0 | present (`0x73b28`) |
-| `Komodo` (build codename) | 0 | present (`0x73af1`) |
+| Runtime evidence | Address |
+| --- | ---: |
+| `HTTP/1.1 200 OK` response/header block | `0x515c` |
+| route table: `resetcfwd`, `dev.xml`, `adv40c9`, `dev` | `0x4a88..0x4aa7` |
+| direct routes: `refresh`, `reset`, `stats`, `rtps`, `clr0/1`, `service[.xml]`, `stat.xml` | `0x4acc..0x5587` |
+| methods `get ` and `post ` | `0x558c`, `0x5591` |
+| parameter descriptors, including `TftpURL`, `CfgInterval`, `UseTftp` | table from `0x4024` |
+| `#ata` parser and profile validation strings | parser runtime `0x44168` region |
 
-Concrete locations in the **transition bank**:
-
-* **Parameter-name table** (NUL-separated, the ordered list the web UI iterates):
-  bank `0x73837`–`0x73a97` — `CallCmd, OutBoundProxy, DialPlan, UDPTOS, MediaPort, SIPPort,
-  NATIP, AltGk, EncryptKey, RingOnOffTime, AlertTone, CallWaitTone, RingBackTone, ReorderTone,
-  BusyTone, DialTone, PServer, NPrintf, TftpURL, … UID0/PWD0/UID1/PWD1 … StaticIP, MAC`.
-* **`UIPassword` special table** at `0x733ca` (name followed by a 40-byte small-value array).
-* **Web form generator** format string at `0x73c40`:
-  `<td bgcolor=%s>%s: <td><input size=20 type=%s name="%s" Value="%s"><br>`; HTTP response
-  strings `0x73c8c`–`0x73fb1`; `Version: %s (Build %s)` at `0x73f2f`.
-* **`#ata` magic** at `0x7471c`; `tftp %d %d %d` / `nextTftp %d` / `TFTP` nearby.
-* `0x73b60` `dev`, `0x73b64` `admsip`, `0x73b6b` `admh323`, `0x73b73` `adv40c9` — web endpoints.
-
-**Consequence:** the config parser and web UI code for this package is in the **transition
-firmware**, not the SIP 3.1.0 bank. The SIP bank and its packed main/aux contain none of these
-strings. The SIP 3.1.0 config path is therefore still unresolved — it may live in a component
-outside this reconstructed bank, or use a non-string (compact) encoding. This is a genuine
-open question, not an artifact of the reconstruction (the SIP bank is byte-identical to the
-pinned digest).
+The exhaustive route recognizer at runtime `0x34238` accepts 13 named routes
+plus the empty/default route; request parser `0x34584` accepts GET and POST. See
+[`ata-service-atlas.md`](ata-service-atlas.md) and reproduce with
+`firmware/service_lookup.py`. The transition image remains useful comparative
+evidence, but it is not the sole location of the SIP configuration/UI path.
 
 ### 8.2 The `FUN_0804xxxx` addresses are **cfgfmt.linux**, not firmware  [resolved]
 

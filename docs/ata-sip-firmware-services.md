@@ -1,5 +1,9 @@
 # ATA 186 SIP 3.1.0 firmware — services map and syslog research
 
+For exact route/operation addresses and offline lookup, see
+[`ata-service-atlas.md`](ata-service-atlas.md). The static inventory confirms
+that HTTP is a server role while TFTP is client-only in this firmware image.
+
 Status: decompilation-derived findings with execution-validated semantics.
 Local evidence chain: `WORKLOG.md` (2026-09-15 entries), the emulator
 `firmware/mipsx_boot_trace.py`, the scanner `firmware/mipsx_strings.py`.

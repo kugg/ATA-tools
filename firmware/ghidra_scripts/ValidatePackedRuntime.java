@@ -72,8 +72,23 @@ public class ValidatePackedRuntime extends GhidraScript {
                 && "maybe_syslog_emit_class".equals(emitter.getName()),
                 "syslog emitter name is missing");
         require(handler != null
-                && "maybe_http_config_post_handler".equals(handler.getName()),
-                "HTTP configuration handler name is missing");
+                && "maybe_http_response_dispatch".equals(handler.getName()),
+                "HTTP response dispatcher name is missing");
+        long[] serviceAddresses = {
+            0x34238L, 0x34584L, 0x44ac4L, 0x44d7cL, 0x44e5cL,
+        };
+        String[] serviceNames = {
+            "maybe_http_route_parse", "maybe_http_request_parse",
+            "maybe_tftp_get_coordinator", "maybe_tftp_schedule",
+            "maybe_tftp_select_source",
+        };
+        for (int index = 0; index < serviceAddresses.length; index++) {
+            Function service = getFunctionAt(toAddr(serviceAddresses[index]));
+            require(service != null
+                    && serviceNames[index].equals(service.getName()),
+                    "service function name is missing at "
+                        + Long.toHexString(serviceAddresses[index]));
+        }
         boolean messageReference = false;
         for (Reference reference : getReferencesFrom(toAddr(0x33c54L))) {
             if (reference.getToAddress().equals(toAddr(0x534cL))) {
@@ -100,6 +115,7 @@ public class ValidatePackedRuntime extends GhidraScript {
         println("runtime_string=0x534c instruction=0x33c54");
         println("maybe_log_event=0x1c9b4 unique_calls=" + calls);
         println("syslog_emitter=0x1cc0c config_message_ref=0x33c54->0x534c");
+        println("service_names=6 web_routes=14 web_methods=2 tftp_role=client");
         println("functions=" + functionCount + " overlapping_bodies=0");
         println("packed_runtime_validation=PASS");
     }

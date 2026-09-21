@@ -47,8 +47,18 @@
       "evidence": "tail target when 0x24ae8 finds the tag. WORKLOG 2026-09-19b."},
     {"address": "0x104c0", "name": "maybe_syslog_emit_class",
        "evidence": "27 static callers pass class/mode/message; runtime 0x1cc0c checks the class mask table at 0x39dc, formats with PRI string 0x3a43, and dispatches output. WORKLOG 2026-09-20f."},
-    {"address": "0x271f4", "name": "maybe_http_config_post_handler",
-       "evidence": "builds HTTP success/error pages from strings 0x515c..0x53df; its success arm at runtime 0x33c48 passes class 3 and message 0x534c to maybe_syslog_emit_class. WORKLOG 2026-09-20f."}
+    {"address": "0x271f4", "name": "maybe_http_response_dispatch",
+       "evidence": "runtime 0x33940 dispatches all recovered route-result codes to HTML/XML handlers; its configuration-success arm at 0x33c48 passes class 3 and message 0x534c to maybe_syslog_emit_class. WORKLOG 2026-09-21a."},
+    {"address": "0x27aec", "name": "maybe_http_route_parse",
+       "evidence": "runtime 0x34238 exhaustively recognizes the empty path, nine direct route strings, and four entries in table 0x4a88 before returning -1 for unknown routes. WORKLOG 2026-09-21a."},
+    {"address": "0x27e38", "name": "maybe_http_request_parse",
+       "evidence": "runtime 0x34584 recognizes only GET token 0x558c and POST token 0x5591, then invokes the route parser. WORKLOG 2026-09-21a."},
+    {"address": "0x38378", "name": "maybe_tftp_get_coordinator",
+       "evidence": "runtime 0x44ac4 initializes the receive buffer, performs bounded TFTP client attempts, records byte count, emits success/failure, and applies a received profile. WORKLOG 2026-09-21a."},
+    {"address": "0x38630", "name": "maybe_tftp_schedule",
+       "evidence": "runtime 0x44d7c marks TFTP client work pending and starts, cancels, or reschedules it; callers pass timer modes 10, 1, and 6. WORKLOG 2026-09-21a."},
+    {"address": "0x38710", "name": "maybe_tftp_select_source",
+       "evidence": "runtime 0x44e5c selects current/alternate TFTP source state and re-enters the transfer coordinator; exact source-field semantics remain provisional. WORKLOG 2026-09-21a."}
   ],
   "globals": [
     {"address": "0x4024", "name": "g_cfg_descriptors",
