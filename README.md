@@ -39,6 +39,8 @@ syslog).
   27-call packed syslog atlas, with optional package-backed verification.
 - `firmware/service_lookup.py` — offline lookup for the complete web-route
   recognizer and the firmware's TFTP client surface.
+- `firmware/lifecycle_lookup.py` — offline lookup for package-verified SIP
+  registration states, call events, teardown paths, and timers.
 - `webrtc/`, `tests/apu2/`, `tests/qemu/` — Asterisk/WebRTC deployment, the QEMU
   twin harness, and the automated echo test.
 
@@ -52,6 +54,8 @@ syslog).
 - `docs/ata-syslog-atlas.md` — message-to-instruction/class/owner atlas and lookup.
 - `docs/ata-service-atlas.md` — web routes and TFTP client operations mapped to
   runtime evidence.
+- `docs/ata-lifecycle-atlas.md` — resident SIP registration and call-control
+  transitions mapped to exact messages and instructions.
 - `docs/ata-firmware-maintenance.md` — operator checklist for maintenance.
 - `docs/asterisk-integration.md` — moving the PBX from the QEMU twin to the device.
 - `firmware/FLASHING.md` — firmware-service protocol, validation and safety.
