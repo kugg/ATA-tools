@@ -115,6 +115,15 @@ def load_atlas(path: str = DEFAULT_ATLAS) -> dict:
                 raise ValueError("service atlas callers are invalid")
             for caller in callers:
                 _address(caller, "caller")
+            checks = entry.get("instruction_checks", [])
+            if not isinstance(checks, list) or len(checks) > 64:
+                raise ValueError("service atlas instruction checks are invalid")
+            for check in checks:
+                if not isinstance(check, dict):
+                    raise ValueError(
+                        "service atlas instruction check is invalid")
+                _address(check.get("address"), "instruction address")
+                _text(check.get("text"), "instruction text")
     web = services["web"]
     routes = [entry for entry in web["entries"] if entry["kind"] == "route"]
     methods = [entry for entry in web["entries"] if entry["kind"] == "method"]
@@ -180,6 +189,12 @@ def verify_package(atlas: dict, package_path: str) -> None:
                 expected = f"addi r0,+0x{value:x},r{item['register']}"
                 if _code_text(code, instruction) != expected:
                     raise ValueError("service materialization does not match package")
+            for check in entry.get("instruction_checks", []):
+                instruction = _address(check["address"],
+                                       "instruction address")
+                if _code_text(code, instruction) != check["text"]:
+                    raise ValueError(
+                        "service instruction check does not match package")
             if "table_slot" in entry:
                 slot = _address(entry["table_slot"], "table slot")
                 data = _runtime_bytes(layout, slot, 8)

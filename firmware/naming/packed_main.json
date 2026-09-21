@@ -57,8 +57,8 @@
        "evidence": "runtime 0x44ac4 initializes the receive buffer, performs bounded TFTP client attempts, records byte count, emits success/failure, and applies a received profile. WORKLOG 2026-09-21a."},
     {"address": "0x38630", "name": "maybe_tftp_schedule",
        "evidence": "runtime 0x44d7c marks TFTP client work pending and starts, cancels, or reschedules it; callers pass timer modes 10, 1, and 6. WORKLOG 2026-09-21a."},
-    {"address": "0x38710", "name": "maybe_tftp_select_source",
-       "evidence": "runtime 0x44e5c selects current/alternate TFTP source state and re-enters the transfer coordinator; exact source-field semantics remain provisional. WORKLOG 2026-09-21a."}
+    {"address": "0x38710", "name": "maybe_tftp_resume_or_reschedule",
+       "evidence": "runtime 0x44e5c performs an immediate GET only during restored startup state, otherwise computes a bounded delay from the persisted timer remainder and configured interval before registering another callback. WORKLOG 2026-09-21c."}
   ],
   "globals": [
     {"address": "0x4024", "name": "g_cfg_descriptors",
@@ -74,7 +74,23 @@
     {"address": "0x534c", "name": "msg_ata_config_update_ok",
        "evidence": "exact mode-1 string; loaded into r6 at runtime 0x33c54 in the HTTP configuration-success path. WORKLOG 2026-09-20f."},
     {"address": "0x3bc", "name": "fmt_arp_update",
-       "evidence": "exact mode-1 ARP format string; resident instruction 0x0cf80bad4 passes it to the packed syslog emitter. WORKLOG 2026-09-20f."}
+       "evidence": "exact mode-1 ARP format string; resident instruction 0x0cf80bad4 passes it to the packed syslog emitter. WORKLOG 2026-09-20f."},
+    {"address": "0xa32c", "name": "g_op_flags",
+       "evidence": "config binding 0x1e7a8 associates key 0x143 with this word; HTTP checks masks 0x80, 0x100 and 0x200 against it. External config metadata identifies key 0x143 as OpFlags. WORKLOG 2026-09-21c."},
+    {"address": "0xaa58", "name": "g_cfg_restart_requirement",
+       "evidence": "configuration changes assign classes 1 or 2 at 0x30d34/0x30d4c; /reset assigns 1 at 0x34400; profile completion tests nonzero at 0x449a4 to choose reset event 5 rather than 2. WORKLOG 2026-09-21c."},
+    {"address": "0xb724", "name": "g_tftp_timer",
+       "evidence": "timer object passed with token TFTP to create/cancel/reschedule calls and queried for remaining time at 0x15394. WORKLOG 2026-09-21c."},
+    {"address": "0xb7b4", "name": "g_persisted_work_flags",
+       "evidence": "saved/restored in persistent runtime state; TFTP scheduling sets bit 0 at 0x44d9c and profile parsing clears it at 0x441b0. Other bits have non-TFTP users. WORKLOG 2026-09-21c."},
+    {"address": "0xb84c", "name": "g_tftp_interval_ticks",
+       "evidence": "initialized from configuration key 0x131 after the call at 0x1eb9c, clamped to at least 60, converted to internal timer units, and used by retry/resume scheduling. WORKLOG 2026-09-21c."},
+    {"address": "0xa988", "name": "g_tftp_timer_remaining",
+       "evidence": "timer remainder from g_tftp_timer minus 200 is persisted at 0x153b4, restored at 0x15978, logged at 0x44ea0 and used by resume scheduling. WORKLOG 2026-09-21c."},
+    {"address": "0xab70", "name": "g_restore_resume_pending",
+       "evidence": "set when restored startup state is below phase 3 at 0x15914; gates the one immediate TFTP GET in 0x44e5c and is also consulted by resident startup paths. WORKLOG 2026-09-21c."},
+    {"address": "0xbaf4", "name": "g_use_tftp",
+       "evidence": "loaded from configuration key 0x14 and stored in the delay slot at 0x1eba0; gates TFTP timer persistence and resume at 0x1536c and 0x44e70. WORKLOG 2026-09-21c."}
   ],
   "references": [
     {"source": "0x33c54", "target": "0x534c",

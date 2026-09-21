@@ -3,6 +3,7 @@
 """Offline tests for the ATA web/TFTP service lookup atlas."""
 
 import contextlib
+import copy
 import io
 import json
 import os
@@ -29,6 +30,13 @@ class ServiceLookupTest(unittest.TestCase):
                              for entry in web["entries"]), 2)
         self.assertEqual(atlas["services"]["tftp"]["role"], "client")
         self.assertFalse(atlas["services"]["tftp"]["server_present"])
+        opflags = service_lookup.search(web["entries"], "OpFlags web gates")
+        self.assertEqual([entry["id"] for entry in opflags],
+                         ["web.state.opflags"])
+        self.assertEqual(
+            service_lookup.search(atlas["services"]["tftp"]["entries"],
+                                  "persisted timer remainder")[0]["id"],
+            "tftp.state.remaining")
 
     def test_web_and_tftp_search(self):
         atlas = service_lookup.load_atlas()
@@ -75,8 +83,14 @@ class ServiceLookupTest(unittest.TestCase):
 
     @unittest.skipUnless(ATA_ZUP.exists(), "needs pinned ATA package")
     def test_pinned_package_matches_atlas(self):
-        service_lookup.verify_package(
-            service_lookup.load_atlas(), str(ATA_ZUP))
+        atlas = service_lookup.load_atlas()
+        service_lookup.verify_package(atlas, str(ATA_ZUP))
+        altered = copy.deepcopy(atlas)
+        state = next(entry for entry in altered["services"]["web"]["entries"]
+                     if entry["id"] == "web.state.opflags")
+        state["instruction_checks"][0]["text"] = "ld +0xa32c[r0],r8"
+        with self.assertRaisesRegex(ValueError, "instruction check"):
+            service_lookup.verify_package(altered, str(ATA_ZUP))
 
 
 if __name__ == "__main__":

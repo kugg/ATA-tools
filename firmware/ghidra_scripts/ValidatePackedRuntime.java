@@ -11,6 +11,7 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.symbol.Symbol;
 import java.nio.charset.StandardCharsets;
 
 public class ValidatePackedRuntime extends GhidraScript {
@@ -80,7 +81,7 @@ public class ValidatePackedRuntime extends GhidraScript {
         String[] serviceNames = {
             "maybe_http_route_parse", "maybe_http_request_parse",
             "maybe_tftp_get_coordinator", "maybe_tftp_schedule",
-            "maybe_tftp_select_source",
+            "maybe_tftp_resume_or_reschedule",
         };
         for (int index = 0; index < serviceAddresses.length; index++) {
             Function service = getFunctionAt(toAddr(serviceAddresses[index]));
@@ -88,6 +89,22 @@ public class ValidatePackedRuntime extends GhidraScript {
                     && serviceNames[index].equals(service.getName()),
                     "service function name is missing at "
                         + Long.toHexString(serviceAddresses[index]));
+        }
+        long[] stateAddresses = {
+            0xa32cL, 0xaa58L, 0xb724L, 0xb7b4L, 0xb84cL,
+            0xa988L, 0xab70L, 0xbaf4L,
+        };
+        String[] stateNames = {
+            "g_op_flags", "g_cfg_restart_requirement", "g_tftp_timer",
+            "g_persisted_work_flags", "g_tftp_interval_ticks",
+            "g_tftp_timer_remaining", "g_restore_resume_pending",
+            "g_use_tftp",
+        };
+        for (int index = 0; index < stateAddresses.length; index++) {
+            Symbol state = getSymbolAt(toAddr(stateAddresses[index]));
+            require(state != null && stateNames[index].equals(state.getName()),
+                    "service state name is missing at "
+                        + Long.toHexString(stateAddresses[index]));
         }
         boolean messageReference = false;
         for (Reference reference : getReferencesFrom(toAddr(0x33c54L))) {
@@ -115,7 +132,8 @@ public class ValidatePackedRuntime extends GhidraScript {
         println("runtime_string=0x534c instruction=0x33c54");
         println("maybe_log_event=0x1c9b4 unique_calls=" + calls);
         println("syslog_emitter=0x1cc0c config_message_ref=0x33c54->0x534c");
-        println("service_names=6 web_routes=14 web_methods=2 tftp_role=client");
+        println("service_names=6 state_names=8 web_routes=14 web_methods=2 "
+                + "tftp_role=client");
         println("functions=" + functionCount + " overlapping_bodies=0");
         println("packed_runtime_validation=PASS");
     }
