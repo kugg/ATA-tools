@@ -10,8 +10,10 @@ import os
 import sys
 
 if __package__:
-    from . import mipsx_dasm, mipsx_strings, zup_bank, zup_extract
+    from . import ghidra_decompile_packed, mipsx_dasm, mipsx_strings, zup_bank, \
+        zup_extract
 else:
+    import ghidra_decompile_packed
     import mipsx_dasm
     import mipsx_strings
     import zup_bank
@@ -24,7 +26,10 @@ MAX_ATLAS_BYTES = 512 * 1024
 MAX_ENTRIES = 128
 MAX_QUERY_LENGTH = 256
 CONFIDENCE = {"exact-control-flow", "direct-message", "inferred-state"}
-MACHINES = {"registration", "outgoing-call", "incoming-call", "call-teardown"}
+MACHINES = {"registration", "outgoing-call", "incoming-call", "call-teardown",
+            "session-refresh", "transfer", "media"}
+SCOPES = {"resident", "packed"}
+PACKED_TYPE8_PAYLOAD = 0x479BC
 
 
 class SafeArgumentParser(argparse.ArgumentParser):
@@ -97,6 +102,11 @@ def load_atlas(path: str = DEFAULT_ATLAS) -> dict:
             _address(entry["data_address"], "data address")
         if "materialization" in entry:
             _address(entry["materialization"], "materialization")
+        if entry.get("scope", "resident") not in SCOPES:
+            raise ValueError("lifecycle atlas scope is invalid")
+        register = entry.get("materialization_register", 4)
+        if not isinstance(register, int) or not 0 <= register <= 31:
+            raise ValueError("lifecycle atlas materialization register is invalid")
         _checks(entry)
         if entry["kind"] == "transition":
             if entry.get("machine") not in MACHINES:
@@ -143,21 +153,49 @@ def verify_package(atlas: dict, package_path: str) -> None:
         package_path, mipsx_strings.MAX_PACKAGE_BYTES, "ATA package")
     bank = zup_bank.build_bank(package).data
     image = mipsx_strings.build_runtime_image(package, bank)
+    packed_layout = None
+    packed_code = None
+    if any(entry.get("scope", "resident") == "packed"
+           for entry in entries(atlas)):
+        packed_layout = ghidra_decompile_packed.build_runtime_layout(
+            bank, 0, PACKED_TYPE8_PAYLOAD)
+        packed_code = next(region for region in packed_layout
+                           if region.kind == "code")
+
+    def packed_bytes(address: int, length: int) -> bytes:
+        for region in packed_layout:
+            if region.data is not None and region.start <= address \
+                    and address + length <= region.end:
+                offset = address - region.start
+                return region.data[offset:offset + length]
+        raise ValueError("lifecycle message lies outside packed runtime data")
+
+    def packed_instruction(address: int) -> str:
+        if address < packed_code.start or address + 4 > packed_code.end:
+            raise ValueError("lifecycle instruction lies outside packed code")
+        offset = address - packed_code.start
+        word = int.from_bytes(packed_code.data[offset:offset + 4], "big")
+        return mipsx_dasm.decode(word, address).text
+
     for entry in entries(atlas):
+        packed = entry.get("scope", "resident") == "packed"
         if "text" in entry:
             address = _address(entry["data_address"], "data address")
-            # Atlas text omits the resident logger's trailing line feed.
+            # Atlas text omits the logger's trailing line feed.
             expected = entry["text"].encode("ascii") + b"\n\0"
-            if image[address:address + len(expected)] != expected:
-                actual = image[address:address + len(expected)]
+            actual = packed_bytes(address, len(expected)) if packed \
+                else image[address:address + len(expected)]
+            if actual != expected:
                 raise ValueError(
                     f"lifecycle message does not match package for "
                     f"{entry['id']} at 0x{address:x}: expected "
                     f"{expected!r}, got {actual!r}")
             materialization = _address(entry["materialization"],
                                        "materialization")
-            expected_instruction = f"addi r0,+0x{address:x},r4"
-            actual_instruction = _instruction(image, materialization)
+            register = entry.get("materialization_register", 4)
+            expected_instruction = f"addi r0,+0x{address:x},r{register}"
+            actual_instruction = packed_instruction(materialization) if packed \
+                else _instruction(image, materialization)
             if actual_instruction != expected_instruction:
                 raise ValueError(
                     f"lifecycle materialization does not match package at "
@@ -165,7 +203,8 @@ def verify_package(atlas: dict, package_path: str) -> None:
                     f"got {actual_instruction!r}")
         for check in entry.get("instruction_checks", []):
             address = _address(check["address"], "instruction address")
-            actual = _instruction(image, address)
+            actual = packed_instruction(address) if packed \
+                else _instruction(image, address)
             if actual != check["text"]:
                 raise ValueError(
                     f"lifecycle instruction check does not match package at "

@@ -1,7 +1,9 @@
 # ATA Firmware Maintenance Checklist
 
 **Status:** offline package validation and the complete loopback response stream are
-tested. No physical ATA has yet been flashed with this Python implementation.
+tested. One operator-attended isolated ATA186 transfer completed and the device
+subsequently reported SIP 3.1(0); that single result does not qualify another
+image, model, device, recovery path, or network.
 
 Use this checklist for one operator-attended maintenance attempt. It is not an
 authorization to operate on a device or network you do not own.

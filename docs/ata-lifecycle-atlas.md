@@ -67,11 +67,48 @@ The labels describe directly logged events and adjacent control flow. Where a
 numeric call-leg state has not been uniquely tied to a protocol phase, the atlas
 uses a descriptive state and leaves the numeric enum unresolved.
 
+## Session refresh, transfer, media, and FXS additions
+
+The atlas now has 3 contexts and 28 transitions. Fourteen transitions were added
+across three new machines (`session-refresh`, `transfer`, `media`), each
+package-verified against the pinned SIP package:
+
+| Transition | Machine | Event | From -> To | Exact anchors |
+|---|---|---|---|---|
+| `session-refresh.incoming-refresh` | session-refresh | re-INVITE asks for refresh | established -> `0x11` | mat `0x16ff0`; save `0x17000`; store `0x17008` |
+| `session-refresh.timeout-disconnect` | session-refresh | refresh timer expires | `0xa` -> `0x5` | compare `0x16858`; mat `0x1688c`; disconnect `0x16894`; store `0x1689c` |
+| `session-refresh.restart-timer` | session-refresh | refresh accepted | refresh negotiated -> timer armed | mat `0x170b4` |
+| `transfer.far-end-refer` | transfer | far end REFER | active call -> `+0x2a58 = 2` | store `0x1b51c`; mat `0x1b53c` |
+| `transfer.consultation` | transfer | consultation transfer | active call -> context recorded | store `0x2be4c`; call `0x2be7c`; mat `0x2be84` |
+| `transfer.blind` | transfer | blind transfer | active call -> `+0x924 = 1` | mat `0x2bee0`; store `0x2beec` |
+| `transfer.redirect-or-xfer` | transfer | redirect/xfer response | proceeding -> fields cleared | clears `0x15eb0`/`0x15eb4`; store `0x15ec8`; mat `0x15ef8` |
+| `failure.invite-failed` | outgoing-call | INVITE failure | `0x4` -> `0x1` | compare `0x162c4`; mat `0x162d4`; store `0x162e0` |
+| `failure.hold-failed` | outgoing-call | hold failure | `0x9` -> hold not established | compare `0x1630c`; mat `0x16314`; call `0x16324` |
+| `failure.retr-failed` | outgoing-call | retrieve failure | retrieve pending -> `0x7` | mat `0x1634c`; store `0x16358` |
+| `media.start-rx` | media | RTP receive starts | negotiated -> Rx active | byte store `0x2af68`; mat `0x2af70`; word store `0x2afcc` |
+| `media.start-resume` | media | media resume | `0x12` -> resumed | compare `0x2b220`; mat `0x2b28c` |
+| `media.codec-mismatch-bye` | media | no matching codec on ACK | `0x7` -> `0x7` | mat `0x1a56c`; store `0x1a57c`; compare `0x1a5a0` |
+| `fxs.hook-event` | media | FXS hook change | hook changed -> recorded | OFF `0x65014`; ON `0x6501c`; store `0x65020`; class `0x65024`; call `0x6502c` |
+
+The FXS hook transition is the first **packed** entry. It uses the packed
+runtime layout (payload offset `0x479bc`, runtime base `0xc74c`), selects the
+`"OFF"`/`"ON"` string (`0x79f0`/`0x79f4`) for the channel context at `+0x10`,
+and emits `[%d]%sHOOK` through the class-6 syslog path. The verifier checks the
+packed instruction text and the packed message bytes for entries with
+`"scope": "packed"`; resident entries continue to verify against the bank
+image.
+
+Call-leg offsets touched by these transitions (`+0x924`, `+0x24a0`, `+0x2a58`,
+`+0x2834`, byte `+0x2899`) are derived only from repeated offset/width evidence
+in the listed instruction checks; no struct fields are inferred from a single
+access.
+
 ## Boundaries
 
-- The atlas contains 3 context records and 14 transitions. It is an initial
-  high-confidence lifecycle slice, not an exhaustive inventory of every SIP
-  response, transfer, session-refresh, FXS, or RTP branch.
+- The atlas contains 3 context records and 28 transitions, covering
+  registration, INVITE, ACK, teardown, session-refresh, transfer, media/RTP,
+  failure, and one packed FXS hook event. It remains a bounded high-confidence
+  slice, not an exhaustive inventory of every SIP branch or FXS state.
 - Timer constants are reported as firmware internal units unless a conversion is
   directly established. In particular, `0xbb8` is not relabeled as seconds.
 - Bench evidence separately proves REGISTER, INVITE, ACK, RTP, DTMF, and BYE on

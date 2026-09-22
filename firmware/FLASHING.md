@@ -1,8 +1,9 @@
 # ATA Firmware-Service Protocol
 
 **Status:** the source-readable Python response stream is qualified against a
-recorded vintage-server reference and a synthetic loopback client. It has not yet
-flashed a physical ATA. Server completion must not be reported as device success.
+recorded vintage-server reference and a synthetic loopback client. One
+operator-attended isolated ATA186 transfer subsequently reported SIP 3.1(0), but
+server completion must not be reported as generic device success.
 
 This document describes the protocol implementation and its live safety boundary.
 The operator checklist is in `../docs/ata-firmware-maintenance.md`.

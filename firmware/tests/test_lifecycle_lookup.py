@@ -24,12 +24,30 @@ class LifecycleLookupTest(unittest.TestCase):
     def test_checked_in_inventory_and_registration_states(self):
         atlas = lifecycle_lookup.load_atlas()
         self.assertEqual(len(atlas["contexts"]), 3)
-        self.assertEqual(len(atlas["transitions"]), 14)
+        self.assertEqual(len(atlas["transitions"]), 28)
         registration = lifecycle_lookup.search(
             atlas["transitions"], "0x16 registered")
         self.assertEqual([entry["id"] for entry in registration],
                          ["registration.success"])
         self.assertEqual(registration[0]["next_state"], "0x16 registered")
+
+    def test_refresh_transfer_media_and_fxs_additions(self):
+        atlas = lifecycle_lookup.load_atlas()
+        by_id = {entry["id"]: entry for entry in atlas["transitions"]}
+        self.assertEqual(by_id["session-refresh.incoming-refresh"]["next_state"],
+                         "0x11")
+        self.assertEqual(by_id["session-refresh.timeout-disconnect"]["next_state"],
+                         "0x5")
+        self.assertEqual(by_id["transfer.blind"]["next_state"],
+                         "transfer active (+0x924 = 1)")
+        self.assertEqual(by_id["media.start-rx"]["machine"], "media")
+        self.assertEqual(by_id["failure.retr-failed"]["next_state"], "0x7")
+        fxs = by_id["fxs.hook-event"]
+        self.assertEqual(fxs["scope"], "packed")
+        self.assertEqual(fxs["materialization_register"], 6)
+        self.assertIn("session-refresh", lifecycle_lookup.MACHINES)
+        self.assertIn("transfer", lifecycle_lookup.MACHINES)
+        self.assertIn("media", lifecycle_lookup.MACHINES)
 
     def test_search_spans_messages_and_contexts(self):
         atlas = lifecycle_lookup.load_atlas()
@@ -83,6 +101,12 @@ class LifecycleLookupTest(unittest.TestCase):
             "addi r0,+0xbb9,r5"
         with self.assertRaisesRegex(ValueError, "instruction check"):
             lifecycle_lookup.verify_package(altered, str(ATA_ZUP))
+        packed = copy.deepcopy(atlas)
+        fxs = next(entry for entry in packed["transitions"]
+                   if entry["id"] == "fxs.hook-event")
+        fxs["materialization_register"] = 4
+        with self.assertRaisesRegex(ValueError, "materialization"):
+            lifecycle_lookup.verify_package(packed, str(ATA_ZUP))
 
 
 if __name__ == "__main__":

@@ -68,7 +68,8 @@ to the ATA and validates the image before sending anything.
    ```
 
 3. When it prints its ready line, dial the shown `100#<host-ip>*8000#` on the
-   phone. The ATA downloads, verifies and resets into SIP mode.
+   phone once. A complete server stream does not prove an accepted update; after
+   the process exits, use `123#` to verify the ATA reports the intended version.
 4. Keep your TFTP config server running: the ATA looks for a profile as soon as
    it boots.
 

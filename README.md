@@ -37,10 +37,14 @@ syslog).
   decompilation drivers.
 - `firmware/syslog_lookup.py` — offline message/address lookup over the complete
   27-call packed syslog atlas, with optional package-backed verification.
+- `firmware/event_lookup.py` — offline lookup over all 108 packed
+  `maybe_log_event` callsites (message, argument producers, subsystem), with
+  optional package-backed verification.
 - `firmware/service_lookup.py` — offline lookup for the complete web-route
   recognizer and the firmware's TFTP client surface.
 - `firmware/lifecycle_lookup.py` — offline lookup for package-verified SIP
-  registration states, call events, teardown paths, and timers.
+  registration states, call events, teardown paths, timers, and the added
+  session-refresh, transfer, media, and FXS hook transitions.
 - `webrtc/`, `tests/apu2/`, `tests/qemu/` — Asterisk/WebRTC deployment, the QEMU
   twin harness, and the automated echo test.
 
@@ -51,12 +55,16 @@ syslog).
   live apply.
 - `docs/ata-sip-firmware-services.md` — services, syslog, remote reboot paths.
 - `docs/firmware-analysis.md` — firmware structure, packages, launch payloads.
-- `docs/ata-syslog-atlas.md` — message-to-instruction/class/owner atlas and lookup.
+- `docs/ata-syslog-atlas.md` — message-to-instruction/class/owner atlas and lookup,
+  plus the separate 108-call `maybe_log_event` path.
 - `docs/ata-service-atlas.md` — web routes and TFTP client operations mapped to
   runtime evidence.
-- `docs/ata-lifecycle-atlas.md` — resident SIP registration and call-control
-  transitions mapped to exact messages and instructions.
+- `docs/ata-lifecycle-atlas.md` — resident and packed SIP registration,
+  call-control, session-refresh, transfer, media, and FXS hook transitions
+  mapped to exact messages and instructions.
 - `docs/ata-firmware-maintenance.md` — operator checklist for maintenance.
+- `docs/pap2-mame-reproduction.md` — PAP2 MAME provenance and bounded
+  reproduction, kept separate from ATA 186/188 firmware maintenance.
 - `docs/asterisk-integration.md` — moving the PBX from the QEMU twin to the device.
 - `firmware/FLASHING.md` — firmware-service protocol, validation and safety.
 

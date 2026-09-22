@@ -1,0 +1,5536 @@
+{
+ "schema_version": 1,
+ "emitter": "0x1c9b4",
+ "emitter_name": "maybe_log_event",
+ "class_note": "maybe_log_event carries no class/mode arguments; class gating happens only in maybe_syslog_emit_class (0x1cc0c), whose forwarding call 0x1cc58 inherits the class used by the emitter.",
+ "direct_calls": 108,
+ "entries": [
+  {
+   "call": "0x14444",
+   "owner": "0x143c4",
+   "owner_name": null,
+   "callers": [
+    "0x14074",
+    "0x1d648"
+   ],
+   "subsystem": "version-check",
+   "message": "e: need ver > 3.0!\n",
+   "message_address": "0x31b5",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x14448",
+     "text": "addi r0,+0x31b5,r4",
+     "kind": "constant",
+     "value": "0x31b5",
+     "string": "e: need ver > 3.0!\n"
+    },
+    {
+     "register": 5,
+     "address": "0x14424",
+     "text": "addi r0,+0x31b0,r5",
+     "kind": "constant",
+     "value": "0x31b0",
+     "string": "ATA4"
+    },
+    {
+     "register": 6,
+     "address": "0x14428",
+     "text": "addi r0,+0x4,r6",
+     "kind": "constant",
+     "value": "0x4",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x14408",
+     "text": "ld +0xbb64[r0],r7",
+     "kind": "global-load",
+     "value": "0xbb64"
+    },
+    {
+     "register": 8,
+     "address": "0x143f8",
+     "text": "ld +0x3890[r0],r8",
+     "kind": "global-load",
+     "value": "0x3890"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x1cc58",
+   "owner": "0x1cc0c",
+   "owner_name": "maybe_syslog_emit_class",
+   "callers": [
+    "0x1e018",
+    "0x1e3a4",
+    "0x1ff2c",
+    "0x33940",
+    "0x35b8c",
+    "0x44ac4",
+    "0x4948c",
+    "0x49550",
+    "0x4a400",
+    "0x4a53c",
+    "0x4c40c",
+    "0x4d784",
+    "0x4d924",
+    "0x4dd84",
+    "0x62728",
+    "0x62cb4",
+    "0x640b4",
+    "0x64f3c",
+    "0x672a4"
+   ],
+   "subsystem": "syslog-forward",
+   "message": "%s",
+   "message_address": "0x3a40",
+   "class": null,
+   "class_source": "inherited-from-maybe_syslog_emit_class",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x1cc5c",
+     "text": "addi r0,+0x3a40,r4",
+     "kind": "constant",
+     "value": "0x3a40",
+     "string": "%s"
+    },
+    {
+     "register": 5,
+     "address": "0x1cc60",
+     "text": "addi r0,+0xc640,r5",
+     "kind": "constant",
+     "value": "0xc640",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x1cc40",
+     "text": "addi r30,+0xc,r6",
+     "kind": "other"
+    },
+    {
+     "register": 7,
+     "address": "0x1cbd8",
+     "text": "mov r16,r7",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 8,
+     "address": "0x1cc54",
+     "text": "ld +0xb6f0[r0],r8",
+     "kind": "global-load",
+     "value": "0xb6f0"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    7
+   ]
+  },
+  {
+   "call": "0x1da14",
+   "owner": "0x1d8d0",
+   "owner_name": null,
+   "callers": [
+    "0x44168"
+   ],
+   "subsystem": "image-validation",
+   "message": "code %d? imageId %d =? %d\n",
+   "message_address": "0x3a64",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x1da04",
+     "text": "addi r0,+0x3a64,r4",
+     "kind": "constant",
+     "value": "0x3a64",
+     "string": "code %d? imageId %d =? %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x1da18",
+     "text": "mov r19,r5",
+     "kind": "register-move",
+     "from": "r19"
+    },
+    {
+     "register": 6,
+     "address": "0x1da10",
+     "text": "ld +0x0[r2],r6",
+     "kind": "struct-load",
+     "base": "r2",
+     "offset": "+0x0"
+    },
+    {
+     "register": 7,
+     "address": "0x1da1c",
+     "text": "ld +0xa92c[r0],r7",
+     "kind": "global-load",
+     "value": "0xa92c"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    4
+   ]
+  },
+  {
+   "call": "0x1dee8",
+   "owner": "0x1de34",
+   "owner_name": null,
+   "callers": [
+    "0x1db80",
+    "0x1e3a4",
+    "0x1f0e0",
+    "0x1f654",
+    "0x1f78c",
+    "0x1f9d0",
+    "0x20f98"
+   ],
+   "subsystem": "dtmf",
+   "message": "dtmf: %c\n",
+   "message_address": "0x3c44",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x1deec",
+     "text": "addi r0,+0x3c44,r4",
+     "kind": "constant",
+     "value": "0x3c44",
+     "string": "dtmf: %c\n"
+    },
+    {
+     "register": 5,
+     "address": "0x1def0",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x1f834",
+   "owner": "0x1f80c",
+   "owner_name": null,
+   "callers": [
+    "0x1f8b8",
+    "0x1f9d0"
+   ],
+   "subsystem": "fxs-hook-key",
+   "message": "kup(%d,%s)\n",
+   "message_address": "0x3d08",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x1f830",
+     "text": "addi r0,+0x3d08,r4",
+     "kind": "constant",
+     "value": "0x3d08",
+     "string": "kup(%d,%s)\n"
+    },
+    {
+     "register": 5,
+     "address": "0x1f838",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x1f83c",
+     "text": "mov r18,r6",
+     "kind": "register-move",
+     "from": "r18"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x1f8e8",
+   "owner": "0x1f8b8",
+   "owner_name": null,
+   "callers": [
+    "0x20f98"
+   ],
+   "subsystem": "fxs-hook-key",
+   "message": "kls ",
+   "message_address": "0x3d14",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x1f8ec",
+     "text": "addi r0,+0x3d14,r4",
+     "kind": "constant",
+     "value": "0x3d14",
+     "string": "kls "
+    },
+    {
+     "register": 5,
+     "address": "0x1f8d8",
+     "text": "addi r0,+0x1,r5",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x1f890",
+     "text": "mov r18,r6",
+     "kind": "register-move",
+     "from": "r18"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6
+   ]
+  },
+  {
+   "call": "0x1fa50",
+   "owner": "0x1f9d0",
+   "owner_name": null,
+   "callers": [
+    "0x20f98"
+   ],
+   "subsystem": "fxs-hook-key",
+   "message": "echo\n",
+   "message_address": "0x3d28",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x1fa54",
+     "text": "addi r0,+0x3d28,r4",
+     "kind": "constant",
+     "value": "0x3d28",
+     "string": "echo\n"
+    },
+    {
+     "register": 5,
+     "address": "0x1fa1c",
+     "text": "addi r0,+0x20,r5",
+     "kind": "constant",
+     "value": "0x20",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x1fa20",
+     "text": "addi r0,+0x0,r6",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x1fa08",
+     "text": "addi r30,-0xc,r7",
+     "kind": "other"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7
+   ]
+  },
+  {
+   "call": "0x1faa0",
+   "owner": "0x1f9d0",
+   "owner_name": null,
+   "callers": [
+    "0x20f98"
+   ],
+   "subsystem": "fxs-hook-key",
+   "message": "kup\n",
+   "message_address": "0x3d2e",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x1faa4",
+     "text": "addi r0,+0x3d2e,r4",
+     "kind": "constant",
+     "value": "0x3d2e",
+     "string": "kup\n"
+    },
+    {
+     "register": 5,
+     "address": "0x1fa90",
+     "text": "addi r0,+0x0,r5",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x1fa20",
+     "text": "addi r0,+0x0,r6",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x1fa08",
+     "text": "addi r30,-0xc,r7",
+     "kind": "other"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7
+   ]
+  },
+  {
+   "call": "0x1fb2c",
+   "owner": "0x1f9d0",
+   "owner_name": null,
+   "callers": [
+    "0x20f98"
+   ],
+   "subsystem": "fxs-hook-key",
+   "message": "e: callType %d\n",
+   "message_address": "0x3d33",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x1fb30",
+     "text": "addi r0,+0x3d33,r4",
+     "kind": "constant",
+     "value": "0x3d33",
+     "string": "e: callType %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x1fb34",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x1fad0",
+     "text": "addi r0,+0x64,r6",
+     "kind": "constant",
+     "value": "0x64",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6
+   ]
+  },
+  {
+   "call": "0x20518",
+   "owner": "0x1ff2c",
+   "owner_name": null,
+   "callers": [
+    "0x1ff2c"
+   ],
+   "subsystem": "startup",
+   "message": "`Hello from %s (%d-%d)\n",
+   "message_address": "0x3da3",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x20510",
+     "text": "addi r0,+0x3da3,r4",
+     "kind": "constant",
+     "value": "0x3da3",
+     "string": "`Hello from %s (%d-%d)\n"
+    },
+    {
+     "register": 5,
+     "address": "0x20514",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x2051c",
+     "text": "ld +0xb7cc[r0],r6",
+     "kind": "global-load",
+     "value": "0xb7cc"
+    },
+    {
+     "register": 7,
+     "address": "0x20520",
+     "text": "ld +0xb808[r0],r7",
+     "kind": "global-load",
+     "value": "0xb808"
+    },
+    {
+     "register": 8,
+     "address": "0x204b4",
+     "text": "ld +0xb7b4[r0],r8",
+     "kind": "global-load",
+     "value": "0xb7b4"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x205b8",
+   "owner": "0x1ff2c",
+   "owner_name": null,
+   "callers": [
+    "0x1ff2c"
+   ],
+   "subsystem": "startup",
+   "message": "Build %s:%s\n",
+   "message_address": "0x3de7",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x205bc",
+     "text": "addi r0,+0x3de7,r4",
+     "kind": "constant",
+     "value": "0x3de7",
+     "string": "Build %s:%s\n"
+    },
+    {
+     "register": 5,
+     "address": "0x205c0",
+     "text": "ld +0x3968[r0],r5",
+     "kind": "global-load",
+     "value": "0x3968"
+    },
+    {
+     "register": 6,
+     "address": "0x205b4",
+     "text": "addi r30,-0x74,r6",
+     "kind": "other"
+    },
+    {
+     "register": 7,
+     "address": "0x20538",
+     "text": "mov r16,r7",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 8,
+     "address": "0x20548",
+     "text": "ld +0xb7cc[r0],r8",
+     "kind": "global-load",
+     "value": "0xb7cc"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x219d4",
+   "owner": "0x21958",
+   "owner_name": null,
+   "callers": [
+    "0x23ea4"
+   ],
+   "subsystem": "startup-flash",
+   "message": "flash0\n",
+   "message_address": "0x3eb8",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x219d8",
+     "text": "addi r0,+0x3eb8,r4",
+     "kind": "constant",
+     "value": "0x3eb8",
+     "string": "flash0\n"
+    },
+    {
+     "register": 5,
+     "address": "0x21990",
+     "text": "addi r0,+0x0,r5",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5
+   ]
+  },
+  {
+   "call": "0x21a08",
+   "owner": "0x21958",
+   "owner_name": null,
+   "callers": [
+    "0x23ea4"
+   ],
+   "subsystem": "startup-flash",
+   "message": "flash1\n",
+   "message_address": "0x3ec0",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x21a0c",
+     "text": "addi r0,+0x3ec0,r4",
+     "kind": "constant",
+     "value": "0x3ec0",
+     "string": "flash1\n"
+    },
+    {
+     "register": 5,
+     "address": "0x21990",
+     "text": "addi r0,+0x0,r5",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5
+   ]
+  },
+  {
+   "call": "0x23f94",
+   "owner": "0x23ea4",
+   "owner_name": null,
+   "callers": [
+    "0x64f3c"
+   ],
+   "subsystem": "fxs-event",
+   "message": "<EM>\n",
+   "message_address": "0x3f58",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x23f98",
+     "text": "addi r0,+0x3f58,r4",
+     "kind": "constant",
+     "value": "0x3f58",
+     "string": "<EM>\n"
+    },
+    {
+     "register": 5,
+     "address": "0x23f90",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x2e868",
+   "owner": "0x2e828",
+   "owner_name": null,
+   "callers": [
+    "0x272e4",
+    "0x292a4",
+    "0x2b094"
+   ],
+   "subsystem": "filesystem",
+   "message": "f: /\n",
+   "message_address": "0x3f8c",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x2e86c",
+     "text": "addi r0,+0x3f8c,r4",
+     "kind": "constant",
+     "value": "0x3f8c",
+     "string": "f: /\n"
+    },
+    {
+     "register": 5,
+     "address": "0x2e778",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x2e83c",
+     "text": "addi r0,+0x0,r6",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6
+   ]
+  },
+  {
+   "call": "0x2e9e4",
+   "owner": "0x2e994",
+   "owner_name": null,
+   "callers": [
+    "0x25efc",
+    "0x26a94",
+    "0x2b094",
+    "0x2f8e0"
+   ],
+   "subsystem": "filesystem",
+   "message": "f: L/\n",
+   "message_address": "0x3f98",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x2e9e8",
+     "text": "addi r0,+0x3f98,r4",
+     "kind": "constant",
+     "value": "0x3f98",
+     "string": "f: L/\n"
+    },
+    {
+     "register": 6,
+     "address": "0x2e8ec",
+     "text": "addi r2,+0x1,r6",
+     "kind": "other"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6
+   ]
+  },
+  {
+   "call": "0x35058",
+   "owner": "0x34584",
+   "owner_name": "maybe_http_request_parse",
+   "callers": [
+    "0x34584"
+   ],
+   "subsystem": "http-request",
+   "message": "`Hello from %s@%s (rebind)\n",
+   "message_address": "0x5597",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x35054",
+     "text": "addi r0,+0x5597,r4",
+     "kind": "constant",
+     "value": "0x5597",
+     "string": "`Hello from %s@%s (rebind)\n"
+    },
+    {
+     "register": 5,
+     "address": "0x3505c",
+     "text": "addi r0,+0xaab0,r5",
+     "kind": "constant",
+     "value": "0xaab0",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x35060",
+     "text": "addi r0,+0xc630,r6",
+     "kind": "constant",
+     "value": "0xc630",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x34fa8",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x35a60",
+   "owner": "0x3599c",
+   "owner_name": null,
+   "callers": [
+    "0x24040",
+    "0x256d4",
+    "0x25c00",
+    "0x2620c",
+    "0x263e4",
+    "0x26910",
+    "0x26a94",
+    "0x26ec0",
+    "0x280a8",
+    "0x28e34",
+    "0x292a4",
+    "0x296c4",
+    "0x29f8c",
+    "0x2a48c",
+    "0x2a600",
+    "0x2aaf8",
+    "0x2b34c",
+    "0x2f8e0",
+    "0x2fc0c",
+    "0x362cc",
+    "0x36e1c",
+    "0x37dc0",
+    "0x38004",
+    "0x38698",
+    "0x387c4",
+    "0x3a308",
+    "0x3cff8",
+    "0x3d1bc",
+    "0x41530",
+    "0x47558",
+    "0x4eb2c",
+    "0x4fcd4",
+    "0x50668",
+    "0x50854",
+    "0x51600",
+    "0x51878",
+    "0x51c58",
+    "0x53ba0",
+    "0x541d0",
+    "0x54468",
+    "0x56e10",
+    "0x57c48",
+    "0x58bf8",
+    "0x58d84",
+    "0x58f74",
+    "0x59c0c",
+    "0x59da4",
+    "0x5a028",
+    "0x5a2d4",
+    "0x5a4b4",
+    "0x5a86c",
+    "0x5a980",
+    "0x5aacc",
+    "0x5b2fc",
+    "0x5ba18",
+    "0x5bb74",
+    "0x5c330",
+    "0x5c4b0",
+    "0x5d18c",
+    "0x5ed40",
+    "0x5eefc",
+    "0x5f350",
+    "0x5ff9c",
+    "0x68150",
+    "0x68380"
+   ],
+   "subsystem": "dtmf",
+   "message": "[%d]: OOB DTMF\n",
+   "message_address": "0x5608",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x35a64",
+     "text": "addi r0,+0x5608,r4",
+     "kind": "constant",
+     "value": "0x5608",
+     "string": "[%d]: OOB DTMF\n"
+    },
+    {
+     "register": 5,
+     "address": "0x35a68",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x35f40",
+   "owner": "0x35b8c",
+   "owner_name": null,
+   "callers": [
+    "0x3b020"
+   ],
+   "subsystem": "dtmf",
+   "message": "DTMF[%d]:%d state:(%d,%d,%d,%d %d) \nEng: (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)\n",
+   "message_address": "0x5618",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x35e40",
+     "text": "addi r0,+0x5618,r4",
+     "kind": "constant",
+     "value": "0x5618",
+     "string": "DTMF[%d]:%d state:(%d,%d,%d,%d %d) \nEng: (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)\n"
+    },
+    {
+     "register": 5,
+     "address": "0x35f44",
+     "text": "ld +0x0[r16],r5",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0x0"
+    },
+    {
+     "register": 6,
+     "address": "0x35f48",
+     "text": "ld -0xc[r30],r6",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "-0xc"
+    },
+    {
+     "register": 7,
+     "address": "0x35e4c",
+     "text": "ldf +0x7d[r16],r7",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0x7d"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x3932c",
+   "owner": "0x39300",
+   "owner_name": null,
+   "callers": [
+    "0x39240",
+    "0x39d98",
+    "0x3b020",
+    "0x49d34",
+    "0x640b4"
+   ],
+   "subsystem": "codec-ec",
+   "message": "[%d]: EC %d\n",
+   "message_address": "0x594c",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x39328",
+     "text": "addi r0,+0x594c,r4",
+     "kind": "constant",
+     "value": "0x594c",
+     "string": "[%d]: EC %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x39330",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x39334",
+     "text": "mov r17,r6",
+     "kind": "register-move",
+     "from": "r17"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x39394",
+   "owner": "0x39370",
+   "owner_name": null,
+   "callers": [
+    "0x39d98",
+    "0x495f0",
+    "0x49d34"
+   ],
+   "subsystem": "codec-ec",
+   "message": "Enable LEC adapt [%d]=%d\n",
+   "message_address": "0x595c",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x39390",
+     "text": "addi r0,+0x595c,r4",
+     "kind": "constant",
+     "value": "0x595c",
+     "string": "Enable LEC adapt [%d]=%d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x39398",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x3939c",
+     "text": "mov r17,r6",
+     "kind": "register-move",
+     "from": "r17"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x39498",
+   "owner": "0x3943c",
+   "owner_name": null,
+   "callers": [
+    "0x39d98",
+    "0x49d34"
+   ],
+   "subsystem": "codec-ec",
+   "message": "[%d]Enable encoder %d\n",
+   "message_address": "0x5978",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x39494",
+     "text": "addi r0,+0x5978,r4",
+     "kind": "constant",
+     "value": "0x5978",
+     "string": "[%d]Enable encoder %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x3949c",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x394a0",
+     "text": "ld +0x0[r3],r6",
+     "kind": "struct-load",
+     "base": "r3",
+     "offset": "+0x0"
+    },
+    {
+     "register": 7,
+     "address": "0x39464",
+     "text": "addi r0,+0x1,r7",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x39808",
+   "owner": "0x397a0",
+   "owner_name": null,
+   "callers": [
+    "0x6219c",
+    "0x623bc",
+    "0x62880",
+    "0x62cb4"
+   ],
+   "subsystem": "tone",
+   "message": "[%d]StartTone %d\n",
+   "message_address": "0x5990",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x39804",
+     "text": "addi r0,+0x5990,r4",
+     "kind": "constant",
+     "value": "0x5990",
+     "string": "[%d]StartTone %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x3980c",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x39810",
+     "text": "mov r17,r6",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 8,
+     "address": "0x397f0",
+     "text": "ld +0x10[r30],r8",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "+0x10"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x3988c",
+   "owner": "0x39834",
+   "owner_name": null,
+   "callers": [
+    "0x20f98",
+    "0x403b8",
+    "0x61c6c",
+    "0x62880",
+    "0x62cb4",
+    "0x63808",
+    "0x640b4",
+    "0x64a84",
+    "0x662a0",
+    "0x672a4"
+   ],
+   "subsystem": "tone",
+   "message": "[%d]StartTone %d\n",
+   "message_address": "0x5990",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x39888",
+     "text": "addi r0,+0x5990,r4",
+     "kind": "constant",
+     "value": "0x5990",
+     "string": "[%d]StartTone %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x39890",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x39894",
+     "text": "mov r17,r6",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 7,
+     "address": "0x39878",
+     "text": "addi r0,+0x8a4c,r7",
+     "kind": "constant",
+     "value": "0x8a4c",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x397f0",
+     "text": "ld +0x10[r30],r8",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "+0x10"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x398f8",
+   "owner": "0x398b8",
+   "owner_name": null,
+   "callers": [
+    "0x20f98",
+    "0x22538",
+    "0x62880",
+    "0x62cb4",
+    "0x63808",
+    "0x640b4",
+    "0x6582c"
+   ],
+   "subsystem": "tone",
+   "message": "[%d]StopTone\n",
+   "message_address": "0x59a4",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x398fc",
+     "text": "addi r0,+0x59a4,r4",
+     "kind": "constant",
+     "value": "0x59a4",
+     "string": "[%d]StopTone\n"
+    },
+    {
+     "register": 5,
+     "address": "0x39900",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x39894",
+     "text": "mov r17,r6",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 7,
+     "address": "0x39878",
+     "text": "addi r0,+0x8a4c,r7",
+     "kind": "constant",
+     "value": "0x8a4c",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6,
+    7
+   ]
+  },
+  {
+   "call": "0x3a798",
+   "owner": "0x3a44c",
+   "owner_name": null,
+   "callers": [
+    "0x3bb50"
+   ],
+   "subsystem": "tone",
+   "message": "Timeout: Rst tone[c=%d,t=%d]\n",
+   "message_address": "0x59d8",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x3a794",
+     "text": "addi r0,+0x59d8,r4",
+     "kind": "constant",
+     "value": "0x59d8",
+     "string": "Timeout: Rst tone[c=%d,t=%d]\n"
+    },
+    {
+     "register": 5,
+     "address": "0x3a79c",
+     "text": "ld +0x0[r18],r5",
+     "kind": "struct-load",
+     "base": "r18",
+     "offset": "+0x0"
+    },
+    {
+     "register": 6,
+     "address": "0x3a7a0",
+     "text": "mov r21,r6",
+     "kind": "register-move",
+     "from": "r21"
+    },
+    {
+     "register": 8,
+     "address": "0x3a78c",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x3bc9c",
+   "owner": "0x3bb50",
+   "owner_name": null,
+   "callers": [
+    "0x3bb50",
+    "0x4b6f8"
+   ],
+   "subsystem": "rtp-stats",
+   "message": "estat[%d]=%d,%d,%d,%d,%d,%d,%02X%02X%02X%02X%02X%02X,%02X%02X%02X%02X%02X%02X\n",
+   "message_address": "0x5a70",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x3bc98",
+     "text": "addi r0,+0x5a70,r4",
+     "kind": "constant",
+     "value": "0x5a70",
+     "string": "estat[%d]=%d,%d,%d,%d,%d,%d,%02X%02X%02X%02X%02X%02X,%02X%02X%02X%02X%02X%02X\n"
+    },
+    {
+     "register": 6,
+     "address": "0x3bca0",
+     "text": "ld +0x8[r7],r6",
+     "kind": "struct-load",
+     "base": "r7",
+     "offset": "+0x8"
+    },
+    {
+     "register": 7,
+     "address": "0x3bca4",
+     "text": "ld +0x0[r7],r7",
+     "kind": "struct-load",
+     "base": "r7",
+     "offset": "+0x0"
+    },
+    {
+     "register": 8,
+     "address": "0x3bbf4",
+     "text": "ld +0x2c[r7],r8",
+     "kind": "struct-load",
+     "base": "r7",
+     "offset": "+0x2c"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x3bd20",
+   "owner": "0x3bb50",
+   "owner_name": null,
+   "callers": [
+    "0x3bb50",
+    "0x4b6f8"
+   ],
+   "subsystem": "rtp-stats",
+   "message": "edif=%d,%d,%d,%d,%d,%d\n",
+   "message_address": "0x5abf",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x3bd28",
+     "text": "addi r0,+0x5abf,r4",
+     "kind": "constant",
+     "value": "0x5abf",
+     "string": "edif=%d,%d,%d,%d,%d,%d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x3bcc4",
+     "text": "sub r9,r8,r5",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x3bcd4",
+     "text": "sub r9,r8,r6",
+     "kind": "other"
+    },
+    {
+     "register": 7,
+     "address": "0x3bce4",
+     "text": "sub r9,r8,r7",
+     "kind": "other"
+    },
+    {
+     "register": 8,
+     "address": "0x3bd00",
+     "text": "ld +0x20[r3],r8",
+     "kind": "struct-load",
+     "base": "r3",
+     "offset": "+0x20"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x3c508",
+   "owner": "0x3bb50",
+   "owner_name": null,
+   "callers": [
+    "0x3bb50",
+    "0x4b6f8"
+   ],
+   "subsystem": "rtp-stats",
+   "message": "%d:%02d;",
+   "message_address": "0x5aec",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x3c504",
+     "text": "addi r0,+0x5aec,r4",
+     "kind": "constant",
+     "value": "0x5aec",
+     "string": "%d:%02d;"
+    },
+    {
+     "register": 5,
+     "address": "0x3c50c",
+     "text": "ld +0x5ae4[r0],r5",
+     "kind": "global-load",
+     "value": "0x5ae4"
+    },
+    {
+     "register": 6,
+     "address": "0x3c510",
+     "text": "ld +0x5ae8[r0],r6",
+     "kind": "global-load",
+     "value": "0x5ae8"
+    },
+    {
+     "register": 8,
+     "address": "0x3c46c",
+     "text": "addi r0,+0x3,r8",
+     "kind": "constant",
+     "value": "0x3",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x3c548",
+   "owner": "0x3bb50",
+   "owner_name": null,
+   "callers": [
+    "0x3bb50",
+    "0x4b6f8"
+   ],
+   "subsystem": "rtp-stats",
+   "message": "%d,",
+   "message_address": "0x5af5",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x3c54c",
+     "text": "addi r0,+0x5af5,r4",
+     "kind": "constant",
+     "value": "0x5af5",
+     "string": "%d,"
+    },
+    {
+     "register": 5,
+     "address": "0x3c544",
+     "text": "lsr r5,r5,#16",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x3c510",
+     "text": "ld +0x5ae8[r0],r6",
+     "kind": "global-load",
+     "value": "0x5ae8"
+    },
+    {
+     "register": 8,
+     "address": "0x3c46c",
+     "text": "addi r0,+0x3,r8",
+     "kind": "constant",
+     "value": "0x3",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6,
+    8
+   ]
+  },
+  {
+   "call": "0x3c57c",
+   "owner": "0x3bb50",
+   "owner_name": null,
+   "callers": [
+    "0x3bb50",
+    "0x4b6f8"
+   ],
+   "subsystem": "rtp-stats",
+   "message": "\n",
+   "message_address": "0x5af9",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x3c580",
+     "text": "addi r0,+0x5af9,r4",
+     "kind": "constant",
+     "value": "0x5af9",
+     "string": "\n"
+    },
+    {
+     "register": 5,
+     "address": "0x3c544",
+     "text": "lsr r5,r5,#16",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x3c510",
+     "text": "ld +0x5ae8[r0],r6",
+     "kind": "global-load",
+     "value": "0x5ae8"
+    },
+    {
+     "register": 8,
+     "address": "0x3c56c",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6
+   ]
+  },
+  {
+   "call": "0x3de00",
+   "owner": "0x3d964",
+   "owner_name": null,
+   "callers": [
+    "0x3a44c",
+    "0x3b020",
+    "0x45d70"
+   ],
+   "subsystem": "tone",
+   "message": "AutoStopTone %d\n",
+   "message_address": "0x5d54",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x3de04",
+     "text": "addi r0,+0x5d54,r4",
+     "kind": "constant",
+     "value": "0x5d54",
+     "string": "AutoStopTone %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x3de08",
+     "text": "ld +0x34[r17],r5",
+     "kind": "struct-load",
+     "base": "r17",
+     "offset": "+0x34"
+    },
+    {
+     "register": 8,
+     "address": "0x3ddf4",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x3dea0",
+   "owner": "0x3de54",
+   "owner_name": null,
+   "callers": [
+    "0x14074",
+    "0x14148",
+    "0x1f91c"
+   ],
+   "subsystem": "provisioning",
+   "message": "e: xurl(%s)\n",
+   "message_address": "0x5d68",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x3dea4",
+     "text": "addi r0,+0x5d68,r4",
+     "kind": "constant",
+     "value": "0x5d68",
+     "string": "e: xurl(%s)\n"
+    },
+    {
+     "register": 5,
+     "address": "0x3dea8",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x3de28",
+     "text": "ld +0x40[r17],r6",
+     "kind": "struct-load",
+     "base": "r17",
+     "offset": "+0x40"
+    },
+    {
+     "register": 7,
+     "address": "0x3de2c",
+     "text": "ld +0x34[r17],r7",
+     "kind": "struct-load",
+     "base": "r17",
+     "offset": "+0x34"
+    },
+    {
+     "register": 8,
+     "address": "0x3de98",
+     "text": "addi r0,+0xa,r8",
+     "kind": "constant",
+     "value": "0xa",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6,
+    7
+   ]
+  },
+  {
+   "call": "0x3df64",
+   "owner": "0x3de54",
+   "owner_name": null,
+   "callers": [
+    "0x14074",
+    "0x14148",
+    "0x1f91c"
+   ],
+   "subsystem": "provisioning",
+   "message": "url(%s)\n",
+   "message_address": "0x5d75",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x3df68",
+     "text": "addi r0,+0x5d75,r4",
+     "kind": "constant",
+     "value": "0x5d75",
+     "string": "url(%s)\n"
+    },
+    {
+     "register": 5,
+     "address": "0x3df6c",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 8,
+     "address": "0x3df04",
+     "text": "ld +0x394c[r0],r8",
+     "kind": "global-load",
+     "value": "0x394c"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x3fe88",
+   "owner": "0x3fe00",
+   "owner_name": null,
+   "callers": [
+    "0x35b8c"
+   ],
+   "subsystem": "dtmf",
+   "message": "ACK digit = %c\n",
+   "message_address": "0x5f18",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x3fe8c",
+     "text": "addi r0,+0x5f18,r4",
+     "kind": "constant",
+     "value": "0x5f18",
+     "string": "ACK digit = %c\n"
+    },
+    {
+     "register": 5,
+     "address": "0x3fe90",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x40514",
+   "owner": "0x403b8",
+   "owner_name": null,
+   "callers": [
+    "0x3ed48",
+    "0x3ef60",
+    "0x41270"
+   ],
+   "subsystem": "fxs-ring",
+   "message": "CIDCW ACK TO\n",
+   "message_address": "0x5f28",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x40518",
+     "text": "addi r0,+0x5f28,r4",
+     "kind": "constant",
+     "value": "0x5f28",
+     "string": "CIDCW ACK TO\n"
+    },
+    {
+     "register": 5,
+     "address": "0x40468",
+     "text": "addi r0,+0x18,r5",
+     "kind": "constant",
+     "value": "0x18",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x404e0",
+     "text": "addi r8,+0x4,r8",
+     "kind": "other"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    8
+   ]
+  },
+  {
+   "call": "0x40e50",
+   "owner": "0x40d9c",
+   "owner_name": null,
+   "callers": [
+    "0x3ef60"
+   ],
+   "subsystem": "fxs-ring",
+   "message": "[%d]RINGING\n",
+   "message_address": "0x5f6c",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x40e54",
+     "text": "addi r0,+0x5f6c,r4",
+     "kind": "constant",
+     "value": "0x5f6c",
+     "string": "[%d]RINGING\n"
+    },
+    {
+     "register": 5,
+     "address": "0x40e58",
+     "text": "ld -0x10[r30],r5",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "-0x10"
+    },
+    {
+     "register": 6,
+     "address": "0x40d7c",
+     "text": "addi r6,+0x1,r6",
+     "kind": "other"
+    },
+    {
+     "register": 7,
+     "address": "0x40dec",
+     "text": "ld +0x5edc[r0],r7",
+     "kind": "global-load",
+     "value": "0x5edc"
+    },
+    {
+     "register": 8,
+     "address": "0x40d60",
+     "text": "addi r8,+0x1,r8",
+     "kind": "other"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6,
+    8
+   ]
+  },
+  {
+   "call": "0x4140c",
+   "owner": "0x41270",
+   "owner_name": null,
+   "callers": [
+    "0x3ef60"
+   ],
+   "subsystem": "fxs-ring",
+   "message": "[%d]RINGING\n",
+   "message_address": "0x5f6c",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x41410",
+     "text": "addi r0,+0x5f6c,r4",
+     "kind": "constant",
+     "value": "0x5f6c",
+     "string": "[%d]RINGING\n"
+    },
+    {
+     "register": 5,
+     "address": "0x41414",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x413c8",
+     "text": "mov r16,r6",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 7,
+     "address": "0x413c4",
+     "text": "add r7,r8,r7",
+     "kind": "other"
+    },
+    {
+     "register": 8,
+     "address": "0x413bc",
+     "text": "ld +0x5edc[r0],r8",
+     "kind": "global-load",
+     "value": "0x5edc"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x41a68",
+   "owner": "0x41660",
+   "owner_name": null,
+   "callers": [
+    "0x41c68"
+   ],
+   "subsystem": "fxs-cid",
+   "message": "CED\n",
+   "message_address": "0x5f84",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x41a70",
+     "text": "addi r0,+0x5f84,r4",
+     "kind": "constant",
+     "value": "0x5f84",
+     "string": "CED\n"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x41aa8",
+   "owner": "0x41660",
+   "owner_name": null,
+   "callers": [
+    "0x41c68"
+   ],
+   "subsystem": "fxs-cid",
+   "message": "V21 Flag\n",
+   "message_address": "0x5f89",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x41ab0",
+     "text": "addi r0,+0x5f89,r4",
+     "kind": "constant",
+     "value": "0x5f89",
+     "string": "V21 Flag\n"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x43690",
+   "owner": "0x4348c",
+   "owner_name": null,
+   "callers": [
+    "0x62728",
+    "0x62cb4"
+   ],
+   "subsystem": "call-display",
+   "message": "[%d]Call Prefix:%s+%s\n",
+   "message_address": "0x5fd0",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x43688",
+     "text": "addi r0,+0x5fd0,r4",
+     "kind": "constant",
+     "value": "0x5fd0",
+     "string": "[%d]Call Prefix:%s+%s\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4368c",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x43694",
+     "text": "mov r16,r6",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 7,
+     "address": "0x43698",
+     "text": "mov r18,r7",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 8,
+     "address": "0x435a0",
+     "text": "addi r0,+0x300,r8",
+     "kind": "constant",
+     "value": "0x300",
+     "string": "%d.%d.%d.%d lease:%d\n"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x438c0",
+   "owner": "0x43794",
+   "owner_name": null,
+   "callers": [
+    "0x62728",
+    "0x62cb4"
+   ],
+   "subsystem": "call-display",
+   "message": "CLIP: %s\n",
+   "message_address": "0x5fe8",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x438c4",
+     "text": "addi r0,+0x5fe8,r4",
+     "kind": "constant",
+     "value": "0x5fe8",
+     "string": "CLIP: %s\n"
+    },
+    {
+     "register": 5,
+     "address": "0x438c8",
+     "text": "mov r18,r5",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 6,
+     "address": "0x43814",
+     "text": "addi r0,-0x1,r6",
+     "kind": "constant",
+     "value": "0xffffffff",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x43830",
+     "text": "ld +0x24[r3],r7",
+     "kind": "struct-load",
+     "base": "r3",
+     "offset": "+0x24"
+    },
+    {
+     "register": 8,
+     "address": "0x43834",
+     "text": "addi r0,+0x1000,r8",
+     "kind": "constant",
+     "value": "0x1000",
+     "string": "n %dsec)\n"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x439a0",
+   "owner": "0x43934",
+   "owner_name": null,
+   "callers": [
+    "0x1c1ac",
+    "0x1c718",
+    "0x1ca88",
+    "0x43aa4"
+   ],
+   "subsystem": "call-display",
+   "message": "H(%s,%d)\n",
+   "message_address": "0x5ff4",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4399c",
+     "text": "addi r0,+0x5ff4,r4",
+     "kind": "constant",
+     "value": "0x5ff4",
+     "string": "H(%s,%d)\n"
+    },
+    {
+     "register": 5,
+     "address": "0x439a4",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x439a8",
+     "text": "mov r18,r6",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 8,
+     "address": "0x43980",
+     "text": "ldf +0x2[r16],r8",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0x2"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x441f4",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "e: cfg < 8\n",
+   "message_address": "0x6008",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x441f8",
+     "text": "addi r0,+0x6008,r4",
+     "kind": "constant",
+     "value": "0x6008",
+     "string": "e: cfg < 8\n"
+    },
+    {
+     "register": 8,
+     "address": "0x441c8",
+     "text": "addi r0,-0x2,r8",
+     "kind": "constant",
+     "value": "0xfffffffe",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x442ec",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "e: #ata\n",
+   "message_address": "0x6019",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x442f4",
+     "text": "addi r0,+0x6019,r4",
+     "kind": "constant",
+     "value": "0x6019",
+     "string": "e: #ata\n"
+    },
+    {
+     "register": 5,
+     "address": "0x442cc",
+     "text": "addi r0,+0x6014,r5",
+     "kind": "constant",
+     "value": "0x6014",
+     "string": "#ata"
+    },
+    {
+     "register": 6,
+     "address": "0x442d0",
+     "text": "addi r0,+0x4,r6",
+     "kind": "constant",
+     "value": "0x4",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x4429c",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x442dc",
+     "text": "addi r0,+0x800,r8",
+     "kind": "constant",
+     "value": "0x800",
+     "string": "u\n\n"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    7
+   ]
+  },
+  {
+   "call": "0x44384",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "e: s/l %d %d\n",
+   "message_address": "0x6022",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4438c",
+     "text": "addi r0,+0x6022,r4",
+     "kind": "constant",
+     "value": "0x6022",
+     "string": "e: s/l %d %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44378",
+     "text": "lsr r5,r5,#16",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x44380",
+     "text": "lsr r6,r6,#16",
+     "kind": "other"
+    },
+    {
+     "register": 7,
+     "address": "0x4429c",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x44340",
+     "text": "addi r0,+0x200,r8",
+     "kind": "constant",
+     "value": "0x200",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x443f4",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "e: bad len\n",
+   "message_address": "0x6030",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x443fc",
+     "text": "addi r0,+0x6030,r4",
+     "kind": "constant",
+     "value": "0x6030",
+     "string": "e: bad len\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44378",
+     "text": "lsr r5,r5,#16",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x44380",
+     "text": "lsr r6,r6,#16",
+     "kind": "other"
+    },
+    {
+     "register": 8,
+     "address": "0x443e4",
+     "text": "addi r0,+0x200,r8",
+     "kind": "constant",
+     "value": "0x200",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6
+   ]
+  },
+  {
+   "call": "0x4447c",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "e: bad sum\n",
+   "message_address": "0x603c",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x44484",
+     "text": "addi r0,+0x603c,r4",
+     "kind": "constant",
+     "value": "0x603c",
+     "string": "e: bad sum\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44444",
+     "text": "lsr r5,r5,#16",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x44380",
+     "text": "lsr r6,r6,#16",
+     "kind": "other"
+    },
+    {
+     "register": 8,
+     "address": "0x4446c",
+     "text": "addi r0,+0x400,r8",
+     "kind": "constant",
+     "value": "0x400",
+     "string": ".c"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6
+   ]
+  },
+  {
+   "call": "0x44558",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "`Hello from %s@%s (rebind)\n",
+   "message_address": "0x6048",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x44554",
+     "text": "addi r0,+0x6048,r4",
+     "kind": "constant",
+     "value": "0x6048",
+     "string": "`Hello from %s@%s (rebind)\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4455c",
+     "text": "addi r0,+0xaab0,r5",
+     "kind": "constant",
+     "value": "0xaab0",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x44560",
+     "text": "addi r0,+0xc630,r6",
+     "kind": "constant",
+     "value": "0xc630",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x444fc",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x447e8",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "e: eex sum\n",
+   "message_address": "0x6070",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x447e4",
+     "text": "addi r0,+0x6070,r4",
+     "kind": "constant",
+     "value": "0x6070",
+     "string": "e: eex sum\n"
+    },
+    {
+     "register": 5,
+     "address": "0x447b8",
+     "text": "lsr r5,r5,#16",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x447c4",
+     "text": "addi r6,+0xc,r6",
+     "kind": "other"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    4,
+    5,
+    6
+   ]
+  },
+  {
+   "call": "0x4483c",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "i: modified? %d %d\n",
+   "message_address": "0x6088",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x44828",
+     "text": "addi r0,+0x6088,r4",
+     "kind": "constant",
+     "value": "0x6088",
+     "string": "i: modified? %d %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44840",
+     "text": "ld +0xbea4[r0],r5",
+     "kind": "global-load",
+     "value": "0xbea4"
+    },
+    {
+     "register": 6,
+     "address": "0x44844",
+     "text": "ld +0xb6b4[r0],r6",
+     "kind": "global-load",
+     "value": "0xb6b4"
+    },
+    {
+     "register": 8,
+     "address": "0x44810",
+     "text": "ld -0x120[r30],r8",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "-0x120"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    4,
+    8
+   ]
+  },
+  {
+   "call": "0x44868",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "i: cfgNeedReboot %d\n",
+   "message_address": "0x609c",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4486c",
+     "text": "addi r0,+0x609c,r4",
+     "kind": "constant",
+     "value": "0x609c",
+     "string": "i: cfgNeedReboot %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44870",
+     "text": "mov r19,r5",
+     "kind": "register-move",
+     "from": "r19"
+    },
+    {
+     "register": 6,
+     "address": "0x44844",
+     "text": "ld +0xb6b4[r0],r6",
+     "kind": "global-load",
+     "value": "0xb6b4"
+    },
+    {
+     "register": 8,
+     "address": "0x44810",
+     "text": "ld -0x120[r30],r8",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "-0x120"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6,
+    8
+   ]
+  },
+  {
+   "call": "0x44a5c",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "i: waiting to reset\n",
+   "message_address": "0x60b8",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x44a60",
+     "text": "addi r0,+0x60b8,r4",
+     "kind": "constant",
+     "value": "0x60b8",
+     "string": "i: waiting to reset\n"
+    },
+    {
+     "register": 5,
+     "address": "0x449f8",
+     "text": "addi r0,+0x4,r5",
+     "kind": "constant",
+     "value": "0x4",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x44a00",
+     "text": "addi r0,+0x1,r6",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x44a94",
+   "owner": "0x44168",
+   "owner_name": "maybe_cfg_parse_profile",
+   "callers": [
+    "0x44ac4"
+   ],
+   "subsystem": "config-apply",
+   "message": "i: reset\n",
+   "message_address": "0x60cd",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x44a98",
+     "text": "addi r0,+0x60cd,r4",
+     "kind": "constant",
+     "value": "0x60cd",
+     "string": "i: reset\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44a78",
+     "text": "addi r23,-0x1f79,r5",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x44a80",
+     "text": "addi r0,+0x1f4,r6",
+     "kind": "constant",
+     "value": "0x1f4",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x44a84",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7
+   ]
+  },
+  {
+   "call": "0x44c8c",
+   "owner": "0x44ac4",
+   "owner_name": "maybe_tftp_get_coordinator",
+   "callers": [
+    "0x20f98",
+    "0x44168",
+    "0x44e5c"
+   ],
+   "subsystem": "tftp",
+   "message": "i: applyProfile\n",
+   "message_address": "0x612a",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x44c90",
+     "text": "addi r0,+0x612a,r4",
+     "kind": "constant",
+     "value": "0x612a",
+     "string": "i: applyProfile\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44c84",
+     "text": "addi r23,-0x1f5b,r5",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x44c88",
+     "text": "addi r0,+0x5dc,r6",
+     "kind": "constant",
+     "value": "0x5dc",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x44bf0",
+     "text": "mov r18,r7",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 8,
+     "address": "0x44c4c",
+     "text": "ld -0xc[r30],r8",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "-0xc"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x44d14",
+   "owner": "0x44ac4",
+   "owner_name": "maybe_tftp_get_coordinator",
+   "callers": [
+    "0x20f98",
+    "0x44168",
+    "0x44e5c"
+   ],
+   "subsystem": "tftp",
+   "message": "i: nextTftp=%d\n",
+   "message_address": "0x613b",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x44d18",
+     "text": "addi r0,+0x613b,r4",
+     "kind": "constant",
+     "value": "0x613b",
+     "string": "i: nextTftp=%d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44d1c",
+     "text": "mov r2,r5",
+     "kind": "register-move",
+     "from": "r2"
+    },
+    {
+     "register": 6,
+     "address": "0x44ca4",
+     "text": "mov r19,r6",
+     "kind": "register-move",
+     "from": "r19"
+    },
+    {
+     "register": 8,
+     "address": "0x44cf4",
+     "text": "ld -0xc[r30],r8",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "-0xc"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6
+   ]
+  },
+  {
+   "call": "0x44e98",
+   "owner": "0x44e5c",
+   "owner_name": "maybe_tftp_resume_or_reschedule",
+   "callers": [
+    "0x1ff2c"
+   ],
+   "subsystem": "tftp",
+   "message": "tftp %d %d\n",
+   "message_address": "0x6154",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x44e90",
+     "text": "addi r0,+0x6154,r4",
+     "kind": "constant",
+     "value": "0x6154",
+     "string": "tftp %d %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44e9c",
+     "text": "ld +0xb7b4[r0],r5",
+     "kind": "global-load",
+     "value": "0xb7b4"
+    },
+    {
+     "register": 6,
+     "address": "0x44ea0",
+     "text": "ld +0xa988[r0],r6",
+     "kind": "global-load",
+     "value": "0xa988"
+    },
+    {
+     "register": 7,
+     "address": "0x44e38",
+     "text": "mov r17,r7",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 8,
+     "address": "0x44e20",
+     "text": "addi r0,+0x5,r8",
+     "kind": "constant",
+     "value": "0x5",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x44ef8",
+   "owner": "0x44e5c",
+   "owner_name": "maybe_tftp_resume_or_reschedule",
+   "callers": [
+    "0x1ff2c"
+   ],
+   "subsystem": "tftp",
+   "message": "nextTftp %d\n",
+   "message_address": "0x6160",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x44efc",
+     "text": "addi r0,+0x6160,r4",
+     "kind": "constant",
+     "value": "0x6160",
+     "string": "nextTftp %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44f00",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x44eb0",
+     "text": "addi r0,+0x0,r6",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x44e38",
+     "text": "mov r17,r7",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 8,
+     "address": "0x44ec8",
+     "text": "ld +0x6170[r0],r8",
+     "kind": "global-load",
+     "value": "0x6170"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x44f78",
+   "owner": "0x44f4c",
+   "owner_name": null,
+   "callers": [
+    "0x4505c"
+   ],
+   "subsystem": "socket",
+   "message": "e: socReg\n",
+   "message_address": "0x617c",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x44f7c",
+     "text": "addi r0,+0x617c,r4",
+     "kind": "constant",
+     "value": "0x617c",
+     "string": "e: socReg\n"
+    },
+    {
+     "register": 5,
+     "address": "0x44f20",
+     "text": "addi r0,+0x4ada,r5",
+     "kind": "constant",
+     "value": "0x4ada",
+     "string": "TFTP"
+    },
+    {
+     "register": 6,
+     "address": "0x44f28",
+     "text": "addi r23,-0x1f79,r6",
+     "kind": "other"
+    },
+    {
+     "register": 7,
+     "address": "0x44f2c",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x44f14",
+     "text": "addi r0,+0x5,r8",
+     "kind": "constant",
+     "value": "0x5",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x4520c",
+   "owner": "0x4505c",
+   "owner_name": null,
+   "callers": [
+    "0x4505c"
+   ],
+   "subsystem": "socket",
+   "message": "e: fcntl set to non-block\n",
+   "message_address": "0x6193",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x45204",
+     "text": "addi r0,+0x6193,r4",
+     "kind": "constant",
+     "value": "0x6193",
+     "string": "e: fcntl set to non-block\n"
+    },
+    {
+     "register": 5,
+     "address": "0x451f8",
+     "text": "addi r0,+0x1,r5",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x451fc",
+     "text": "addi r0,+0x0,r6",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x45140",
+     "text": "addi r30,-0x24,r7",
+     "kind": "other"
+    },
+    {
+     "register": 8,
+     "address": "0x451d4",
+     "text": "addi r0,+0x932c,r8",
+     "kind": "constant",
+     "value": "0x932c",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    4,
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x453bc",
+   "owner": "0x4505c",
+   "owner_name": null,
+   "callers": [
+    "0x4505c"
+   ],
+   "subsystem": "socket",
+   "message": "s: tcpl\n",
+   "message_address": "0x61ae",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x453c0",
+     "text": "addi r0,+0x61ae,r4",
+     "kind": "constant",
+     "value": "0x61ae",
+     "string": "s: tcpl\n"
+    },
+    {
+     "register": 5,
+     "address": "0x45374",
+     "text": "addi r30,-0x14,r5",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x4537c",
+     "text": "addi r0,+0x3,r6",
+     "kind": "constant",
+     "value": "0x3",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x45380",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x45390",
+     "text": "addi r0,+0x932c,r8",
+     "kind": "constant",
+     "value": "0x932c",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x45504",
+   "owner": "0x4505c",
+   "owner_name": null,
+   "callers": [
+    "0x4505c"
+   ],
+   "subsystem": "socket",
+   "message": "e: select %d\n",
+   "message_address": "0x61b7",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x45508",
+     "text": "addi r0,+0x61b7,r4",
+     "kind": "constant",
+     "value": "0x61b7",
+     "string": "e: select %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x454b4",
+     "text": "addi r30,-0x14,r5",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x454bc",
+     "text": "addi r0,+0x3,r6",
+     "kind": "constant",
+     "value": "0x3",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x454c0",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x454d0",
+     "text": "addi r0,+0x932c,r8",
+     "kind": "constant",
+     "value": "0x932c",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x48e60",
+   "owner": "0x48d64",
+   "owner_name": null,
+   "callers": [
+    "0x485ac",
+    "0x48668",
+    "0x48814",
+    "0x48a4c",
+    "0x4c090",
+    "0x4c170"
+   ],
+   "subsystem": "socket",
+   "message": "e: bind\n",
+   "message_address": "0x68bc",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x48e64",
+     "text": "addi r0,+0x68bc,r4",
+     "kind": "constant",
+     "value": "0x68bc",
+     "string": "e: bind\n"
+    },
+    {
+     "register": 5,
+     "address": "0x48e38",
+     "text": "addi r30,-0x14,r5",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x48e3c",
+     "text": "addi r0,+0x0,r6",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x48ec0",
+   "owner": "0x48d64",
+   "owner_name": null,
+   "callers": [
+    "0x485ac",
+    "0x48668",
+    "0x48814",
+    "0x48a4c",
+    "0x4c090",
+    "0x4c170"
+   ],
+   "subsystem": "socket",
+   "message": "e: setsockopt, tos\n",
+   "message_address": "0x68c5",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x48ec4",
+     "text": "addi r0,+0x68c5,r4",
+     "kind": "constant",
+     "value": "0x68c5",
+     "string": "e: setsockopt, tos\n"
+    },
+    {
+     "register": 5,
+     "address": "0x48eac",
+     "text": "addi r0,+0x2,r5",
+     "kind": "constant",
+     "value": "0x2",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x48eb0",
+     "text": "addi r0,+0x3,r6",
+     "kind": "constant",
+     "value": "0x3",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x48e9c",
+     "text": "addi r30,-0x18,r7",
+     "kind": "other"
+    },
+    {
+     "register": 8,
+     "address": "0x48e7c",
+     "text": "addi r0,+0xff,r8",
+     "kind": "constant",
+     "value": "0xff",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x48f28",
+   "owner": "0x48d64",
+   "owner_name": null,
+   "callers": [
+    "0x485ac",
+    "0x48668",
+    "0x48814",
+    "0x48a4c",
+    "0x4c090",
+    "0x4c170"
+   ],
+   "subsystem": "socket",
+   "message": "e: setsockopt, cos\n",
+   "message_address": "0x68d9",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x48f2c",
+     "text": "addi r0,+0x68d9,r4",
+     "kind": "constant",
+     "value": "0x68d9",
+     "string": "e: setsockopt, cos\n"
+    },
+    {
+     "register": 5,
+     "address": "0x48f14",
+     "text": "addi r0,+0x2,r5",
+     "kind": "constant",
+     "value": "0x2",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x48f18",
+     "text": "addi r0,+0xe,r6",
+     "kind": "constant",
+     "value": "0xe",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x48f04",
+     "text": "addi r30,-0x18,r7",
+     "kind": "other"
+    },
+    {
+     "register": 8,
+     "address": "0x48ee4",
+     "text": "addi r0,+0x7,r8",
+     "kind": "constant",
+     "value": "0x7",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x491f0",
+   "owner": "0x48fe8",
+   "owner_name": null,
+   "callers": [
+    "0x1b4e0"
+   ],
+   "subsystem": "codec",
+   "message": "SetG723Mode: %d %d\n",
+   "message_address": "0x68f0",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x491f8",
+     "text": "addi r0,+0x68f0,r4",
+     "kind": "constant",
+     "value": "0x68f0",
+     "string": "SetG723Mode: %d %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x49150",
+     "text": "addi r0,+0x0,r5",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x4916c",
+     "text": "addi r0,+0xaa20,r6",
+     "kind": "constant",
+     "value": "0xaa20",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6
+   ]
+  },
+  {
+   "call": "0x4941c",
+   "owner": "0x4938c",
+   "owner_name": null,
+   "callers": [
+    "0x4b354"
+   ],
+   "subsystem": "rtp-media",
+   "message": "Recv[%d]: %d %d %d %d %d %d %d %d\n",
+   "message_address": "0x6904",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x49414",
+     "text": "addi r0,+0x6904,r4",
+     "kind": "constant",
+     "value": "0x6904",
+     "string": "Recv[%d]: %d %d %d %d %d %d %d %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x49418",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x49420",
+     "text": "mov r2,r6",
+     "kind": "register-move",
+     "from": "r2"
+    },
+    {
+     "register": 7,
+     "address": "0x49424",
+     "text": "ld +0x0[r16],r7",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0x0"
+    },
+    {
+     "register": 8,
+     "address": "0x493f0",
+     "text": "ld +0x18[r16],r8",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0x18"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x49460",
+   "owner": "0x4938c",
+   "owner_name": null,
+   "callers": [
+    "0x4b354"
+   ],
+   "subsystem": "rtp-media",
+   "message": "Tx[%d]: %d %d %d\n",
+   "message_address": "0x6927",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x49458",
+     "text": "addi r0,+0x6927,r4",
+     "kind": "constant",
+     "value": "0x6927",
+     "string": "Tx[%d]: %d %d %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4945c",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x49464",
+     "text": "mov r2,r6",
+     "kind": "register-move",
+     "from": "r2"
+    },
+    {
+     "register": 7,
+     "address": "0x49468",
+     "text": "ld +0xc[r16],r7",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0xc"
+    },
+    {
+     "register": 8,
+     "address": "0x4944c",
+     "text": "ld +0x10[r16],r8",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0x10"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x49850",
+   "owner": "0x497a4",
+   "owner_name": null,
+   "callers": [
+    "0x20e70"
+   ],
+   "subsystem": "rtp-media",
+   "message": "e: bind\n",
+   "message_address": "0x68bc",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x49854",
+     "text": "addi r0,+0x68bc,r4",
+     "kind": "constant",
+     "value": "0x68bc",
+     "string": "e: bind\n"
+    },
+    {
+     "register": 5,
+     "address": "0x49828",
+     "text": "addi r30,-0x14,r5",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x49834",
+     "text": "addi r0,+0x0,r6",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x49778",
+     "text": "addi r0,+0x1,r7",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x49800",
+     "text": "addi r0,+0x2,r8",
+     "kind": "constant",
+     "value": "0x2",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    7
+   ]
+  },
+  {
+   "call": "0x49938",
+   "owner": "0x497a4",
+   "owner_name": null,
+   "callers": [
+    "0x20e70"
+   ],
+   "subsystem": "rtp-media",
+   "message": "echo addr=%d.%d.%d.%d; lo port=%d, skt=%d set=%X\n",
+   "message_address": "0x69a8",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x49940",
+     "text": "addi r0,+0x69a8,r4",
+     "kind": "constant",
+     "value": "0x69a8",
+     "string": "echo addr=%d.%d.%d.%d; lo port=%d, skt=%d set=%X\n"
+    },
+    {
+     "register": 5,
+     "address": "0x498e8",
+     "text": "ldf +0x0[r18],r5",
+     "kind": "struct-load",
+     "base": "r18",
+     "offset": "+0x0"
+    },
+    {
+     "register": 6,
+     "address": "0x498ec",
+     "text": "ldf +0x1[r18],r6",
+     "kind": "struct-load",
+     "base": "r18",
+     "offset": "+0x1"
+    },
+    {
+     "register": 7,
+     "address": "0x498f0",
+     "text": "ldf +0x2[r18],r7",
+     "kind": "struct-load",
+     "base": "r18",
+     "offset": "+0x2"
+    },
+    {
+     "register": 8,
+     "address": "0x49934",
+     "text": "ld +0xb7c4[r0],r8",
+     "kind": "global-load",
+     "value": "0xb7c4"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x49d08",
+   "owner": "0x49c00",
+   "owner_name": null,
+   "callers": [
+    "0x497a4",
+    "0x4bc18"
+   ],
+   "subsystem": "rtp-media",
+   "message": "RTP Rx Init: %d, %d\n",
+   "message_address": "0x69dc",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x49d04",
+     "text": "addi r0,+0x69dc,r4",
+     "kind": "constant",
+     "value": "0x69dc",
+     "string": "RTP Rx Init: %d, %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x49d0c",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x49d10",
+     "text": "mov r16,r6",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 7,
+     "address": "0x49ce4",
+     "text": "addi r0,+0xbef4,r7",
+     "kind": "constant",
+     "value": "0xbef4",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x49e80",
+   "owner": "0x49d34",
+   "owner_name": null,
+   "callers": [
+    "0x497a4"
+   ],
+   "subsystem": "rtp-media",
+   "message": "RTP Tx Init: %d, %d\n",
+   "message_address": "0x69f4",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x49e7c",
+     "text": "addi r0,+0x69f4,r4",
+     "kind": "constant",
+     "value": "0x69f4",
+     "string": "RTP Tx Init: %d, %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x49e84",
+     "text": "mov r18,r5",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 6,
+     "address": "0x49e88",
+     "text": "mov r17,r6",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 7,
+     "address": "0x49e68",
+     "text": "addi r0,+0xbef4,r7",
+     "kind": "constant",
+     "value": "0xbef4",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x4a190",
+   "owner": "0x49f0c",
+   "owner_name": null,
+   "callers": [
+    "0x3bb50"
+   ],
+   "subsystem": "rtp-media",
+   "message": "AVT: pt=%d dig=%c\n",
+   "message_address": "0x6a50",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4a194",
+     "text": "addi r0,+0x6a50,r4",
+     "kind": "constant",
+     "value": "0x6a50",
+     "string": "AVT: pt=%d dig=%c\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4a198",
+     "text": "mov r2,r5",
+     "kind": "register-move",
+     "from": "r2"
+    },
+    {
+     "register": 6,
+     "address": "0x4a16c",
+     "text": "ld +0x9384[r18],r6",
+     "kind": "struct-load",
+     "base": "r18",
+     "offset": "+0x9384"
+    },
+    {
+     "register": 7,
+     "address": "0x4a170",
+     "text": "ld +0x0[r2],r7",
+     "kind": "struct-load",
+     "base": "r2",
+     "offset": "+0x0"
+    },
+    {
+     "register": 8,
+     "address": "0x4a158",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x4b608",
+   "owner": "0x4b4d4",
+   "owner_name": null,
+   "callers": [
+    "0x4dd84"
+   ],
+   "subsystem": "rtp-media",
+   "message": "[%d]--LAT %d (bc=%d, m=%d), min_lat: %d\n",
+   "message_address": "0x6af8",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4b604",
+     "text": "addi r0,+0x6af8,r4",
+     "kind": "constant",
+     "value": "0x6af8",
+     "string": "[%d]--LAT %d (bc=%d, m=%d), min_lat: %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4b60c",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x4b5f0",
+     "text": "lsr r6,r6,#16",
+     "kind": "other"
+    },
+    {
+     "register": 7,
+     "address": "0x4b610",
+     "text": "ld +0xbd88[r16],r7",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0xbd88"
+    },
+    {
+     "register": 8,
+     "address": "0x4b528",
+     "text": "addi r0,+0x6,r8",
+     "kind": "constant",
+     "value": "0x6",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x4b6b0",
+   "owner": "0x4b4d4",
+   "owner_name": null,
+   "callers": [
+    "0x4dd84"
+   ],
+   "subsystem": "rtp-media",
+   "message": "[%d]++LAT %d (bc=%d), min_lat: %d\n",
+   "message_address": "0x6b21",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4b6ac",
+     "text": "addi r0,+0x6b21,r4",
+     "kind": "constant",
+     "value": "0x6b21",
+     "string": "[%d]++LAT %d (bc=%d), min_lat: %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4b6b4",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x4b6a4",
+     "text": "lsr r6,r6,#16",
+     "kind": "other"
+    },
+    {
+     "register": 7,
+     "address": "0x4b6b8",
+     "text": "ld +0xbd88[r7],r7",
+     "kind": "struct-load",
+     "base": "r7",
+     "offset": "+0xbd88"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x4b890",
+   "owner": "0x4b6f8",
+   "owner_name": null,
+   "callers": [
+    "0x4dd84"
+   ],
+   "subsystem": "rtp-media",
+   "message": "[%d]resync @%u %u, df %d\n",
+   "message_address": "0x6b44",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4b880",
+     "text": "addi r0,+0x6b44,r4",
+     "kind": "constant",
+     "value": "0x6b44",
+     "string": "[%d]resync @%u %u, df %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4b884",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x4b888",
+     "text": "mov r21,r6",
+     "kind": "register-move",
+     "from": "r21"
+    },
+    {
+     "register": 7,
+     "address": "0x4b88c",
+     "text": "ld +0xc1c4[r2],r7",
+     "kind": "struct-load",
+     "base": "r2",
+     "offset": "+0xc1c4"
+    },
+    {
+     "register": 8,
+     "address": "0x4b838",
+     "text": "addi r0,+0xbd80,r8",
+     "kind": "constant",
+     "value": "0xbd80",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x4bb94",
+   "owner": "0x4b6f8",
+   "owner_name": null,
+   "callers": [
+    "0x4dd84"
+   ],
+   "subsystem": "rtp-media",
+   "message": "[%d]slow down@%u %u bc %d td %d df %d\n",
+   "message_address": "0x6b84",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4bb84",
+     "text": "addi r0,+0x6b84,r4",
+     "kind": "constant",
+     "value": "0x6b84",
+     "string": "[%d]slow down@%u %u bc %d td %d df %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4bb88",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x4bb8c",
+     "text": "mov r21,r6",
+     "kind": "register-move",
+     "from": "r21"
+    },
+    {
+     "register": 7,
+     "address": "0x4bb90",
+     "text": "ld +0xc1c4[r7],r7",
+     "kind": "struct-load",
+     "base": "r7",
+     "offset": "+0xc1c4"
+    },
+    {
+     "register": 8,
+     "address": "0x4bb0c",
+     "text": "addi r0,+0xbd80,r8",
+     "kind": "constant",
+     "value": "0xbd80",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    4,
+    8
+   ]
+  },
+  {
+   "call": "0x4bcb4",
+   "owner": "0x4bc18",
+   "owner_name": null,
+   "callers": [
+    "0x497a4",
+    "0x4b6f8",
+    "0x4bc18",
+    "0x4dd84"
+   ],
+   "subsystem": "rtp-media",
+   "message": "%d: Close RTPRX\n",
+   "message_address": "0x6bd4",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4bcb8",
+     "text": "addi r0,+0x6bd4,r4",
+     "kind": "constant",
+     "value": "0x6bd4",
+     "string": "%d: Close RTPRX\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4bcbc",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x4bfd4",
+   "owner": "0x4bdb8",
+   "owner_name": null,
+   "callers": [
+    "0x3bb50"
+   ],
+   "subsystem": "rtp-media",
+   "message": "[%d]DBG: 2 RTP streams: %0x:%d, %0x:%0d\n",
+   "message_address": "0x6be8",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4bfd8",
+     "text": "addi r0,+0x6be8,r4",
+     "kind": "constant",
+     "value": "0x6be8",
+     "string": "[%d]DBG: 2 RTP streams: %0x:%d, %0x:%0d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4bf68",
+     "text": "asr r5,r5,#16",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x4bfdc",
+     "text": "ld +0x0[r6],r6",
+     "kind": "struct-load",
+     "base": "r6",
+     "offset": "+0x0"
+    },
+    {
+     "register": 7,
+     "address": "0x4bfb0",
+     "text": "ldt +0x2[r2],r7",
+     "kind": "struct-load",
+     "base": "r2",
+     "offset": "+0x2"
+    },
+    {
+     "register": 8,
+     "address": "0x4bfb4",
+     "text": "ld +0xc1b8[r4],r8",
+     "kind": "struct-load",
+     "base": "r4",
+     "offset": "+0xc1b8"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x4c380",
+   "owner": "0x4c2f0",
+   "owner_name": null,
+   "callers": [
+    "0x49d34"
+   ],
+   "subsystem": "rtp-media",
+   "message": "RTP TX[%d]:SSRC_ID = %08x\n",
+   "message_address": "0x6c9a",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4c37c",
+     "text": "addi r0,+0x6c9a,r4",
+     "kind": "constant",
+     "value": "0x6c9a",
+     "string": "RTP TX[%d]:SSRC_ID = %08x\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4c384",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x4c388",
+     "text": "mov r2,r6",
+     "kind": "register-move",
+     "from": "r2"
+    },
+    {
+     "register": 7,
+     "address": "0x4c368",
+     "text": "ld +0x6cbc[r0],r7",
+     "kind": "global-load",
+     "value": "0x6cbc"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x4c88c",
+   "owner": "0x4c40c",
+   "owner_name": null,
+   "callers": [
+    "0x49f0c"
+   ],
+   "subsystem": "rtp-media",
+   "message": "[%d]TX SID frame (pt %d)\n",
+   "message_address": "0x6cc0",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4c890",
+     "text": "addi r0,+0x6cc0,r4",
+     "kind": "constant",
+     "value": "0x6cc0",
+     "string": "[%d]TX SID frame (pt %d)\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4c894",
+     "text": "mov r18,r5",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 6,
+     "address": "0x4c888",
+     "text": "ldt +0x18[r16],r6",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0x18"
+    },
+    {
+     "register": 8,
+     "address": "0x4c864",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x4de48",
+   "owner": "0x4dd84",
+   "owner_name": null,
+   "callers": [
+    "0x4bdb8"
+   ],
+   "subsystem": "rtp-media",
+   "message": "version is not valid: version = %d\n",
+   "message_address": "0x6d34",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4de4c",
+     "text": "addi r0,+0x6d34,r4",
+     "kind": "constant",
+     "value": "0x6d34",
+     "string": "version is not valid: version = %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4de34",
+     "text": "lsr r2,r5,#30",
+     "kind": "other"
+    },
+    {
+     "register": 8,
+     "address": "0x4de14",
+     "text": "ld -0x20[r30],r8",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "-0x20"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x4e2ec",
+   "owner": "0x4dd84",
+   "owner_name": null,
+   "callers": [
+    "0x4bdb8"
+   ],
+   "subsystem": "rtp-media",
+   "message": "[%d]RX SID frame (pt %d)\n",
+   "message_address": "0x6dce",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4e2e8",
+     "text": "addi r0,+0x6dce,r4",
+     "kind": "constant",
+     "value": "0x6dce",
+     "string": "[%d]RX SID frame (pt %d)\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4e2f0",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x4e2f4",
+     "text": "mov r20,r6",
+     "kind": "register-move",
+     "from": "r20"
+    },
+    {
+     "register": 8,
+     "address": "0x4e234",
+     "text": "ldf +0x0[r8],r8",
+     "kind": "struct-load",
+     "base": "r8",
+     "offset": "+0x0"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x4e3ac",
+   "owner": "0x4dd84",
+   "owner_name": null,
+   "callers": [
+    "0x4bdb8"
+   ],
+   "subsystem": "rtp-media",
+   "message": "[%d]DPKT 1st: %u %u, pt %d\n",
+   "message_address": "0x6de8",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x4e3b0",
+     "text": "addi r0,+0x6de8,r4",
+     "kind": "constant",
+     "value": "0x6de8",
+     "string": "[%d]DPKT 1st: %u %u, pt %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x4e3b4",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x4e3a4",
+     "text": "ld -0x18[r30],r6",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "-0x18"
+    },
+    {
+     "register": 7,
+     "address": "0x4e3a8",
+     "text": "ld +0xc1c4[r16],r7",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0xc1c4"
+    },
+    {
+     "register": 8,
+     "address": "0x4e380",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x50a18",
+   "owner": "0x50940",
+   "owner_name": null,
+   "callers": [
+    "0x4eb2c",
+    "0x5597c",
+    "0x56514"
+   ],
+   "subsystem": "codec",
+   "message": "**** LPC unstable\n",
+   "message_address": "0x6ee4",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x50a1c",
+     "text": "addi r0,+0x6ee4,r4",
+     "kind": "constant",
+     "value": "0x6ee4",
+     "string": "**** LPC unstable\n"
+    },
+    {
+     "register": 6,
+     "address": "0x5097c",
+     "text": "ld +0x38a0[r0],r6",
+     "kind": "global-load",
+     "value": "0x38a0"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6
+   ]
+  },
+  {
+   "call": "0x6160c",
+   "owner": "0x615b0",
+   "owner_name": null,
+   "callers": [
+    "0x615b0"
+   ],
+   "subsystem": "call-control",
+   "message": "[%d:%d]Rel LBRC Res\n",
+   "message_address": "0x7772",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x61610",
+     "text": "addi r0,+0x7772,r4",
+     "kind": "constant",
+     "value": "0x7772",
+     "string": "[%d:%d]Rel LBRC Res\n"
+    },
+    {
+     "register": 5,
+     "address": "0x61614",
+     "text": "mov r7,r5",
+     "kind": "register-move",
+     "from": "r7"
+    },
+    {
+     "register": 6,
+     "address": "0x615c8",
+     "text": "mov r5,r6",
+     "kind": "register-move",
+     "from": "r5"
+    },
+    {
+     "register": 7,
+     "address": "0x615c4",
+     "text": "mov r4,r7",
+     "kind": "register-move",
+     "from": "r4"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x62240",
+   "owner": "0x6219c",
+   "owner_name": null,
+   "callers": [
+    "0x62cb4",
+    "0x63808",
+    "0x64a84",
+    "0x64d28"
+   ],
+   "subsystem": "call-control",
+   "message": "[%d:%d]RINGING\n",
+   "message_address": "0x779c",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x6223c",
+     "text": "addi r0,+0x779c,r4",
+     "kind": "constant",
+     "value": "0x779c",
+     "string": "[%d:%d]RINGING\n"
+    },
+    {
+     "register": 5,
+     "address": "0x62244",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x62248",
+     "text": "mov r18,r6",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 7,
+     "address": "0x62168",
+     "text": "addi r18,+0x31,r7",
+     "kind": "other"
+    },
+    {
+     "register": 8,
+     "address": "0x621dc",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    4,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x622c8",
+   "owner": "0x6219c",
+   "owner_name": null,
+   "callers": [
+    "0x62cb4",
+    "0x63808",
+    "0x64a84",
+    "0x64d28"
+   ],
+   "subsystem": "call-control",
+   "message": "[%d:%d]Call waiting\n",
+   "message_address": "0x77ac",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x622c4",
+     "text": "addi r0,+0x77ac,r4",
+     "kind": "constant",
+     "value": "0x77ac",
+     "string": "[%d:%d]Call waiting\n"
+    },
+    {
+     "register": 5,
+     "address": "0x622cc",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x622d0",
+     "text": "mov r18,r6",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 7,
+     "address": "0x6227c",
+     "text": "mov r17,r7",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 8,
+     "address": "0x622b4",
+     "text": "addi r0,+0x75b8,r8",
+     "kind": "constant",
+     "value": "0x75b8",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x62450",
+   "owner": "0x623bc",
+   "owner_name": null,
+   "callers": [
+    "0x6582c"
+   ],
+   "subsystem": "call-control",
+   "message": "Pausing retry\n",
+   "message_address": "0x77cc",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x62454",
+     "text": "addi r0,+0x77cc,r4",
+     "kind": "constant",
+     "value": "0x77cc",
+     "string": "Pausing retry\n"
+    },
+    {
+     "register": 5,
+     "address": "0x62388",
+     "text": "mov r17,r5",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 6,
+     "address": "0x6238c",
+     "text": "mov r18,r6",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 7,
+     "address": "0x62378",
+     "text": "and r9,r8,r7",
+     "kind": "other"
+    },
+    {
+     "register": 8,
+     "address": "0x62370",
+     "text": "ld +0x77c8[r0],r8",
+     "kind": "global-load",
+     "value": "0x77c8"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x62954",
+   "owner": "0x62880",
+   "owner_name": null,
+   "callers": [
+    "0x62880",
+    "0x62cb4"
+   ],
+   "subsystem": "call-control",
+   "message": "Call Block:%s\n",
+   "message_address": "0x77ec",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x6295c",
+     "text": "addi r0,+0x77ec,r4",
+     "kind": "constant",
+     "value": "0x77ec",
+     "string": "Call Block:%s\n"
+    },
+    {
+     "register": 5,
+     "address": "0x62958",
+     "text": "addi r16,+0xe4,r5",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x628c8",
+     "text": "addi r0,+0x5,r6",
+     "kind": "constant",
+     "value": "0x5",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x6294c",
+     "text": "addi r0,+0xb,r8",
+     "kind": "constant",
+     "value": "0xb",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6
+   ]
+  },
+  {
+   "call": "0x629b8",
+   "owner": "0x62880",
+   "owner_name": null,
+   "callers": [
+    "0x62880",
+    "0x62cb4"
+   ],
+   "subsystem": "call-control",
+   "message": "Calling %s\n",
+   "message_address": "0x77fb",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x629c0",
+     "text": "addi r0,+0x77fb,r4",
+     "kind": "constant",
+     "value": "0x77fb",
+     "string": "Calling %s\n"
+    },
+    {
+     "register": 5,
+     "address": "0x629bc",
+     "text": "addi r16,+0xe4,r5",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x628c8",
+     "text": "addi r0,+0x5,r6",
+     "kind": "constant",
+     "value": "0x5",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x6299c",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6,
+    8
+   ]
+  },
+  {
+   "call": "0x63034",
+   "owner": "0x62cb4",
+   "owner_name": null,
+   "callers": [
+    "0x623bc",
+    "0x62880"
+   ],
+   "subsystem": "call-control",
+   "message": "CFWD Block:%s\n",
+   "message_address": "0x7808",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x63038",
+     "text": "addi r0,+0x7808,r4",
+     "kind": "constant",
+     "value": "0x7808",
+     "string": "CFWD Block:%s\n"
+    },
+    {
+     "register": 5,
+     "address": "0x6303c",
+     "text": "mov r21,r5",
+     "kind": "register-move",
+     "from": "r21"
+    },
+    {
+     "register": 6,
+     "address": "0x62ff4",
+     "text": "mov r20,r6",
+     "kind": "register-move",
+     "from": "r20"
+    },
+    {
+     "register": 7,
+     "address": "0x62ff8",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x63008",
+     "text": "addi r0,+0x3,r8",
+     "kind": "constant",
+     "value": "0x3",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6,
+    7
+   ]
+  },
+  {
+   "call": "0x63150",
+   "owner": "0x62cb4",
+   "owner_name": null,
+   "callers": [
+    "0x623bc",
+    "0x62880"
+   ],
+   "subsystem": "call-control",
+   "message": "CCBS canceled\n",
+   "message_address": "0x7817",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x63154",
+     "text": "addi r0,+0x7817,r4",
+     "kind": "constant",
+     "value": "0x7817",
+     "string": "CCBS canceled\n"
+    },
+    {
+     "register": 5,
+     "address": "0x63134",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x6313c",
+     "text": "mov r20,r6",
+     "kind": "register-move",
+     "from": "r20"
+    },
+    {
+     "register": 7,
+     "address": "0x63140",
+     "text": "mov r19,r7",
+     "kind": "register-move",
+     "from": "r19"
+    },
+    {
+     "register": 8,
+     "address": "0x6310c",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x639d0",
+   "owner": "0x63808",
+   "owner_name": null,
+   "callers": [
+    "0x62cb4"
+   ],
+   "subsystem": "call-control",
+   "message": "CCBS expired\n",
+   "message_address": "0x78c4",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x639d4",
+     "text": "addi r0,+0x78c4,r4",
+     "kind": "constant",
+     "value": "0x78c4",
+     "string": "CCBS expired\n"
+    },
+    {
+     "register": 5,
+     "address": "0x639a8",
+     "text": "ld +0x0[r16],r5",
+     "kind": "struct-load",
+     "base": "r16",
+     "offset": "+0x0"
+    },
+    {
+     "register": 6,
+     "address": "0x639b0",
+     "text": "mov r18,r6",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 7,
+     "address": "0x639b4",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x63904",
+     "text": "ld +0xb6f8[r0],r8",
+     "kind": "global-load",
+     "value": "0xb6f8"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x63a48",
+   "owner": "0x63808",
+   "owner_name": null,
+   "callers": [
+    "0x62cb4"
+   ],
+   "subsystem": "call-control",
+   "message": "Next retry @ %d\n",
+   "message_address": "0x78d2",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x63a50",
+     "text": "addi r0,+0x78d2,r4",
+     "kind": "constant",
+     "value": "0x78d2",
+     "string": "Next retry @ %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x63a44",
+     "text": "addi r2,+0x5dc,r5",
+     "kind": "other"
+    },
+    {
+     "register": 6,
+     "address": "0x639b0",
+     "text": "mov r18,r6",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 7,
+     "address": "0x639b4",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x63a04",
+     "text": "addi r0,+0xf,r8",
+     "kind": "constant",
+     "value": "0xf",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x63b8c",
+   "owner": "0x63808",
+   "owner_name": null,
+   "callers": [
+    "0x62cb4"
+   ],
+   "subsystem": "call-control",
+   "message": "CCBS enabled: %d\n",
+   "message_address": "0x78e3",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x63b90",
+     "text": "addi r0,+0x78e3,r4",
+     "kind": "constant",
+     "value": "0x78e3",
+     "string": "CCBS enabled: %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x63b88",
+     "text": "ld +0x7900[r0],r5",
+     "kind": "global-load",
+     "value": "0x7900"
+    },
+    {
+     "register": 8,
+     "address": "0x63b58",
+     "text": "ld +0xa440[r0],r8",
+     "kind": "global-load",
+     "value": "0xa440"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    8
+   ]
+  },
+  {
+   "call": "0x63d4c",
+   "owner": "0x63808",
+   "owner_name": null,
+   "callers": [
+    "0x62cb4"
+   ],
+   "subsystem": "call-control",
+   "message": "Disconnect in ALERT\n",
+   "message_address": "0x7904",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x63d50",
+     "text": "addi r0,+0x7904,r4",
+     "kind": "constant",
+     "value": "0x7904",
+     "string": "Disconnect in ALERT\n"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x63f40",
+   "owner": "0x63808",
+   "owner_name": null,
+   "callers": [
+    "0x62cb4"
+   ],
+   "subsystem": "call-control",
+   "message": "[%d:%d]uii say busy\n",
+   "message_address": "0x7919",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x63f3c",
+     "text": "addi r0,+0x7919,r4",
+     "kind": "constant",
+     "value": "0x7919",
+     "string": "[%d:%d]uii say busy\n"
+    },
+    {
+     "register": 5,
+     "address": "0x63f44",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x63f48",
+     "text": "mov r19,r6",
+     "kind": "register-move",
+     "from": "r19"
+    },
+    {
+     "register": 8,
+     "address": "0x63ef0",
+     "text": "addi r0,+0xff,r8",
+     "kind": "constant",
+     "value": "0xff",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  },
+  {
+   "call": "0x64424",
+   "owner": "0x640b4",
+   "owner_name": null,
+   "callers": [
+    "0x640b4",
+    "0x6582c"
+   ],
+   "subsystem": "call-control",
+   "message": "SCC: Call Held\n",
+   "message_address": "0x7930",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x64428",
+     "text": "addi r0,+0x7930,r4",
+     "kind": "constant",
+     "value": "0x7930",
+     "string": "SCC: Call Held\n"
+    },
+    {
+     "register": 5,
+     "address": "0x64414",
+     "text": "ld +0x8[r19],r5",
+     "kind": "struct-load",
+     "base": "r19",
+     "offset": "+0x8"
+    },
+    {
+     "register": 6,
+     "address": "0x64404",
+     "text": "mov r17,r6",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 7,
+     "address": "0x64408",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x643d8",
+     "text": "ld +0x757c[r0],r8",
+     "kind": "global-load",
+     "value": "0x757c"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x6443c",
+   "owner": "0x640b4",
+   "owner_name": null,
+   "callers": [
+    "0x640b4",
+    "0x6582c"
+   ],
+   "subsystem": "call-control",
+   "message": "SCC: Call Retrieved\n",
+   "message_address": "0x7940",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x64440",
+     "text": "addi r0,+0x7940,r4",
+     "kind": "constant",
+     "value": "0x7940",
+     "string": "SCC: Call Retrieved\n"
+    },
+    {
+     "register": 5,
+     "address": "0x64414",
+     "text": "ld +0x8[r19],r5",
+     "kind": "struct-load",
+     "base": "r19",
+     "offset": "+0x8"
+    },
+    {
+     "register": 6,
+     "address": "0x64404",
+     "text": "mov r17,r6",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 7,
+     "address": "0x64408",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x643d8",
+     "text": "ld +0x757c[r0],r8",
+     "kind": "global-load",
+     "value": "0x757c"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x64480",
+   "owner": "0x640b4",
+   "owner_name": null,
+   "callers": [
+    "0x640b4",
+    "0x6582c"
+   ],
+   "subsystem": "call-control",
+   "message": "[%d:%d]SCC: Disconnected\n",
+   "message_address": "0x7955",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x6447c",
+     "text": "addi r0,+0x7955,r4",
+     "kind": "constant",
+     "value": "0x7955",
+     "string": "[%d:%d]SCC: Disconnected\n"
+    },
+    {
+     "register": 5,
+     "address": "0x64484",
+     "text": "mov r16,r5",
+     "kind": "register-move",
+     "from": "r16"
+    },
+    {
+     "register": 6,
+     "address": "0x64488",
+     "text": "mov r17,r6",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 7,
+     "address": "0x64408",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x64454",
+     "text": "addi r0,+0x1,r8",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    7
+   ]
+  },
+  {
+   "call": "0x6463c",
+   "owner": "0x640b4",
+   "owner_name": null,
+   "callers": [
+    "0x640b4",
+    "0x6582c"
+   ],
+   "subsystem": "call-control",
+   "message": "SCC: Call Xferred\n",
+   "message_address": "0x796f",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x64640",
+     "text": "addi r0,+0x796f,r4",
+     "kind": "constant",
+     "value": "0x796f",
+     "string": "SCC: Call Xferred\n"
+    },
+    {
+     "register": 5,
+     "address": "0x6462c",
+     "text": "addi r0,+0x3,r5",
+     "kind": "constant",
+     "value": "0x3",
+     "string": null
+    },
+    {
+     "register": 6,
+     "address": "0x645f8",
+     "text": "mov r17,r6",
+     "kind": "register-move",
+     "from": "r17"
+    },
+    {
+     "register": 7,
+     "address": "0x645fc",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x645d0",
+     "text": "addi r0,+0xb,r8",
+     "kind": "constant",
+     "value": "0xb",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x64a4c",
+   "owner": "0x640b4",
+   "owner_name": null,
+   "callers": [
+    "0x640b4",
+    "0x6582c"
+   ],
+   "subsystem": "call-control",
+   "message": "SCC: Held w Hold\n",
+   "message_address": "0x79c2",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x64a48",
+     "text": "addi r0,+0x79c2,r4",
+     "kind": "constant",
+     "value": "0x79c2",
+     "string": "SCC: Held w Hold\n"
+    },
+    {
+     "register": 5,
+     "address": "0x64a2c",
+     "text": "mov r18,r5",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 6,
+     "address": "0x649d4",
+     "text": "mov r18,r6",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 7,
+     "address": "0x649d8",
+     "text": "addi r0,+0x0,r7",
+     "kind": "constant",
+     "value": "0x0",
+     "string": null
+    },
+    {
+     "register": 8,
+     "address": "0x649e0",
+     "text": "ld +0x79d4[r0],r8",
+     "kind": "global-load",
+     "value": "0x79d4"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    4,
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "call": "0x65320",
+   "owner": "0x6519c",
+   "owner_name": null,
+   "callers": [
+    "0x3d964",
+    "0x4d924",
+    "0x623bc",
+    "0x62cb4",
+    "0x63808",
+    "0x64f3c"
+   ],
+   "subsystem": "call-control",
+   "message": "##SCC evqFull\n",
+   "message_address": "0x7a06",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x65324",
+     "text": "addi r0,+0x7a06,r4",
+     "kind": "constant",
+     "value": "0x7a06",
+     "string": "##SCC evqFull\n"
+    },
+    {
+     "register": 5,
+     "address": "0x6529c",
+     "text": "ld +0x4[r17],r5",
+     "kind": "struct-load",
+     "base": "r17",
+     "offset": "+0x4"
+    },
+    {
+     "register": 6,
+     "address": "0x652b8",
+     "text": "addi r0,+0x14,r6",
+     "kind": "constant",
+     "value": "0x14",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    5,
+    6
+   ]
+  },
+  {
+   "call": "0x653ac",
+   "owner": "0x65380",
+   "owner_name": null,
+   "callers": [
+    "0x672a4"
+   ],
+   "subsystem": "call-control",
+   "message": "SCC Rst Line %d\n",
+   "message_address": "0x7a18",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x653b0",
+     "text": "addi r0,+0x7a18,r4",
+     "kind": "constant",
+     "value": "0x7a18",
+     "string": "SCC Rst Line %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x653b4",
+     "text": "mov r18,r5",
+     "kind": "register-move",
+     "from": "r18"
+    },
+    {
+     "register": 6,
+     "address": "0x652b8",
+     "text": "addi r0,+0x14,r6",
+     "kind": "constant",
+     "value": "0x14",
+     "string": null
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6
+   ]
+  },
+  {
+   "call": "0x65aa0",
+   "owner": "0x6582c",
+   "owner_name": null,
+   "callers": [
+    "0x1ff2c"
+   ],
+   "subsystem": "call-control",
+   "message": "SCC:ev=%d[%d:%d] %d %d\n",
+   "message_address": "0x7a2c",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x65a9c",
+     "text": "addi r0,+0x7a2c,r4",
+     "kind": "constant",
+     "value": "0x7a2c",
+     "string": "SCC:ev=%d[%d:%d] %d %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x65aa4",
+     "text": "mov r19,r5",
+     "kind": "register-move",
+     "from": "r19"
+    },
+    {
+     "register": 6,
+     "address": "0x65a3c",
+     "text": "addi r0,+0x1,r6",
+     "kind": "constant",
+     "value": "0x1",
+     "string": null
+    },
+    {
+     "register": 7,
+     "address": "0x65aa8",
+     "text": "mov r20,r7",
+     "kind": "register-move",
+     "from": "r20"
+    },
+    {
+     "register": 8,
+     "address": "0x65a90",
+     "text": "ld +0x74[r17],r8",
+     "kind": "struct-load",
+     "base": "r17",
+     "offset": "+0x74"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    6
+   ]
+  },
+  {
+   "call": "0x66040",
+   "owner": "0x6582c",
+   "owner_name": null,
+   "callers": [
+    "0x1ff2c"
+   ],
+   "subsystem": "call-control",
+   "message": "SCC: IDLE TO\n",
+   "message_address": "0x7a44",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x66044",
+     "text": "addi r0,+0x7a44,r4",
+     "kind": "constant",
+     "value": "0x7a44",
+     "string": "SCC: IDLE TO\n"
+    },
+    {
+     "register": 8,
+     "address": "0x66018",
+     "text": "ld -0x2c[r30],r8",
+     "kind": "struct-load",
+     "base": "r30",
+     "offset": "-0x2c"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "linear"
+  },
+  {
+   "call": "0x66374",
+   "owner": "0x662a0",
+   "owner_name": null,
+   "callers": [
+    "0x672a4"
+   ],
+   "subsystem": "call-control",
+   "message": "[%d]ERR:Invalid context %d %d\n",
+   "message_address": "0x7a58",
+   "class": null,
+   "class_source": "none",
+   "args": [
+    {
+     "register": 4,
+     "address": "0x6636c",
+     "text": "addi r0,+0x7a58,r4",
+     "kind": "constant",
+     "value": "0x7a58",
+     "string": "[%d]ERR:Invalid context %d %d\n"
+    },
+    {
+     "register": 5,
+     "address": "0x66370",
+     "text": "mov r21,r5",
+     "kind": "register-move",
+     "from": "r21"
+    },
+    {
+     "register": 6,
+     "address": "0x66378",
+     "text": "mov r8,r6",
+     "kind": "register-move",
+     "from": "r8"
+    },
+    {
+     "register": 7,
+     "address": "0x6637c",
+     "text": "mov r9,r7",
+     "kind": "register-move",
+     "from": "r9"
+    },
+    {
+     "register": 8,
+     "address": "0x662d0",
+     "text": "mov r5,r8",
+     "kind": "register-move",
+     "from": "r5"
+    }
+   ],
+   "confidence": "exact-message",
+   "args_dominance": "may-be-conditional",
+   "conditional_args": [
+    8
+   ]
+  }
+ ]
+}

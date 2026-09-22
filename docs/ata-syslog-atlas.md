@@ -118,6 +118,51 @@ The first pointer therefore supplies the four IP octets and the second supplies
 the six MAC octets. The semantic purpose of state word `0x3ac` is not yet proven;
 the atlas records its observed branch polarity without naming it.
 
+## Separate packed log-event path
+
+The packed function `maybe_log_event` (payload offset `0x10268`, runtime
+`0x1c9b4`) is a second, larger logging path: the corrected runtime disassembly
+finds **108 unique call instructions** to it, not the 104 visible in the stale
+base-zero project. It is not the syslog class emitter and carries **no class or
+mode argument**: it receives a message address in `r4` plus up to four further
+arguments, formats into a local buffer, and forwards the record through
+`maybe_log_dispatch` (runtime `0x1c834`) to the resident event dispatcher.
+The only connection to the class gate is the forwarding call `0x1cc58` inside
+`maybe_syslog_emit_class`, which passes `"%s"` and the already-formatted
+record, so it inherits the emitter's class.
+
+The complete atlas is searchable and package-verifiable without vendor
+firmware:
+
+```sh
+python3 firmware/event_lookup.py "Close RTPRX"
+python3 firmware/event_lookup.py 0x44ac4
+python3 firmware/event_lookup.py --list
+python3 firmware/event_lookup.py --verify-package \
+  ata_03_01_00_sip_040211_1/ATA030100SIP040211A.zup
+```
+
+Package verification re-resolves all 108 calls, re-decodes every recorded
+argument-producing instruction, and compares every recorded message string
+against the rebuilt runtime layout.
+
+Coverage: 108/108 calls have an exact message recovered from `r4`; 11 have all
+arguments materialized as constants and 97 have at least one explicitly
+recorded dynamic argument (register move, struct load, global load, or other
+producer). Each entry records its owning function, direct callers, subsystem
+owner (call-control, RTP media, config apply, TFTP, sockets, tones, DTMF, FXS
+hook/ring/CID, codec, provisioning, startup, and so on), and whether an
+argument's producing write may be conditionally skipped (69 entries carry that
+warning).
+
+One useful layout observation: the packed config error/event calls pass
+`0x60xx` values that are simultaneously the documented event code and the
+message address, because the config message table is located at runtime
+`0x6000` (`0x6008` "e: cfg < 8", `0x6019` "e: #ata", `0x6022` "e: s/l %d %d",
+`0x6030` "e: bad len", `0x603c` "e: bad sum", `0x6070` "e: eex sum",
+`0x6088` "i: modified? %d %d", `0x609c` "i: cfgNeedReboot %d", `0x60b8`
+"i: waiting to reset", `0x60cd` "i: reset").
+
 ## Evidence boundary
 
 This is static, artifact-backed evidence. It establishes message, instruction,
